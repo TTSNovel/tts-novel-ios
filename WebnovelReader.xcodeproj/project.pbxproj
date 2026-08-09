@@ -11,21 +11,31 @@
 		0BDDA8058FCDA7E8B0FA23D2 /* SessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02A238C8FEF0622E96FC931A /* SessionStore.swift */; };
 		1BB202042E037EAF2316FE48 /* Book.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1B12EADCA0EFAF291FD9838 /* Book.swift */; };
 		1EFD6360A2C903E322D7E5E2 /* WebnovelReaderApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCCFA3ECCF1BC534D815BE89 /* WebnovelReaderApp.swift */; };
+		288E6EF37C418E4E17F10599 /* sherpa-onnx in Frameworks */ = {isa = PBXBuildFile; productRef = 7077642E7C1882099C491E58 /* sherpa-onnx */; };
 		33D575D0EB0BE195DE94E78F /* TTSVoice.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA4C129AEC16B23659D86A76 /* TTSVoice.swift */; };
 		405FB7143AFA70ACA00B3F7F /* DownloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E323E4940121D8CD5ED4F589 /* DownloadManager.swift */; };
+		525D00CEE7BDBD175A01D2E4 /* OfflineDownloadUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DBCCF9522AFEE7CBAD6CA7D /* OfflineDownloadUITests.swift */; };
 		589A1BFA8C2F69AA15C5B895 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4504947934A2B3AECF872F72 /* LoginView.swift */; };
 		5952907776FF164D7CFE6429 /* ReaderPlaybackController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D86948B589F016B404B328BE /* ReaderPlaybackController.swift */; };
+		5D9892CB3ADD91F8903A819C /* ResumeFlowUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A23CE4FF9D11C814434BC096 /* ResumeFlowUITests.swift */; };
 		60D547ECFC0BF5D6FBA4D62A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CA3F21C8B4954B34AA708570 /* Assets.xcassets */; };
 		62C269BBB96D7C16A2EB3462 /* Keychain.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6587C63291898026681CC4FC /* Keychain.swift */; };
+		7F6655053DDE66F5844B0A78 /* ProgressStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F71F4FEECB8FC120E2D7ACA3 /* ProgressStore.swift */; };
 		82E705700471517BACD99233 /* AudioPlaybackService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39AFB5C424CB4F3411EF2E1C /* AudioPlaybackService.swift */; };
 		84CDE63B346CFA8781341F91 /* ReaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E57E5AABFA973BEC1EC6782 /* ReaderView.swift */; };
 		91133D4F60ADB994746EBB32 /* ChapterFragmentParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74B2204E8D3D938583F01489 /* ChapterFragmentParser.swift */; };
 		9447EC2CEA1E4B3C0F55C341 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE6217F8797409C3BC9D1BFC /* APIClient.swift */; };
+		ABCBDA0B1D0335FE4650CC24 /* ReadingProgress.swift in Sources */ = {isa = PBXBuildFile; fileRef = 393BBC110CC5F516C47AD621 /* ReadingProgress.swift */; };
+		AEFD1810A6923AFCB301959D /* tokens.txt in Resources */ = {isa = PBXBuildFile; fileRef = 2538B9C2D810DA7B997904AC /* tokens.txt */; };
 		B1158413D4404F3BA886912F /* LoginFlowUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB44137B32FE2CC7F103757F /* LoginFlowUITests.swift */; };
+		BC7774DC5AA3F54E7F5C5299 /* vi_VN-vais1000-medium.onnx in Resources */ = {isa = PBXBuildFile; fileRef = 19BB4D3E4A9827CF125F6CC5 /* vi_VN-vais1000-medium.onnx */; };
+		C30C58DC9526D986385052DC /* PiperOfflineTTSService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67FCD507015BA179DEAFCA4B /* PiperOfflineTTSService.swift */; };
 		CA7ECBB0F96F47DE90BDDA58 /* TTSPlaybackUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91A32907F3C51AD7EB26D010 /* TTSPlaybackUITests.swift */; };
 		E1D6DCC98BFD391488935A9C /* CoverImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D24D2C47B51D7655DCB2A4B /* CoverImage.swift */; };
+		E729385900ADBD810C521459 /* NetworkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E16D74A6AA8A1A5ED6CF291 /* NetworkMonitor.swift */; };
 		E737A4B4DB04177DA20C8D61 /* LibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B341D7BF826C02000149E75 /* LibraryView.swift */; };
 		EAE570E582ECF7A0E5F68BCA /* TextSegmentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65F1934BFB315721963575A7 /* TextSegmentation.swift */; };
+		FED5D0C4F738A6E4022D7274 /* espeak-ng-data in Resources */ = {isa = PBXBuildFile; fileRef = D7D04640EB80155C062EFE5C /* espeak-ng-data */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -40,27 +50,47 @@
 
 /* Begin PBXFileReference section */
 		02A238C8FEF0622E96FC931A /* SessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStore.swift; sourceTree = "<group>"; };
+		19BB4D3E4A9827CF125F6CC5 /* vi_VN-vais1000-medium.onnx */ = {isa = PBXFileReference; path = "vi_VN-vais1000-medium.onnx"; sourceTree = "<group>"; };
+		2538B9C2D810DA7B997904AC /* tokens.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = tokens.txt; sourceTree = "<group>"; };
+		2E16D74A6AA8A1A5ED6CF291 /* NetworkMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkMonitor.swift; sourceTree = "<group>"; };
+		393BBC110CC5F516C47AD621 /* ReadingProgress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadingProgress.swift; sourceTree = "<group>"; };
 		39AFB5C424CB4F3411EF2E1C /* AudioPlaybackService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioPlaybackService.swift; sourceTree = "<group>"; };
 		4504947934A2B3AECF872F72 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
 		6587C63291898026681CC4FC /* Keychain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Keychain.swift; sourceTree = "<group>"; };
 		65F1934BFB315721963575A7 /* TextSegmentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextSegmentation.swift; sourceTree = "<group>"; };
+		67FCD507015BA179DEAFCA4B /* PiperOfflineTTSService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PiperOfflineTTSService.swift; sourceTree = "<group>"; };
 		6D24D2C47B51D7655DCB2A4B /* CoverImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoverImage.swift; sourceTree = "<group>"; };
 		6E57E5AABFA973BEC1EC6782 /* ReaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReaderView.swift; sourceTree = "<group>"; };
 		74B2204E8D3D938583F01489 /* ChapterFragmentParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChapterFragmentParser.swift; sourceTree = "<group>"; };
 		8B341D7BF826C02000149E75 /* LibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryView.swift; sourceTree = "<group>"; };
+		8DBCCF9522AFEE7CBAD6CA7D /* OfflineDownloadUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineDownloadUITests.swift; sourceTree = "<group>"; };
 		91A32907F3C51AD7EB26D010 /* TTSPlaybackUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TTSPlaybackUITests.swift; sourceTree = "<group>"; };
+		A23CE4FF9D11C814434BC096 /* ResumeFlowUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResumeFlowUITests.swift; sourceTree = "<group>"; };
 		BB44137B32FE2CC7F103757F /* LoginFlowUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginFlowUITests.swift; sourceTree = "<group>"; };
 		BCCFA3ECCF1BC534D815BE89 /* WebnovelReaderApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebnovelReaderApp.swift; sourceTree = "<group>"; };
 		C0E38D3C42826F7665A2F966 /* WebnovelReaderUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = WebnovelReaderUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C2F97CC55E8520B59C8800BB /* WebnovelReader.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = WebnovelReader.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		CA3F21C8B4954B34AA708570 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		D1B12EADCA0EFAF291FD9838 /* Book.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Book.swift; sourceTree = "<group>"; };
+		D7D04640EB80155C062EFE5C /* espeak-ng-data */ = {isa = PBXFileReference; lastKnownFileType = folder; name = "espeak-ng-data"; path = "WebnovelReader/Resources/PiperOffline/espeak-ng-data"; sourceTree = SOURCE_ROOT; };
 		D86948B589F016B404B328BE /* ReaderPlaybackController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReaderPlaybackController.swift; sourceTree = "<group>"; };
 		E323E4940121D8CD5ED4F589 /* DownloadManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadManager.swift; sourceTree = "<group>"; };
 		EA4C129AEC16B23659D86A76 /* TTSVoice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TTSVoice.swift; sourceTree = "<group>"; };
 		F60BA012E937FDC3266CEAAC /* BookDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookDetailView.swift; sourceTree = "<group>"; };
+		F71F4FEECB8FC120E2D7ACA3 /* ProgressStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressStore.swift; sourceTree = "<group>"; };
 		FE6217F8797409C3BC9D1BFC /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		984DD7D968613DAC3B667C7F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				288E6EF37C418E4E17F10599 /* sherpa-onnx in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		24C4D85E293F450B527D8A2F /* WebnovelReader */ = {
@@ -71,6 +101,7 @@
 				BFAB3415967010ED7429F994 /* Download */,
 				550B93F910E6547AE6634665 /* Models */,
 				D72CFF8FB30CFC7A6F25E2A9 /* Networking */,
+				9DD3E03A3F6B27D23E9B06BA /* Progress */,
 				A8F63E6B890DD9AC0DCE849F /* Resources */,
 				C92E2632E4461A36B7004B2E /* Security */,
 				776D0AC67A146637CA1512FD /* TTS */,
@@ -95,6 +126,8 @@
 			isa = PBXGroup;
 			children = (
 				BB44137B32FE2CC7F103757F /* LoginFlowUITests.swift */,
+				8DBCCF9522AFEE7CBAD6CA7D /* OfflineDownloadUITests.swift */,
+				A23CE4FF9D11C814434BC096 /* ResumeFlowUITests.swift */,
 				91A32907F3C51AD7EB26D010 /* TTSPlaybackUITests.swift */,
 			);
 			path = WebnovelReaderUITests;
@@ -113,6 +146,7 @@
 			isa = PBXGroup;
 			children = (
 				D1B12EADCA0EFAF291FD9838 /* Book.swift */,
+				393BBC110CC5F516C47AD621 /* ReadingProgress.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -120,6 +154,7 @@
 		776D0AC67A146637CA1512FD /* TTS */ = {
 			isa = PBXGroup;
 			children = (
+				67FCD507015BA179DEAFCA4B /* PiperOfflineTTSService.swift */,
 				D86948B589F016B404B328BE /* ReaderPlaybackController.swift */,
 				65F1934BFB315721963575A7 /* TextSegmentation.swift */,
 				EA4C129AEC16B23659D86A76 /* TTSVoice.swift */,
@@ -136,6 +171,14 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		9DD3E03A3F6B27D23E9B06BA /* Progress */ = {
+			isa = PBXGroup;
+			children = (
+				F71F4FEECB8FC120E2D7ACA3 /* ProgressStore.swift */,
+			);
+			path = Progress;
+			sourceTree = "<group>";
+		};
 		A7A3685413D9477378D880C5 /* Audio */ = {
 			isa = PBXGroup;
 			children = (
@@ -148,8 +191,19 @@
 			isa = PBXGroup;
 			children = (
 				CA3F21C8B4954B34AA708570 /* Assets.xcassets */,
+				B341071D5232D01B72A1F877 /* PiperOffline */,
 			);
 			path = Resources;
+			sourceTree = "<group>";
+		};
+		B341071D5232D01B72A1F877 /* PiperOffline */ = {
+			isa = PBXGroup;
+			children = (
+				D7D04640EB80155C062EFE5C /* espeak-ng-data */,
+				2538B9C2D810DA7B997904AC /* tokens.txt */,
+				19BB4D3E4A9827CF125F6CC5 /* vi_VN-vais1000-medium.onnx */,
+			);
+			path = PiperOffline;
 			sourceTree = "<group>";
 		};
 		BFAB3415967010ED7429F994 /* Download */ = {
@@ -181,6 +235,7 @@
 			children = (
 				FE6217F8797409C3BC9D1BFC /* APIClient.swift */,
 				74B2204E8D3D938583F01489 /* ChapterFragmentParser.swift */,
+				2E16D74A6AA8A1A5ED6CF291 /* NetworkMonitor.swift */,
 				02A238C8FEF0622E96FC931A /* SessionStore.swift */,
 			);
 			path = Networking;
@@ -213,6 +268,7 @@
 			buildPhases = (
 				6292A9195DA1F145FC9BDB42 /* Sources */,
 				3579980DC8B201EA4701BF26 /* Resources */,
+				984DD7D968613DAC3B667C7F /* Frameworks */,
 			);
 			buildRules = (
 			);
@@ -220,6 +276,7 @@
 			);
 			name = WebnovelReader;
 			packageProductDependencies = (
+				7077642E7C1882099C491E58 /* sherpa-onnx */,
 			);
 			productName = WebnovelReader;
 			productReference = C2F97CC55E8520B59C8800BB /* WebnovelReader.app */;
@@ -254,6 +311,9 @@
 			);
 			mainGroup = 49E539FBF17C66ECA0FDFA44;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				E6AE861AF5232330B796CD85 /* XCRemoteSwiftPackageReference "sherpa-onnx" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 842308F4F81D147E7A905121 /* Products */;
 			projectDirPath = "";
@@ -271,6 +331,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				60D547ECFC0BF5D6FBA4D62A /* Assets.xcassets in Resources */,
+				FED5D0C4F738A6E4022D7274 /* espeak-ng-data in Resources */,
+				AEFD1810A6923AFCB301959D /* tokens.txt in Resources */,
+				BC7774DC5AA3F54E7F5C5299 /* vi_VN-vais1000-medium.onnx in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -291,8 +354,12 @@
 				62C269BBB96D7C16A2EB3462 /* Keychain.swift in Sources */,
 				E737A4B4DB04177DA20C8D61 /* LibraryView.swift in Sources */,
 				589A1BFA8C2F69AA15C5B895 /* LoginView.swift in Sources */,
+				E729385900ADBD810C521459 /* NetworkMonitor.swift in Sources */,
+				C30C58DC9526D986385052DC /* PiperOfflineTTSService.swift in Sources */,
+				7F6655053DDE66F5844B0A78 /* ProgressStore.swift in Sources */,
 				5952907776FF164D7CFE6429 /* ReaderPlaybackController.swift in Sources */,
 				84CDE63B346CFA8781341F91 /* ReaderView.swift in Sources */,
+				ABCBDA0B1D0335FE4650CC24 /* ReadingProgress.swift in Sources */,
 				0BDDA8058FCDA7E8B0FA23D2 /* SessionStore.swift in Sources */,
 				33D575D0EB0BE195DE94E78F /* TTSVoice.swift in Sources */,
 				EAE570E582ECF7A0E5F68BCA /* TextSegmentation.swift in Sources */,
@@ -305,6 +372,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				B1158413D4404F3BA886912F /* LoginFlowUITests.swift in Sources */,
+				525D00CEE7BDBD175A01D2E4 /* OfflineDownloadUITests.swift in Sources */,
+				5D9892CB3ADD91F8903A819C /* ResumeFlowUITests.swift in Sources */,
 				CA7ECBB0F96F47DE90BDDA58 /* TTSPlaybackUITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -544,6 +613,25 @@
 			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		E6AE861AF5232330B796CD85 /* XCRemoteSwiftPackageReference "sherpa-onnx" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/k2-fsa/sherpa-onnx";
+			requirement = {
+				kind = revision;
+				revision = 634265c9b57642fdd158120148785c89aa281c4b;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		7077642E7C1882099C491E58 /* sherpa-onnx */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E6AE861AF5232330B796CD85 /* XCRemoteSwiftPackageReference "sherpa-onnx" */;
+			productName = "sherpa-onnx";
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 5D34D48E6C761EA4755EDBD3 /* Project object */;
 }

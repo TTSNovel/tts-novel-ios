@@ -39,7 +39,7 @@ struct LoginView: View {
                     .accessibilityIdentifier("loginButton")
                 }
             }
-            .navigationTitle("WebnovelReader")
+            .navigationTitle("Novel Reader")
         }
     }
 }

@@ -34,6 +34,18 @@ final class DownloadManager: ObservableObject {
         return try? Data(contentsOf: coverFile)
     }
 
+    func localBook(bookID: Int) -> Book? {
+        guard let data = try? Data(contentsOf: metaFileURL(bookID)) else { return nil }
+        return try? JSONDecoder().decode(Book.self, from: data)
+    }
+
+    /// Reconstructs a library list purely from disk — what LibraryView
+    /// falls back to when fetchBooks() can't reach the server at all.
+    func downloadedBooks() -> [Book] {
+        downloadedBookIDs.compactMap { localBook(bookID: $0) }
+            .sorted { $0.title.localizedStandardCompare($1.title) == .orderedAscending }
+    }
+
     func download(book: Book, baseURL: URL) async {
         guard !downloading.contains(book.id), book.n > 0 else { return }
         downloading.insert(book.id)
@@ -55,6 +67,7 @@ final class DownloadManager: ObservableObject {
             let chapters = try await fetchAllChapters(book: book, baseURL: baseURL)
             let data = try JSONEncoder().encode(chapters.sorted { $0.index < $1.index })
             try data.write(to: chaptersFileURL(book.id))
+            try JSONEncoder().encode(book).write(to: metaFileURL(book.id))
             downloadedBookIDs.insert(book.id)
         } catch {
             // Best-effort: chapters.json is only written on full success,
@@ -111,9 +124,16 @@ final class DownloadManager: ObservableObject {
         bookDirectory(bookID).appendingPathComponent("chapters.json")
     }
 
+    private func metaFileURL(_ bookID: Int) -> URL {
+        bookDirectory(bookID).appendingPathComponent("meta.json")
+    }
+
     private func refreshDownloadedList() {
         guard let entries = try? fileManager.contentsOfDirectory(at: booksDirectory(), includingPropertiesForKeys: nil) else { return }
         downloadedBookIDs = Set(entries.compactMap { Int($0.lastPathComponent) }
-            .filter { fileManager.fileExists(atPath: chaptersFileURL($0).path) })
+            .filter {
+                fileManager.fileExists(atPath: chaptersFileURL($0).path)
+                    && fileManager.fileExists(atPath: metaFileURL($0).path)
+            })
     }
 }

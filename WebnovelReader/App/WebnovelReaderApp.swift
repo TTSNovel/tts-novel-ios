@@ -5,6 +5,8 @@ import AVFoundation
 struct WebnovelReaderApp: App {
     @StateObject private var session = SessionStore.shared
     @StateObject private var downloads = DownloadManager.shared
+    @StateObject private var progressStore = ProgressStore.shared
+    @StateObject private var network = NetworkMonitor.shared
 
     init() {
         // .playback (not .ambient/.soloAmbient) is what keeps audio going
@@ -33,7 +35,14 @@ struct WebnovelReaderApp: App {
             }
             .environmentObject(session)
             .environmentObject(downloads)
-            .task { await session.restoreSession() }
+            .environmentObject(progressStore)
+            .environmentObject(network)
+            .task {
+                await session.restoreSession()
+                if session.isLoggedIn && !session.isOfflineSession {
+                    await progressStore.refreshFromServer(baseURL: SessionStore.baseURL)
+                }
+            }
         }
     }
 }

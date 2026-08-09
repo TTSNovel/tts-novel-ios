@@ -4,6 +4,8 @@ struct BookDetailView: View {
     let book: Book
 
     @EnvironmentObject private var downloads: DownloadManager
+    @EnvironmentObject private var progressStore: ProgressStore
+    @EnvironmentObject private var network: NetworkMonitor
 
     var body: some View {
         List {
@@ -17,6 +19,7 @@ struct BookDetailView: View {
                         Text(author).font(.subheadline).foregroundStyle(.secondary)
                     }
                     Text("\(book.n) chương · \(book.category)").font(.caption).foregroundStyle(.secondary)
+                    readingActions
                     downloadControl
                 }
                 .frame(maxWidth: .infinity)
@@ -38,6 +41,28 @@ struct BookDetailView: View {
     }
 
     @ViewBuilder
+    private var readingActions: some View {
+        HStack {
+            NavigationLink {
+                ReaderView(book: book, chapterIndex: 0)
+            } label: {
+                Label("Đọc từ đầu", systemImage: "book")
+            }
+            .buttonStyle(.bordered)
+
+            if let progress = progressStore.localProgress(bookID: book.id) {
+                NavigationLink {
+                    ReaderView(book: book, chapterIndex: progress.chapterIndex)
+                } label: {
+                    Label("Đọc tiếp (Chương \(progress.chapterIndex + 1))", systemImage: "play.fill")
+                }
+                .buttonStyle(.borderedProminent)
+            }
+        }
+        .font(.footnote)
+    }
+
+    @ViewBuilder
     private var downloadControl: some View {
         if downloads.isDownloaded(book.id) {
             Button(role: .destructive) {
@@ -45,6 +70,7 @@ struct BookDetailView: View {
             } label: {
                 Label("Xoá bản tải xuống", systemImage: "trash")
             }
+            .accessibilityIdentifier("deleteDownloadButton")
         } else if downloads.downloading.contains(book.id) {
             ProgressView(value: downloads.progress[book.id] ?? 0)
                 .frame(maxWidth: 200)
@@ -54,6 +80,8 @@ struct BookDetailView: View {
             } label: {
                 Label("Tải xuống để đọc offline", systemImage: "arrow.down.circle")
             }
+            .disabled(!network.isConnected)
+            .accessibilityIdentifier("downloadButton")
         }
     }
 }
@@ -64,4 +92,6 @@ struct BookDetailView: View {
     }
     .environmentObject(SessionStore.shared)
     .environmentObject(DownloadManager.shared)
+    .environmentObject(ProgressStore.shared)
+    .environmentObject(NetworkMonitor.shared)
 }

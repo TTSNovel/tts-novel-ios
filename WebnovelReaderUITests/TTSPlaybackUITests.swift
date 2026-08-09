@@ -59,7 +59,7 @@ final class TTSPlaybackUITests: XCTestCase {
         let playButton = app.buttons["playPauseButton"]
         XCTAssertTrue(playButton.waitForExistence(timeout: 5))
 
-        for voice in ["Piper VN", "Google Cloud TTS", "VieNeu-TTS"] {
+        for voice in ["Piper VN", "Google Cloud TTS", "VieNeu-TTS", "Piper (offline)"] {
             selectVoice(voice, app: app)
 
             playButton.tap()

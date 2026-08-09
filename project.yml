@@ -11,12 +11,35 @@ settings:
     DEVELOPMENT_TEAM: "R5U3W3463A"
     CODE_SIGN_STYLE: Automatic
 
+packages:
+  # No tagged release of this repo has ever included Package.swift (it
+  # only exists on the `master` branch — confirmed via `git tag
+  # --contains` on the commit that added it) — version/exactVersion
+  # resolution always fails with "the package manifest at '/Package.swift'
+  # cannot be accessed", so pin a specific commit instead of a version.
+  SherpaOnnx:
+    url: https://github.com/k2-fsa/sherpa-onnx
+    revision: 634265c9b57642fdd158120148785c89aa281c4b
+
 targets:
   WebnovelReader:
     type: application
     platform: iOS
     sources:
+      # espeak-ng-data must stay a real subdirectory at runtime (espeak
+      # reads many files inside it by relative path) — added separately
+      # below as a folder reference (type: folder) instead of letting the
+      # default recursive group pick it up, which would just flatten
+      # every file inside it to the bundle root like any other resource.
       - path: WebnovelReader
+        excludes:
+          - "Resources/PiperOffline/espeak-ng-data/**"
+      - path: WebnovelReader/Resources/PiperOffline/espeak-ng-data
+        type: folder
+        buildPhase: resources
+    dependencies:
+      - package: SherpaOnnx
+        product: sherpa-onnx
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: dev.yanglong.webnovelreader
@@ -27,7 +50,7 @@ targets:
     info:
       path: Generated-Info.plist
       properties:
-        CFBundleDisplayName: "WebnovelReader"
+        CFBundleDisplayName: "Novel Reader"
         UILaunchScreen: {}
         UIBackgroundModes:
           - audio

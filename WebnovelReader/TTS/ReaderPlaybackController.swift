@@ -52,9 +52,17 @@ final class ReaderPlaybackController: ObservableObject {
     /// and restart playback.
     var onChapterFinished: (() -> Void)?
 
+    /// Fires whenever the playing/highlighted sentence advances — ReaderView
+    /// uses this to persist reading position as playback goes.
+    var onSentenceChanged: ((Int) -> Void)?
+
     private var baseURL: URL?
     private var active = false
     private var generation = 0
+    /// Set by `prepareResume`, consumed by the next `start()` call so the
+    /// first Play press after resuming lands on the saved sentence instead
+    /// of the top of the chapter.
+    private var pendingResumeIndex: Int?
     /// One fetch per sentence index, started either by the main play
     /// loop or by look-ahead prefetch — awaiting the same Task twice
     /// (once from prefetch, once from playback reaching that index) just
@@ -83,8 +91,24 @@ final class ReaderPlaybackController: ObservableObject {
     }
 
     func start(text: String, baseURL: URL) {
-        beginChapter(text: text, baseURL: baseURL)
+        let startIndex = pendingResumeIndex ?? 0
+        pendingResumeIndex = nil
+        beginChapter(text: text, baseURL: baseURL, startIndex: startIndex)
         scheduleAutoStop()
+    }
+
+    /// Shows the chapter split into sentences with the saved position
+    /// highlighted/scrolled-to (via ReaderView's existing
+    /// highlightedSentenceIndex machinery) without starting audio —
+    /// matches "open app -> jump + highlight, Play continues from there"
+    /// rather than auto-playing on launch. The index is consumed by the
+    /// next `start()` call.
+    func prepareResume(text: String, sentenceIndex: Int) {
+        sentences = TextSegmentation.sentences(from: TextSegmentation.cleaned(text))
+        guard sentences.indices.contains(sentenceIndex) else { return }
+        currentSentenceIndex = sentenceIndex
+        highlightedSentenceIndex = sentenceIndex
+        pendingResumeIndex = sentenceIndex
     }
 
     /// Like `start`, but for auto-advancing to the next chapter mid-
@@ -105,10 +129,10 @@ final class ReaderPlaybackController: ObservableObject {
         clearAutoStopState()
     }
 
-    private func beginChapter(text: String, baseURL: URL) {
+    private func beginChapter(text: String, baseURL: URL, startIndex: Int = 0) {
         self.baseURL = baseURL
         sentences = TextSegmentation.sentences(from: TextSegmentation.cleaned(text))
-        currentSentenceIndex = 0
+        currentSentenceIndex = startIndex
         preloadedIndices = []
         preloadedCount = 0
         audioTasks = [:]
@@ -135,6 +159,7 @@ final class ReaderPlaybackController: ObservableObject {
         active = false
         generation += 1
         audioTasks = [:]
+        pendingResumeIndex = nil
         clearAutoStopState()
         player.stop()
         highlightedSentenceIndex = nil
@@ -171,6 +196,7 @@ final class ReaderPlaybackController: ObservableObject {
         guard let baseURL else { return }
 
         highlightedSentenceIndex = currentSentenceIndex
+        onSentenceChanged?(currentSentenceIndex)
         isLoadingAudio = audioTasks[currentSentenceIndex] == nil
         do {
             let data = try await fetchTask(index: currentSentenceIndex, baseURL: baseURL).value
@@ -210,8 +236,20 @@ final class ReaderPlaybackController: ObservableObject {
         let voice = self.voice
         let speed = self.speed
         let generation = self.generation
+        // Re-checked per sentence (not cached for the whole chapter) so
+        // playback self-corrects the moment connectivity returns, and
+        // never mutates `voice`/its persisted UserDefaults value — the
+        // user's actual selection resumes automatically once back online.
+        let isConnected = NetworkMonitor.shared.isConnected
         return Task {
-            let data = try await APIClient.shared.synthesize(baseURL: baseURL, text: text, voice: voice, speed: speed)
+            let data: Data
+            if voice.isOffline || !isConnected {
+                // No network round trip — runs the bundled ONNX model
+                // right here on-device (see PiperOfflineTTSService).
+                data = try await PiperOfflineTTSService.shared.synthesize(text: text, speed: speed)
+            } else {
+                data = try await APIClient.shared.synthesize(baseURL: baseURL, text: text, voice: voice, speed: speed)
+            }
             self.markPreloaded(index: index, generation: generation)
             return data
         }

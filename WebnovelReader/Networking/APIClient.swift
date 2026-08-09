@@ -83,6 +83,30 @@ final class APIClient: @unchecked Sendable {
         return data
     }
 
+    /// Server-side counterpart: app/server.py's `/api/progress` routes
+    /// (tts-webnovel repo) — not one of reader.js's existing endpoints,
+    /// added specifically for cross-device resume.
+    func fetchProgress(baseURL: URL) async throws -> [Int: ReadingProgress] {
+        var request = URLRequest(url: baseURL.appendingPathComponent("api/progress"))
+        request.httpMethod = "GET"
+        let (data, response) = try await session.data(for: request)
+        try Self.checkOK(response)
+        return try JSONDecoder.readingProgress.decode([Int: ReadingProgress].self, from: data)
+    }
+
+    func postProgress(baseURL: URL, bookID: Int, chapterIndex: Int, sentenceIndex: Int) async throws -> ReadingProgress {
+        var request = URLRequest(url: baseURL.appendingPathComponent("api/progress"))
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONEncoder().encode(
+            ProgressRequestBody(bookID: bookID, chapterIndex: chapterIndex, sentenceIndex: sentenceIndex)
+        )
+
+        let (data, response) = try await session.data(for: request)
+        try Self.checkOK(response)
+        return try JSONDecoder.readingProgress.decode(ReadingProgress.self, from: data)
+    }
+
     private static func checkOK(_ response: URLResponse) throws {
         guard let http = response as? HTTPURLResponse else { throw APIError.invalidResponse }
         if http.statusCode == 401 { throw APIError.notAuthenticated }
@@ -94,6 +118,18 @@ private struct TTSRequestBody: Encodable {
     let text: String
     let speed: Double
     let model: String
+}
+
+private struct ProgressRequestBody: Encodable {
+    let bookID: Int
+    let chapterIndex: Int
+    let sentenceIndex: Int
+
+    enum CodingKeys: String, CodingKey {
+        case bookID = "book_id"
+        case chapterIndex = "chapter"
+        case sentenceIndex = "sentence"
+    }
 }
 
 private extension String {
