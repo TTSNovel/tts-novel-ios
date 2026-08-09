@@ -24,11 +24,38 @@ struct LibraryView: View {
 
     var body: some View {
         NavigationStack(path: $navPath) {
-            List(books) { book in
-                NavigationLink(value: book) {
-                    bookRow(book)
+            List {
+                if !recentBooks.isEmpty {
+                    Section {
+                        ForEach(recentBooks) { book in
+                            NavigationLink(value: book) {
+                                BookRow(book: book)
+                            }
+                            .accessibilityIdentifier("bookRow")
+                        }
+                    } header: {
+                        HStack {
+                            Text("Đọc gần đây")
+                            Spacer()
+                            NavigationLink("Xem tất cả") {
+                                HistoryView(books: historyBooks)
+                            }
+                            .accessibilityIdentifier("seeAllHistoryButton")
+                        }
+                        .textCase(nil)
+                    }
                 }
-                .accessibilityIdentifier("bookRow")
+
+                Section {
+                    ForEach(books) { book in
+                        NavigationLink(value: book) {
+                            BookRow(book: book)
+                        }
+                        .accessibilityIdentifier("bookRow")
+                    }
+                } header: {
+                    if !recentBooks.isEmpty { Text("Tất cả") }
+                }
             }
             .listStyle(.plain)
             .navigationTitle("Novel Reader")
@@ -88,33 +115,17 @@ struct LibraryView: View {
             .background(.bar)
     }
 
-    // Split out of the List's row closure — SwiftUI's ViewBuilder type
-    // inference chokes on too many mixed if-let/plain statements in one
-    // closure and reports the failure at an unrelated call site (was
-    // surfacing as "cannot convert [Book] to Range<Int>" on `List(books)`
-    // itself once the progress-badge line was added inline).
-    @ViewBuilder
-    private func bookRow(_ book: Book) -> some View {
-        HStack(spacing: 12) {
-            CoverImage(book: book)
-                .frame(width: 48, height: 64)
-                .clipShape(RoundedRectangle(cornerRadius: 6))
-            VStack(alignment: .leading, spacing: 2) {
-                Text(book.title).font(.headline)
-                if let author = book.author {
-                    Text(author).font(.subheadline).foregroundStyle(.secondary)
-                }
-                Text("\(book.n) chương").font(.caption).foregroundStyle(.secondary)
-                if let progress = progressStore.localProgress(bookID: book.id) {
-                    Text("Đang đọc: Chương \(progress.chapterIndex + 1)/\(book.n)")
-                        .font(.caption).foregroundStyle(Color.accentColor)
-                }
-            }
-            Spacer()
-            if downloads.isDownloaded(book.id) {
-                Image(systemName: "arrow.down.circle.fill").foregroundStyle(.green)
-            }
-        }
+    /// Top 5 most-recently-updated books that are actually still in the
+    /// library list (a book could have progress from before it was removed/
+    /// renamed — compactMap drops those instead of showing a dead row).
+    private var recentBooks: [Book] {
+        Array(historyBooks.prefix(5))
+    }
+
+    /// Every book with saved progress, most-recent first — the full list
+    /// behind "Xem tất cả" (HistoryView), and the source recentBooks caps.
+    private var historyBooks: [Book] {
+        progressStore.recentEntries().compactMap { entry in books.first(where: { $0.id == entry.bookID }) }
     }
 
     private func loadBooks() async {

@@ -25,6 +25,16 @@ final class ProgressStore: ObservableObject {
             .map { (bookID: $0.key, progress: $0.value) }
     }
 
+    /// Every book with saved progress, most-recently-updated first — backs
+    /// both the Library's "Đọc gần đây" preview (capped) and the full
+    /// History screen (uncapped). `limit: nil` returns everything.
+    func recentEntries(limit: Int? = nil) -> [(bookID: Int, progress: ReadingProgress)] {
+        let sorted = progress.sorted { $0.value.updatedAt > $1.value.updatedAt }
+            .map { (bookID: $0.key, progress: $0.value) }
+        guard let limit else { return sorted }
+        return Array(sorted.prefix(limit))
+    }
+
     func recordLocal(bookID: Int, chapterIndex: Int, sentenceIndex: Int) {
         progress[bookID] = ReadingProgress(chapterIndex: chapterIndex, sentenceIndex: sentenceIndex, updatedAt: Date())
         persistToDisk()
