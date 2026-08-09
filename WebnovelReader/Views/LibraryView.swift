@@ -10,7 +10,6 @@ struct ChapterRoute: Hashable {
 }
 
 struct LibraryView: View {
-    @EnvironmentObject private var session: SessionStore
     @EnvironmentObject private var downloads: DownloadManager
     @EnvironmentObject private var progressStore: ProgressStore
     @EnvironmentObject private var network: NetworkMonitor
@@ -66,8 +65,13 @@ struct LibraryView: View {
                 ReaderView(book: route.book, chapterIndex: route.chapterIndex)
             }
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Đăng xuất") { session.logout() }
+                ToolbarItem(placement: .topBarLeading) {
+                    NavigationLink {
+                        DownloadedBooksView()
+                    } label: {
+                        Image(systemName: "arrow.down.circle")
+                    }
+                    .accessibilityLabel("Đã tải xuống")
                 }
             }
             .refreshable { await loadBooks() }
@@ -102,6 +106,18 @@ struct LibraryView: View {
                 guard connected, isOfflineMode else { return }
                 Task { await loadBooks() }
             }
+            .readerSettingsToolbar()
+        }
+        // Attached once to the NavigationStack itself (not per-screen — see
+        // PlaybackBar's doc comment for why per-screen attachment was tried
+        // and reverted: every pushed screen stays mounted underneath in a
+        // NavigationStack, so a PlaybackBar on each one renders N live
+        // "playPauseButton"s simultaneously, which is both an accessibility
+        // hazard and broke PlaybackPersistenceUITests) so it stays visible
+        // — and singular — across every pushed screen (BookDetailView,
+        // HistoryView, ReaderView), like Music/Podcasts.
+        .safeAreaInset(edge: .bottom) {
+            PlaybackBar()
         }
     }
 
@@ -168,4 +184,5 @@ struct LibraryView: View {
         .environmentObject(DownloadManager.shared)
         .environmentObject(ProgressStore.shared)
         .environmentObject(NetworkMonitor.shared)
+        .environmentObject(ReaderPlaybackController.shared)
 }

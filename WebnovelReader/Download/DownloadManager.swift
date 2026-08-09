@@ -28,6 +28,16 @@ final class DownloadManager: ObservableObject {
         return chapters.first { $0.index == index }
     }
 
+    /// Downloaded books already have every chapter's full content (title
+    /// included) cached in chaptersFileURL — free to read the titles back
+    /// out of that, no separate fetch needed even though the online path
+    /// (APIClient.fetchChapterTitles) hits its own dedicated endpoint.
+    func localChapterTitles(bookID: Int) -> [String]? {
+        guard let data = try? Data(contentsOf: chaptersFileURL(bookID)),
+              let chapters = try? JSONDecoder().decode([Chapter].self, from: data) else { return nil }
+        return chapters.sorted { $0.index < $1.index }.map(\.title)
+    }
+
     func localCoverData(bookID: Int) -> Data? {
         guard let files = try? fileManager.contentsOfDirectory(at: bookDirectory(bookID), includingPropertiesForKeys: nil),
               let coverFile = files.first(where: { $0.lastPathComponent.hasPrefix("cover.") }) else { return nil }

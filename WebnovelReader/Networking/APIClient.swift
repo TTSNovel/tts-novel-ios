@@ -61,6 +61,19 @@ final class APIClient: @unchecked Sendable {
         return ChapterFragmentParser.parse(html: html, index: index)
     }
 
+    /// books/<id>/titles.json — every chapter's title, in reading order,
+    /// with no other content (book_renderer.render_chapter_titles in the
+    /// tts-webnovel repo). One small request instead of fetching every
+    /// chapter's full HTML fragment just to read its title — the only way
+    /// to show a real chapter list/picker without that cost for a book
+    /// that can run into the thousands of chapters.
+    func fetchChapterTitles(baseURL: URL, bookID: Int) async throws -> [String] {
+        let url = baseURL.appendingPathComponent("books/\(bookID)/titles.json")
+        let (data, response) = try await session.data(from: url)
+        try Self.checkOK(response)
+        return try JSONDecoder().decode([String].self, from: data)
+    }
+
     func fetchCoverData(baseURL: URL, bookID: Int, filename: String) async throws -> Data {
         let url = baseURL.appendingPathComponent("books/\(bookID)/\(filename)")
         let (data, response) = try await session.data(from: url)

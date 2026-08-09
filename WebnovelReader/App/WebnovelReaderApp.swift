@@ -7,6 +7,7 @@ struct WebnovelReaderApp: App {
     @StateObject private var downloads = DownloadManager.shared
     @StateObject private var progressStore = ProgressStore.shared
     @StateObject private var network = NetworkMonitor.shared
+    @StateObject private var playback = ReaderPlaybackController.shared
 
     init() {
         // .playback (not .ambient/.soloAmbient) is what keeps audio going
@@ -37,6 +38,7 @@ struct WebnovelReaderApp: App {
             .environmentObject(downloads)
             .environmentObject(progressStore)
             .environmentObject(network)
+            .environmentObject(playback)
             .task {
                 await session.restoreSession()
                 if session.isLoggedIn && !session.isOfflineSession {
