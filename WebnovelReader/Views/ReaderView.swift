@@ -71,6 +71,12 @@ struct ReaderView: View {
                     proxy.scrollTo(newValue, anchor: .center)
                 }
             }
+            // See PlaybackBar's doc comment — invisible spacer, not a
+            // second bar (the one real PlaybackBar lives on LibraryView's
+            // NavigationStack).
+            .safeAreaInset(edge: .bottom) {
+                Color.clear.frame(height: PlaybackBar.reservedHeight)
+            }
         }
         .navigationTitle(book.title)
         .navigationBarTitleDisplayMode(.inline)

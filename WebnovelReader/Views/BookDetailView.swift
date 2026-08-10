@@ -58,6 +58,12 @@ struct BookDetailView: View {
                 }
             }
         }
+        // Invisible spacer reserving the same bottom space as the real
+        // PlaybackBar (see its doc comment) without a second real
+        // PlaybackBar/playPauseButton.
+        .safeAreaInset(edge: .bottom) {
+            Color.clear.frame(height: PlaybackBar.reservedHeight)
+        }
         .navigationDestination(item: $pendingChapterIndex) { index in
             ReaderView(book: book, chapterIndex: index)
         }

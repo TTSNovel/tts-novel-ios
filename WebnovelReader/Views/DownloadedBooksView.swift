@@ -29,6 +29,10 @@ struct DownloadedBooksView: View {
             }
         }
         .readerSettingsToolbar()
+        // See PlaybackBar's doc comment — invisible spacer, not a second bar.
+        .safeAreaInset(edge: .bottom) {
+            Color.clear.frame(height: PlaybackBar.reservedHeight)
+        }
     }
 }
 

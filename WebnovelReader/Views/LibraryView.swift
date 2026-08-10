@@ -9,10 +9,20 @@ struct ChapterRoute: Hashable {
     let chapterIndex: Int
 }
 
+/// Marker route for "Xem tất cả" → HistoryView. Needed because HistoryView
+/// itself contains value-based `NavigationLink(value: book)` rows that must
+/// resolve against *this* NavigationStack's `.navigationDestination(for:
+/// Book.self)` — pushing HistoryView via an old-style closure-based
+/// NavigationLink(destination:) broke that resolution (confirmed: tapping a
+/// row inside it showed the pressed state but never navigated). Routing it
+/// through the same value-based mechanism as everything else fixes it.
+struct HistoryRoute: Hashable {}
+
 struct LibraryView: View {
     @EnvironmentObject private var downloads: DownloadManager
     @EnvironmentObject private var progressStore: ProgressStore
     @EnvironmentObject private var network: NetworkMonitor
+    @EnvironmentObject private var playback: ReaderPlaybackController
 
     @State private var books: [Book] = []
     @State private var loadError: String?
@@ -36,8 +46,8 @@ struct LibraryView: View {
                         HStack {
                             Text("Đọc gần đây")
                             Spacer()
-                            NavigationLink("Xem tất cả") {
-                                HistoryView(books: historyBooks)
+                            NavigationLink(value: HistoryRoute()) {
+                                Text("Xem tất cả")
                             }
                             .accessibilityIdentifier("seeAllHistoryButton")
                         }
@@ -63,6 +73,9 @@ struct LibraryView: View {
             }
             .navigationDestination(for: ChapterRoute.self) { route in
                 ReaderView(book: route.book, chapterIndex: route.chapterIndex)
+            }
+            .navigationDestination(for: HistoryRoute.self) { _ in
+                HistoryView(books: historyBooks)
             }
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
@@ -106,18 +119,28 @@ struct LibraryView: View {
                 guard connected, isOfflineMode else { return }
                 Task { await loadBooks() }
             }
+            // See ReaderPlaybackController.pendingChapterRoute — set by
+            // PlaybackBar's title tap (it lives outside this NavigationStack
+            // as a root overlay, so it can't push directly itself).
+            .onChange(of: playback.pendingChapterRoute) { _, route in
+                guard let route else { return }
+                playback.pendingChapterRoute = nil
+                navPath.append(route.book)
+                navPath.append(route)
+            }
             .readerSettingsToolbar()
-        }
-        // Attached once to the NavigationStack itself (not per-screen — see
-        // PlaybackBar's doc comment for why per-screen attachment was tried
-        // and reverted: every pushed screen stays mounted underneath in a
-        // NavigationStack, so a PlaybackBar on each one renders N live
-        // "playPauseButton"s simultaneously, which is both an accessibility
-        // hazard and broke PlaybackPersistenceUITests) so it stays visible
-        // — and singular — across every pushed screen (BookDetailView,
-        // HistoryView, ReaderView), like Music/Podcasts.
-        .safeAreaInset(edge: .bottom) {
-            PlaybackBar()
+            // Same inert Color.clear spacer every other screen reserves —
+            // the one real PlaybackBar lives as a plain overlay at the
+            // window root (see WebnovelReaderApp), not attached to any
+            // List/NavigationStack here. It was attached at this level
+            // before; nesting its real, conditionally-changing height
+            // inside this List's own safeAreaInset chain caused a layout
+            // feedback loop that froze the whole app's accessibility tree
+            // (visually looked fine — a stale last frame — but nothing
+            // responded to taps).
+            .safeAreaInset(edge: .bottom) {
+                Color.clear.frame(height: PlaybackBar.reservedHeight)
+            }
         }
     }
 

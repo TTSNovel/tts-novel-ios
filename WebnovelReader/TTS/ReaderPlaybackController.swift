@@ -32,38 +32,43 @@ final class ReaderPlaybackController: ObservableObject {
     @Published private(set) var currentSentenceIndex = 0
     @Published private(set) var sentences: [String] = []
     @Published private(set) var highlightedSentenceIndex: Int?
-    /// How many sentences (of the current chapter) have audio fetched and
-    /// cached, ready to play without a network wait — reader.js's
-    /// `preloadReady` counter (els.preload text).
-    @Published private(set) var preloadedCount = 0
+    /// Furthest sentence index reached by *contiguous* preloading (-1 if
+    /// none yet) — "audio is ready straight through sentence N". Not a raw
+    /// count of however many fetches succeeded: on a resume mid-chapter,
+    /// everything before the resume point is treated as already "through"
+    /// without needing to actually be fetched (see `prepareResume`), and a
+    /// plain count would silently exclude that prefix.
+    @Published private(set) var preloadedThroughIndex = -1
+    /// Mirrors `player.isPlaying`, but as this object's own @Published
+    /// property — PlaybackBar only observes ReaderPlaybackController, so a
+    /// change on the (separate) AudioPlaybackService object doesn't by
+    /// itself trigger a re-render; the button previously only looked right
+    /// by coincidence, whenever some *other* @Published property here (like
+    /// isLoadingAudio) happened to change at the same moment. Set
+    /// explicitly at every play/pause/resume/stop/finish transition below.
+    @Published private(set) var isPlaying = false
     @Published var errorMessage: String?
+    /// Set by PlaybackBar's title tap (it lives outside any NavigationStack
+    /// — see its doc comment — so it can't use NavigationLink directly);
+    /// LibraryView observes this and pushes the route onto its own
+    /// navPath, then clears it back to nil.
+    @Published var pendingChapterRoute: ChapterRoute?
 
-    /// Live-measured height of the single on-screen PlaybackBar (see its
-    /// doc comment). Every other screen reserves an invisible spacer of
-    /// this exact height at the bottom of its own scrollable content — a
-    /// plain `.safeAreaInset` attached once on the ancestor NavigationStack
-    /// does not reliably keep a *pushed* screen's own ScrollView/List
-    /// content clear of the bar once the bar's height changes (e.g. the
-    /// combined progress row appearing once `sentenceCount > 0`), which was
-    /// the actual cause of chapter text rendering behind the bar.
-    @Published var barHeight: CGFloat = 0
-
-    /// Changing voice/speed mid-chapter used to silently keep whatever was
-    /// already preloaded under the *old* setting — reader.js explicitly
-    /// drops its preloadCache on both of these changes (site_assets/
-    /// reader.js:831-844) specifically to avoid finishing a chapter in a
-    /// mixed voice/speed; this port had been missing that call entirely.
+    /// Changing voice/speed mid-chapter deliberately does NOT drop whatever
+    /// is already preloaded/in-flight under the *old* setting — changing
+    /// voice isn't "start over," it's "keep whatever's already buffered,
+    /// and preload everything from here on with the new voice/speed."
+    /// (An earlier version dropped the whole preload queue here, porting
+    /// reader.js's dropPreloadedAudio() call — but that meant switching
+    /// voice mid-chapter visibly threw away buffered progress the user had
+    /// already waited for.) `makeFetchTask` reads `self.voice`/`self.speed`
+    /// fresh at the moment each *new* fetch is queued, so nothing further
+    /// is needed here for new preloads to pick up the change.
     @Published var voice: TTSVoice {
-        didSet {
-            UserDefaults.standard.set(voice.rawValue, forKey: Keys.voice)
-            dropPreloadedAudio()
-        }
+        didSet { UserDefaults.standard.set(voice.rawValue, forKey: Keys.voice) }
     }
     @Published var speed: Double {
-        didSet {
-            UserDefaults.standard.set(speed, forKey: Keys.speed)
-            dropPreloadedAudio()
-        }
+        didSet { UserDefaults.standard.set(speed, forKey: Keys.speed) }
     }
     @Published var autoNextChapter: Bool {
         didSet { UserDefaults.standard.set(autoNextChapter, forKey: Keys.autoNext) }
@@ -78,15 +83,21 @@ final class ReaderPlaybackController: ObservableObject {
             if active { scheduleAutoStop() }
         }
     }
-    /// How many sentences ahead to prefetch audio for — user-configurable
-    /// (Cài đặt đọc), was a fixed constant before.
+    /// Max concurrent sentence-audio fetches allowed at once — user-
+    /// configurable (Cài đặt đọc). NOT a fixed look-ahead distance from the
+    /// playhead: `refillPreloadQueue()` keeps this many in flight
+    /// continuously, sliding forward through the rest of the chapter as
+    /// each one completes, whether or not playback is actually active
+    /// (raising this immediately tops up to the new limit).
     @Published var preloadAhead: Int {
-        didSet { UserDefaults.standard.set(preloadAhead, forKey: Keys.preloadAhead) }
+        didSet {
+            UserDefaults.standard.set(preloadAhead, forKey: Keys.preloadAhead)
+            refillPreloadQueue()
+        }
     }
 
     let player = AudioPlaybackService()
 
-    var isPlaying: Bool { player.isPlaying }
     var sentenceCount: Int { sentences.count }
 
     private var shouldAutoPlayNextChapter = false
@@ -102,6 +113,10 @@ final class ReaderPlaybackController: ObservableObject {
     /// first Play press after resuming lands on the saved sentence instead
     /// of the top of the chapter.
     private var pendingResumeIndex: Int?
+    /// Next not-yet-queued sentence index for `refillPreloadQueue()` — only
+    /// ever moves forward. Reset to the chapter's start index in
+    /// `beginChapter`/`prepareResume`.
+    private var preloadCursor = 0
     /// One fetch per sentence index, started either by the main play
     /// loop or by look-ahead prefetch — awaiting the same Task twice
     /// (once from prefetch, once from playback reaching that index) just
@@ -109,6 +124,12 @@ final class ReaderPlaybackController: ObservableObject {
     /// `preloadCache[i]` Promise map.
     private var audioTasks: [Int: Task<Data, Error>] = [:]
     private var preloadedIndices: Set<Int> = []
+    /// Actual fetched audio bytes, kept once a fetch completes — separate
+    /// from `audioTasks` (in-flight only; an entry is removed from there
+    /// the moment its Task resolves, freeing a `refillPreloadQueue()`
+    /// concurrency slot) so playback can hand over already-preloaded audio
+    /// immediately instead of re-fetching it.
+    private var preloadedData: [Int: Data] = [:]
     private var sleepTimerTask: Task<Void, Never>?
 
     private enum Keys {
@@ -156,6 +177,7 @@ final class ReaderPlaybackController: ObservableObject {
         self.book = book
         self.chapterIndex = chapterIndex
         chapter = nil
+        clearSentenceState()
         hasCheckedResume = false
         await loadChapter()
     }
@@ -168,6 +190,7 @@ final class ReaderPlaybackController: ObservableObject {
         guard let book, index >= 0, index < book.n else { return }
         stop()
         chapter = nil
+        clearSentenceState()
         chapterIndex = index
         // Marks "now on this chapter" as a baseline even before any audio
         // plays — playCurrentSentence's progress recording takes over with
@@ -205,6 +228,16 @@ final class ReaderPlaybackController: ObservableObject {
         loadError = nil
         let continuing = shouldAutoPlayNextChapter
         if !continuing { stop() }
+        // Captured *after* the stop() calls above (both this one and the
+        // caller's, in open()/goTo()) so it reflects this exact navigation.
+        // Without this, a slow fetchChapter() from a chapter the user has
+        // already navigated away from (e.g. rapidly picking a different row
+        // in ChapterListSheet before the previous pick's request lands) can
+        // resolve after a newer, faster request already finished — and
+        // unconditionally overwrite the correct chapter with the stale one,
+        // which reads as "tapping a chapter does nothing" even though the
+        // tap itself was handled correctly.
+        let generation = self.generation
 
         if let local = DownloadManager.shared.localChapter(bookID: book.id, index: chapterIndex) {
             chapter = local
@@ -218,11 +251,13 @@ final class ReaderPlaybackController: ObservableObject {
             let fetched = try await APIClient.shared.fetchChapter(
                 baseURL: SessionStore.baseURL, bookID: book.id, index: chapterIndex
             )
+            guard generation == self.generation else { return }
             chapter = fetched
             player.updateNowPlaying(bookTitle: book.title, chapterTitle: fetched.title)
             applyResumeIfNeeded(fetched)
             resumeAutoPlayIfNeeded()
         } catch {
+            guard generation == self.generation else { return }
             loadError = "Không tải được nội dung chương"
         }
     }
@@ -268,7 +303,7 @@ final class ReaderPlaybackController: ObservableObject {
     /// point only a fresh `start` makes sense, not `resume`).
     func togglePlayback() {
         guard chapter != nil else { return }
-        if player.isPlaying {
+        if isPlaying {
             pause()
             syncProgress()
         } else if active {
@@ -282,10 +317,40 @@ final class ReaderPlaybackController: ObservableObject {
         active = false
         generation += 1
         audioTasks = [:]
+        preloadedIndices = []
+        preloadedData = [:]
+        preloadedThroughIndex = -1
         pendingResumeIndex = nil
         clearAutoStopState()
         player.stop()
+        isPlaying = false
         highlightedSentenceIndex = nil
+    }
+
+    /// Clears the sentence-segmented view of the *previous* chapter right
+    /// when abandoning it for a different one (`open()`/`goTo()`, wherever
+    /// `chapter` gets set to nil ahead of the new one loading).
+    ///
+    /// `sentences` only ever gets (re)populated by `beginChapter` or
+    /// `prepareResume` — and manual chapter navigation (goTo, e.g. from
+    /// ChapterListSheet) deliberately does *not* call either of those
+    /// (see goTo's doc comment: it lands on the chapter without playing,
+    /// and `hasCheckedResume` blocks `applyResumeIfNeeded` from firing a
+    /// second time within the same open() session). Without this reset,
+    /// `sentences` silently kept the *old* chapter's segmented text after
+    /// switching chapters, and ReaderView.chapterBody renders from
+    /// `playback.sentences` whenever it's non-empty — so tapping "Chương 6"
+    /// in the chapter list correctly updated the header/position counters
+    /// (those read `chapter`/`chapterIndex`, which loadChapter sets
+    /// correctly) while the actual body text kept showing chapter 1's
+    /// content, exactly as if the tap had silently loaded the wrong
+    /// chapter. Deliberately NOT done inside `stop()` itself — `stop()` is
+    /// also used to just halt playback in place (e.g. the sleep timer)
+    /// without abandoning the chapter, where clearing this would wrongly
+    /// blow away the current reading position's highlighting.
+    private func clearSentenceState() {
+        sentences = []
+        currentSentenceIndex = 0
     }
 
     private func syncProgress() {
@@ -295,8 +360,14 @@ final class ReaderPlaybackController: ObservableObject {
 
     private func start() {
         let startIndex = pendingResumeIndex ?? 0
+        // If prepareResume() already primed preloading from this exact
+        // position (pendingResumeIndex was set), beginChapter must NOT
+        // reset it — that would throw away the head start it already
+        // bought while the user was looking at the resumed position before
+        // pressing Play.
+        let alreadyPrimed = pendingResumeIndex != nil
         pendingResumeIndex = nil
-        beginChapter(startIndex: startIndex)
+        beginChapter(startIndex: startIndex, resetPreload: !alreadyPrimed)
         scheduleAutoStop()
     }
 
@@ -306,6 +377,11 @@ final class ReaderPlaybackController: ObservableObject {
     /// matches "open app -> jump + highlight, Play continues from there"
     /// rather than auto-playing on launch. The index is consumed by the
     /// next `start()` call.
+    ///
+    /// Also starts preloading from this position immediately, even though
+    /// nothing is playing yet — preloading isn't tied to `active`/Play, so
+    /// audio for the resumed position (and beyond) is already buffering by
+    /// the time the user actually presses Play.
     private func prepareResume(sentenceIndex: Int) {
         guard let chapter else { return }
         sentences = Self.sentenceSequence(for: chapter)
@@ -313,6 +389,12 @@ final class ReaderPlaybackController: ObservableObject {
         currentSentenceIndex = sentenceIndex
         highlightedSentenceIndex = sentenceIndex
         pendingResumeIndex = sentenceIndex
+        preloadedIndices = []
+        preloadedData = [:]
+        preloadedThroughIndex = sentenceIndex - 1
+        preloadCursor = sentenceIndex
+        audioTasks = [:]
+        refillPreloadQueue()
     }
 
     /// Call when the caller has decided NOT to continue into another
@@ -324,25 +406,41 @@ final class ReaderPlaybackController: ObservableObject {
         clearAutoStopState()
     }
 
-    private func beginChapter(startIndex: Int) {
+    /// `resetPreload: false` when called right after `prepareResume` already
+    /// set up preloading from this exact `startIndex` — see `start()`.
+    /// Crucially, `generation` is only bumped when actually resetting:
+    /// bumping it unconditionally would silently orphan every preload
+    /// `Task` prepareResume already had in flight — their eventual
+    /// `markPreloaded` calls check `generation == self.generation` and
+    /// would find a mismatch, so the audio they fetch would still play
+    /// fine (whoever awaits the Task still gets its value) but never get
+    /// recorded as preloaded, leaving `preloadedThroughIndex` stuck behind
+    /// however far playback had actually already gotten.
+    private func beginChapter(startIndex: Int, resetPreload: Bool = true) {
         guard let chapter else { return }
         sentences = Self.sentenceSequence(for: chapter)
         currentSentenceIndex = startIndex
-        preloadedIndices = []
-        preloadedCount = 0
-        audioTasks = [:]
+        if resetPreload {
+            preloadedIndices = []
+            preloadedData = [:]
+            preloadedThroughIndex = startIndex - 1
+            preloadCursor = startIndex
+            audioTasks = [:]
+            generation += 1
+        }
         active = true
-        generation += 1
         Task { await playCurrentSentence(generation: generation) }
     }
 
     private func pause() {
         player.pause()
+        isPlaying = false
     }
 
     private func resume() {
         guard active else { return }
         player.resume()
+        isPlaying = true
     }
 
     private func advance() {
@@ -360,6 +458,7 @@ final class ReaderPlaybackController: ObservableObject {
             // handleChapterFinished knows whether that's actually going to
             // happen (see abandonSleepTimerIfIdle()).
             active = false
+            isPlaying = false
             highlightedSentenceIndex = nil
             handleChapterFinished()
             return
@@ -368,29 +467,36 @@ final class ReaderPlaybackController: ObservableObject {
 
         highlightedSentenceIndex = currentSentenceIndex
         ProgressStore.shared.recordLocal(bookID: book.id, chapterIndex: chapterIndex, sentenceIndex: currentSentenceIndex)
-        isLoadingAudio = audioTasks[currentSentenceIndex] == nil
+        // Always show loading while waiting on this sentence's audio, even
+        // if it was already mid-fetch as a preload (not just when starting
+        // a brand-new fetch) — otherwise pressing Play while preload
+        // happens to still be catching up shows no feedback at all until
+        // audio suddenly starts, which reads as "the tap didn't do
+        // anything."
+        isLoadingAudio = true
+        preloadCursor = max(preloadCursor, currentSentenceIndex + 1)
         do {
             let data = try await fetchTask(index: currentSentenceIndex).value
             guard generation == self.generation else { return }
             isLoadingAudio = false
-            audioTasks[currentSentenceIndex] = nil
             try player.play(data: data)
+            isPlaying = true
             errorMessage = nil
-            // Look ahead — same idea as reader.js's PRELOAD_AHEAD loop
-            // right after a sentence starts playing.
-            for k in 1...max(preloadAhead, 1) {
-                preload(index: currentSentenceIndex + k)
-            }
+            // Keep the preload queue topped up now that a slot may have
+            // freed (or the playhead moved) — see refillPreloadQueue().
+            refillPreloadQueue()
         } catch {
             isLoadingAudio = false
             guard generation == self.generation else { return }
             errorMessage = "Không tạo được audio — thử lại hoặc đổi giọng đọc"
             active = false
+            isPlaying = false
             clearAutoStopState()
         }
     }
 
     private func fetchTask(index: Int) -> Task<Data, Error> {
+        if let cached = preloadedData[index] { return Task { cached } }
         if let existing = audioTasks[index] { return existing }
         let task = makeFetchTask(index: index)
         audioTasks[index] = task
@@ -398,8 +504,32 @@ final class ReaderPlaybackController: ObservableObject {
     }
 
     private func preload(index: Int) {
-        guard index >= 0, index < sentences.count, audioTasks[index] == nil else { return }
+        guard index >= 0, index < sentences.count, audioTasks[index] == nil, !preloadedIndices.contains(index) else { return }
         audioTasks[index] = makeFetchTask(index: index)
+    }
+
+    /// Tops up preloading up to `preloadAhead` sentences beyond wherever
+    /// `currentSentenceIndex` actually is right now — a bounded window,
+    /// NOT "keep fetching until the whole chapter is done": an earlier
+    /// version had this run unbounded to the end of the chapter (gated only
+    /// by concurrency), which defeated the whole point of the setting —
+    /// abandoning a chapter partway through would've silently fetched (and
+    /// wasted the bandwidth/cost for) every remaining sentence's audio.
+    ///
+    /// Still independent of whether playback is *active* (so it keeps
+    /// buffering while paused, and a voice/speed change — which no longer
+    /// drops the queue, see `voice`'s didSet — just continues with the new
+    /// setting instead of restarting) — just bounded by *distance* from the
+    /// playhead rather than by time or by chapter end. The window re-slides
+    /// forward on its own as `currentSentenceIndex` advances, since every
+    /// call recomputes the boundary from its current value.
+    private func refillPreloadQueue() {
+        guard !sentences.isEmpty else { return }
+        let boundary = min(currentSentenceIndex + preloadAhead, sentences.count - 1)
+        while preloadCursor <= boundary {
+            preload(index: preloadCursor)
+            preloadCursor += 1
+        }
     }
 
     private func makeFetchTask(index: Int) -> Task<Data, Error> {
@@ -422,29 +552,27 @@ final class ReaderPlaybackController: ObservableObject {
             } else {
                 data = try await APIClient.shared.synthesize(baseURL: baseURL, text: text, voice: voice, speed: speed)
             }
-            self.markPreloaded(index: index, generation: generation)
+            self.markPreloaded(index: index, data: data, generation: generation)
             return data
         }
     }
 
-    private func markPreloaded(index: Int, generation: Int) {
+    /// Stores the fetched audio, removes it from `audioTasks` (it's done —
+    /// no longer "in flight"), advances the contiguous
+    /// `preloadedThroughIndex` frontier, and calls `refillPreloadQueue()`
+    /// in case the window has since slid forward (currentSentenceIndex
+    /// advanced) enough to include a new sentence.
+    private func markPreloaded(index: Int, data: Data, generation: Int) {
         guard generation == self.generation else { return }
+        preloadedData[index] = data
+        audioTasks[index] = nil
         preloadedIndices.insert(index)
-        preloadedCount = preloadedIndices.count
-    }
-
-    /// Drops every not-yet-played preloaded/in-flight sentence so the next
-    /// one fetched picks up the newly changed voice/speed — reader.js's
-    /// dropPreloadedAudio(). Safe to call mid-playback: by the time a
-    /// sentence is actually *playing*, its entry has already been removed
-    /// from `audioTasks` (see playCurrentSentence, right before
-    /// `player.play`), so this only ever discards sentences ahead of
-    /// what's currently audible, never interrupting it.
-    private func dropPreloadedAudio() {
-        for task in audioTasks.values { task.cancel() }
-        audioTasks = [:]
-        preloadedIndices = []
-        preloadedCount = 0
+        var next = preloadedThroughIndex + 1
+        while preloadedIndices.contains(next) {
+            preloadedThroughIndex = next
+            next += 1
+        }
+        refillPreloadQueue()
     }
 
     private func scheduleAutoStop() {
