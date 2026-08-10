@@ -58,6 +58,21 @@ final class AudioPlaybackService: NSObject, ObservableObject {
         MPNowPlayingInfoCenter.default().nowPlayingInfo = info
     }
 
+    /// Drives the lock-screen/Control-Center progress bar and elapsed-time
+    /// label. `elapsed`/`duration` are ReaderPlaybackController's
+    /// character-count-based estimate for the whole chapter (there's no real
+    /// per-chapter audio duration — sentences are synthesized and played one
+    /// clip at a time) — setting these plus a non-zero rate is enough for
+    /// iOS to interpolate the displayed time on its own going forward; no
+    /// per-second updates needed from here.
+    func updateNowPlayingProgress(elapsed: TimeInterval, duration: TimeInterval, rate: Double) {
+        var info = MPNowPlayingInfoCenter.default().nowPlayingInfo ?? [:]
+        info[MPNowPlayingInfoPropertyElapsedPlaybackTime] = elapsed
+        info[MPMediaItemPropertyPlaybackDuration] = duration
+        info[MPNowPlayingInfoPropertyPlaybackRate] = rate
+        MPNowPlayingInfoCenter.default().nowPlayingInfo = info
+    }
+
     private func configureRemoteCommands() {
         let center = MPRemoteCommandCenter.shared()
 

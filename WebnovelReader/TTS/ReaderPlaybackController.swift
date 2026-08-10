@@ -68,7 +68,10 @@ final class ReaderPlaybackController: ObservableObject {
         didSet { UserDefaults.standard.set(voice.rawValue, forKey: Keys.voice) }
     }
     @Published var speed: Double {
-        didSet { UserDefaults.standard.set(speed, forKey: Keys.speed) }
+        didSet {
+            UserDefaults.standard.set(speed, forKey: Keys.speed)
+            updateNowPlayingProgress()
+        }
     }
     @Published var autoNextChapter: Bool {
         didSet { UserDefaults.standard.set(autoNextChapter, forKey: Keys.autoNext) }
@@ -131,6 +134,13 @@ final class ReaderPlaybackController: ObservableObject {
     /// immediately instead of re-fetching it.
     private var preloadedData: [Int: Data] = [:]
     private var sleepTimerTask: Task<Void, Never>?
+
+    /// Rough Vietnamese-speech pace at `speed == 1.0`, used only to turn
+    /// character counts into the lock-screen/Control-Center progress bar's
+    /// elapsed/duration estimate (see `updateNowPlayingProgress`) — TTS
+    /// audio has no real duration until each sentence is actually
+    /// synthesized, so this is an approximation, not calibrated per-voice.
+    private static let baseCharactersPerSecond: Double = 14
 
     private enum Keys {
         static let voice = "reader.model"
@@ -325,6 +335,7 @@ final class ReaderPlaybackController: ObservableObject {
         player.stop()
         isPlaying = false
         highlightedSentenceIndex = nil
+        updateNowPlayingProgress()
     }
 
     /// Clears the sentence-segmented view of the *previous* chapter right
@@ -351,6 +362,27 @@ final class ReaderPlaybackController: ObservableObject {
     private func clearSentenceState() {
         sentences = []
         currentSentenceIndex = 0
+        updateNowPlayingProgress()
+    }
+
+    /// Pushes an estimated elapsed/duration/rate to
+    /// MPNowPlayingInfoCenter so the lock screen and Control Center show a
+    /// progress bar + counting time like Music/Podcasts, even though TTS
+    /// audio has no real per-chapter duration. Called at every sentence
+    /// boundary and play/pause/speed transition — iOS interpolates the
+    /// displayed time on its own between calls as long as elapsed/duration/
+    /// rate are kept current, so this doesn't need a per-second timer.
+    private func updateNowPlayingProgress() {
+        guard !sentences.isEmpty else {
+            player.updateNowPlayingProgress(elapsed: 0, duration: 0, rate: 0)
+            return
+        }
+        let rate = Self.baseCharactersPerSecond * max(speed, 0.1)
+        let totalChars = sentences.reduce(0) { $0 + $1.count }
+        let elapsedChars = sentences[0..<min(currentSentenceIndex, sentences.count)].reduce(0) { $0 + $1.count }
+        let duration = Double(totalChars) / rate
+        let elapsed = Double(elapsedChars) / rate
+        player.updateNowPlayingProgress(elapsed: elapsed, duration: duration, rate: isPlaying ? speed : 0)
     }
 
     private func syncProgress() {
@@ -389,6 +421,7 @@ final class ReaderPlaybackController: ObservableObject {
         currentSentenceIndex = sentenceIndex
         highlightedSentenceIndex = sentenceIndex
         pendingResumeIndex = sentenceIndex
+        updateNowPlayingProgress()
         preloadedIndices = []
         preloadedData = [:]
         preloadedThroughIndex = sentenceIndex - 1
@@ -420,6 +453,7 @@ final class ReaderPlaybackController: ObservableObject {
         guard let chapter else { return }
         sentences = Self.sentenceSequence(for: chapter)
         currentSentenceIndex = startIndex
+        updateNowPlayingProgress()
         if resetPreload {
             preloadedIndices = []
             preloadedData = [:]
@@ -435,17 +469,20 @@ final class ReaderPlaybackController: ObservableObject {
     private func pause() {
         player.pause()
         isPlaying = false
+        updateNowPlayingProgress()
     }
 
     private func resume() {
         guard active else { return }
         player.resume()
         isPlaying = true
+        updateNowPlayingProgress()
     }
 
     private func advance() {
         guard active else { return }
         currentSentenceIndex += 1
+        updateNowPlayingProgress()
         Task { await playCurrentSentence(generation: generation) }
     }
 
@@ -460,6 +497,7 @@ final class ReaderPlaybackController: ObservableObject {
             active = false
             isPlaying = false
             highlightedSentenceIndex = nil
+            updateNowPlayingProgress()
             handleChapterFinished()
             return
         }
@@ -481,6 +519,7 @@ final class ReaderPlaybackController: ObservableObject {
             isLoadingAudio = false
             try player.play(data: data)
             isPlaying = true
+            updateNowPlayingProgress()
             errorMessage = nil
             // Keep the preload queue topped up now that a slot may have
             // freed (or the playhead moved) — see refillPreloadQueue().
@@ -491,6 +530,7 @@ final class ReaderPlaybackController: ObservableObject {
             errorMessage = "Không tạo được audio — thử lại hoặc đổi giọng đọc"
             active = false
             isPlaying = false
+            updateNowPlayingProgress()
             clearAutoStopState()
         }
     }
