@@ -9,19 +9,19 @@ struct CoverImage: View {
     let book: Book
 
     @EnvironmentObject private var downloads: DownloadManager
+    @State private var remoteData: Data?
 
     var body: some View {
         Group {
             if let data = downloads.localCoverData(bookID: book.id), let uiImage = UIImage(data: data) {
                 Image(uiImage: uiImage).resizable().scaledToFill()
+            } else if let data = remoteData, let uiImage = UIImage(data: data) {
+                Image(uiImage: uiImage).resizable().scaledToFill()
             } else if let url = book.coverURL(baseURL: SessionStore.baseURL) {
-                AsyncImage(url: url) { phase in
-                    if let image = phase.image {
-                        image.resizable().scaledToFill()
-                    } else {
-                        placeholder
+                placeholder
+                    .task(id: url) {
+                        remoteData = await CoverImageCache.shared.data(for: url)
                     }
-                }
             } else {
                 placeholder
             }

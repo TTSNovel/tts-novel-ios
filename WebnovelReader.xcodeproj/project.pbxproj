@@ -51,6 +51,7 @@
 		D66070AB1B1E355AFEC029B0 /* ActionHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C80348C35F790F0DE254630B /* ActionHistoryView.swift */; };
 		DDEE93E3E9DAFB7C2D0A1364 /* EventLogStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 517EE92EB602E9C3F69F581F /* EventLogStore.swift */; };
 		E1D6DCC98BFD391488935A9C /* CoverImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D24D2C47B51D7655DCB2A4B /* CoverImage.swift */; };
+		E56DBE4914F38CB525D0FE29 /* CoverImageCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB5E3C26D94F8123E9B0B710 /* CoverImageCache.swift */; };
 		E729385900ADBD810C521459 /* NetworkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E16D74A6AA8A1A5ED6CF291 /* NetworkMonitor.swift */; };
 		E737A4B4DB04177DA20C8D61 /* LibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B341D7BF826C02000149E75 /* LibraryView.swift */; };
 		EAE570E582ECF7A0E5F68BCA /* TextSegmentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65F1934BFB315721963575A7 /* TextSegmentation.swift */; };
@@ -122,6 +123,7 @@
 		EA4C129AEC16B23659D86A76 /* TTSVoice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TTSVoice.swift; sourceTree = "<group>"; };
 		F60BA012E937FDC3266CEAAC /* BookDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookDetailView.swift; sourceTree = "<group>"; };
 		F71F4FEECB8FC120E2D7ACA3 /* ProgressStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressStore.swift; sourceTree = "<group>"; };
+		FB5E3C26D94F8123E9B0B710 /* CoverImageCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoverImageCache.swift; sourceTree = "<group>"; };
 		FE6217F8797409C3BC9D1BFC /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -301,6 +303,7 @@
 			children = (
 				FE6217F8797409C3BC9D1BFC /* APIClient.swift */,
 				74B2204E8D3D938583F01489 /* ChapterFragmentParser.swift */,
+				FB5E3C26D94F8123E9B0B710 /* CoverImageCache.swift */,
 				2E16D74A6AA8A1A5ED6CF291 /* NetworkMonitor.swift */,
 				02A238C8FEF0622E96FC931A /* SessionStore.swift */,
 			);
@@ -422,6 +425,7 @@
 				712CC9D873EC43419CBADFFC /* ChapterListSheet.swift in Sources */,
 				814D74F701676CD7B17DB49D /* ChapterTitles.swift in Sources */,
 				E1D6DCC98BFD391488935A9C /* CoverImage.swift in Sources */,
+				E56DBE4914F38CB525D0FE29 /* CoverImageCache.swift in Sources */,
 				405FB7143AFA70ACA00B3F7F /* DownloadManager.swift in Sources */,
 				CBCE947F9F049237E90DE1BB /* DownloadedBooksView.swift in Sources */,
 				DDEE93E3E9DAFB7C2D0A1364 /* EventLogStore.swift in Sources */,
