@@ -42,6 +42,17 @@ struct ReaderSettingsSheet: View {
                             Text("\(Int(minutes)) phút").tag(minutes)
                         }
                     }
+                    // See PlaybackBar's matching countdown for why
+                    // "deadline > Date()" guards Text(timerInterval:).
+                    if let deadline = playback.sleepTimerDeadline, deadline > Date() {
+                        HStack {
+                            Text("Sẽ tắt sau")
+                            Spacer()
+                            Text(timerInterval: Date()...deadline, countsDown: true)
+                                .foregroundStyle(.secondary)
+                                .monospacedDigit()
+                        }
+                    }
                 }
 
                 Section {

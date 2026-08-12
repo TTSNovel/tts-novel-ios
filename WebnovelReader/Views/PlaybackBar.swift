@@ -60,20 +60,38 @@ struct PlaybackBar: View {
                 // overlay — see its doc comment — so it can't use
                 // NavigationLink directly; LibraryView observes this and
                 // pushes the route onto its own navPath instead).
-                Button {
-                    playback.pendingChapterRoute = ChapterRoute(book: book, chapterIndex: playback.chapterIndex)
-                } label: {
-                    HStack(spacing: 4) {
-                        Text(book.title).font(.caption).bold()
-                        Text("· \(playback.chapterIndex + 1)/\(book.n)")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
+                HStack(spacing: 8) {
+                    Button {
+                        playback.pendingChapterRoute = ChapterRoute(book: book, chapterIndex: playback.chapterIndex)
+                    } label: {
+                        HStack(spacing: 4) {
+                            Text(book.title).font(.caption).bold()
+                            Text("· \(playback.chapterIndex + 1)/\(book.n)")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                        .lineLimit(1)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
-                    .lineLimit(1)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .buttonStyle(.plain)
+                    .accessibilityIdentifier("playbackBarTitle")
+
+                    // "deadline > Date()" guards Text(timerInterval:)'s
+                    // ClosedRange precondition (lowerBound <= upperBound) —
+                    // sleepTimerDeadline can briefly still be non-nil for a
+                    // stale, just-passed deadline in the instant before
+                    // autoStopFired() clears it.
+                    if let deadline = playback.sleepTimerDeadline, deadline > Date() {
+                        HStack(spacing: 2) {
+                            Image(systemName: "moon.zzz.fill")
+                            Text(timerInterval: Date()...deadline, countsDown: true)
+                        }
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .monospacedDigit()
+                        .accessibilityIdentifier("sleepTimerCountdown")
+                    }
                 }
-                .buttonStyle(.plain)
-                .accessibilityIdentifier("playbackBarTitle")
                 .padding(.bottom, playback.sentenceCount > 0 ? 4 : 12)
 
                 // Row 2: one combined bar — the filled (accent) portion is

@@ -134,6 +134,18 @@ final class ReaderPlaybackController: ObservableObject {
     /// immediately instead of re-fetching it.
     private var preloadedData: [Int: Data] = [:]
     private var sleepTimerTask: Task<Void, Never>?
+    /// nil whenever no sleep timer is running — lets the UI show a live
+    /// countdown via `Text(timerInterval:)` without polling.
+    @Published private(set) var sleepTimerDeadline: Date?
+    /// Set by `autoStopFired()`, checked by `playCurrentSentence` right
+    /// before it plays a sentence — blocks the case where the timer fires
+    /// while the *next* sentence's audio is already mid-fetch (kicked off by
+    /// `advance()` just before the deadline hit): without this, that fetch
+    /// would resolve moments later and `player.play(data:)` would fire
+    /// anyway, silently undoing the timer's pause. Cleared on the next
+    /// `resume()`/`scheduleAutoStop()` so it only suppresses the one
+    /// in-flight sentence, not playback in general.
+    private var sleepTimerExpired = false
 
     /// Rough Vietnamese-speech pace at `speed == 1.0`, used only to turn
     /// character counts into the lock-screen/Control-Center progress bar's
@@ -482,6 +494,7 @@ final class ReaderPlaybackController: ObservableObject {
 
     private func resume() {
         guard active else { return }
+        sleepTimerExpired = false
         player.resume()
         isPlaying = true
         updateNowPlayingProgress()
@@ -529,7 +542,10 @@ final class ReaderPlaybackController: ObservableObject {
         preloadCursor = max(preloadCursor, currentSentenceIndex + 1)
         do {
             let data = try await fetchTask(index: currentSentenceIndex).value
-            guard generation == self.generation else { return }
+            guard generation == self.generation, !sleepTimerExpired else {
+                isLoadingAudio = false
+                return
+            }
             isLoadingAudio = false
             try player.play(data: data)
             isPlaying = true
@@ -644,8 +660,10 @@ final class ReaderPlaybackController: ObservableObject {
 
     private func scheduleAutoStop() {
         clearAutoStopState()
+        sleepTimerExpired = false
         guard autoStopMinutes > 0 else { return }
         let nanoseconds = UInt64(autoStopMinutes * 60 * 1_000_000_000)
+        sleepTimerDeadline = Date().addingTimeInterval(autoStopMinutes * 60)
         sleepTimerTask = Task {
             try? await Task.sleep(nanoseconds: nanoseconds)
             guard !Task.isCancelled else { return }
@@ -663,8 +681,15 @@ final class ReaderPlaybackController: ObservableObject {
     /// player's buffered sentence and the preload queue intact) means the
     /// next press correctly routes through `togglePlayback()`'s `resume()`
     /// branch instead.
+    ///
+    /// `sleepTimerExpired = true` covers the one case `pause()` alone
+    /// doesn't: if the deadline lands right as `advance()` has already
+    /// kicked off the *next* sentence's fetch, that fetch finishing moments
+    /// later would otherwise call `player.play()` and silently undo this
+    /// pause — see `playCurrentSentence`'s check.
     private func autoStopFired() {
         guard active else { return }
+        sleepTimerExpired = true
         pause()
         syncProgress()
         clearAutoStopState()
@@ -673,6 +698,7 @@ final class ReaderPlaybackController: ObservableObject {
     private func clearAutoStopState() {
         sleepTimerTask?.cancel()
         sleepTimerTask = nil
+        sleepTimerDeadline = nil
     }
 
     /// Chapter title read aloud first, as sentence 0, before the body —
