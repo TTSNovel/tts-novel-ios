@@ -73,3 +73,16 @@ targets:
         TEST_TARGET_NAME: WebnovelReader
     dependencies:
       - target: WebnovelReader
+
+schemes:
+  WebnovelReader:
+    build:
+      targets:
+        WebnovelReader: all
+        WebnovelReaderUITests: [test]
+    test:
+      targets:
+        - WebnovelReaderUITests
+    run:
+      config: Debug
+    shared: true

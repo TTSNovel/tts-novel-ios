@@ -4,3 +4,10 @@ build/
 xcuserdata/
 .build/
 .DS_Store
+
+# Kiwi TCMS local dev server + scripts
+Scripts/kiwi/.venv/
+Scripts/kiwi/*.env
+Scripts/kiwi/test_case_map.yml
+Scripts/kiwi/__pycache__/
+TestResults.xcresult/

@@ -16,6 +16,7 @@ struct DownloadedBooksView: View {
             NavigationLink(value: book) {
                 BookRow(book: book)
             }
+            .accessibilityIdentifier("bookRow")
         }
         .listStyle(.plain)
         .navigationTitle("Đã tải xuống")

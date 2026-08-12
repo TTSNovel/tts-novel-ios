@@ -85,6 +85,7 @@ struct LibraryView: View {
                         Image(systemName: "arrow.down.circle")
                     }
                     .accessibilityLabel("Đã tải xuống")
+                    .accessibilityIdentifier("downloadedBooksButton")
                 }
             }
             .refreshable { await loadBooks() }

@@ -1,0 +1,44 @@
+services:
+    db:
+        container_name: kiwi_db
+        image: mariadb:latest
+        command:
+            --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+        volumes:
+            - db_data:/var/lib/mysql
+        restart: always
+        environment:
+            # checkov:skip=CKV_SECRET_6:Base64 High Entropy String
+            MYSQL_ROOT_PASSWORD: kiwi-1s-aw3s0m3
+            MYSQL_DATABASE: kiwi
+            MYSQL_USER: kiwi
+            MYSQL_PASSWORD: kiwi
+
+    web:
+        container_name: kiwi_web
+        depends_on:
+            - db
+        restart: always
+        # pub.kiwitcms.eu/kiwitcms/kiwi:latest is amd64-only, built against
+        # CentOS Stream 10 (requires x86-64-v3/AVX2) — unrunnable under
+        # QEMU/Rosetta emulation on Apple Silicon. Built natively for arm64
+        # instead: `docker build -t kiwitcms-arm64:local
+        # https://github.com/kiwitcms/Kiwi.git#master` (see README.md).
+        image: kiwitcms-arm64:local
+        ports:
+            - 8080:8080
+            - 8443:8443
+        volumes:
+            - uploads:/Kiwi/uploads:Z
+        environment:
+            KIWI_DB_HOST: db
+            KIWI_DB_PORT: 3306
+            KIWI_DB_NAME: kiwi
+            KIWI_DB_USER: kiwi
+            KIWI_DB_PASSWORD: kiwi
+        cap_drop:
+          - ALL
+
+volumes:
+    db_data:
+    uploads:

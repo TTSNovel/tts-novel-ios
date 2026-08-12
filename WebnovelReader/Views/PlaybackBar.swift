@@ -131,6 +131,7 @@ struct PlaybackBar: View {
                         Image(systemName: "backward.end.fill")
                     }
                     .accessibilityLabel("Chương trước")
+                    .accessibilityIdentifier("previousChapterButton")
                     .disabled(playback.chapterIndex <= 0)
 
                     Button {
@@ -151,6 +152,7 @@ struct PlaybackBar: View {
                         Image(systemName: "forward.end.fill")
                     }
                     .accessibilityLabel("Chương tiếp")
+                    .accessibilityIdentifier("nextChapterButton")
                     .disabled(playback.chapterIndex >= book.n - 1)
                 }
                 .font(.title3)
