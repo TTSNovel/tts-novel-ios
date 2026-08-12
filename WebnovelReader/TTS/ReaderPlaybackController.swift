@@ -189,6 +189,7 @@ final class ReaderPlaybackController: ObservableObject {
         chapter = nil
         clearSentenceState()
         hasCheckedResume = false
+        EventLogStore.shared.record(.navigation, "Mở chương", detail: "\(book.title) — Chương \(chapterIndex + 1)")
         await loadChapter()
     }
 
@@ -201,6 +202,8 @@ final class ReaderPlaybackController: ObservableObject {
         stop()
         chapter = nil
         clearSentenceState()
+        let direction = index == chapterIndex + 1 ? "chương tiếp" : (index == chapterIndex - 1 ? "chương trước" : "chương \(index + 1)")
+        EventLogStore.shared.record(.navigation, "Chuyển \(direction)", detail: "\(book.title) — Chương \(index + 1)")
         chapterIndex = index
         // Marks "now on this chapter" as a baseline even before any audio
         // plays — playCurrentSentence's progress recording takes over with
@@ -269,6 +272,7 @@ final class ReaderPlaybackController: ObservableObject {
         } catch {
             guard generation == self.generation else { return }
             loadError = "Không tải được nội dung chương"
+            EventLogStore.shared.record(.error, "Không tải được nội dung chương", detail: "\(book.title) — Chương \(chapterIndex + 1): \(error.localizedDescription)")
         }
     }
 
@@ -392,6 +396,9 @@ final class ReaderPlaybackController: ObservableObject {
 
     private func start() {
         let startIndex = pendingResumeIndex ?? 0
+        // No log call here — playCurrentSentence() logs every sentence it
+        // actually starts playing (including this first one), so a separate
+        // "Phát audio" entry here would just duplicate that.
         // If prepareResume() already primed preloading from this exact
         // position (pendingResumeIndex was set), beginChapter must NOT
         // reset it — that would throw away the head start it already
@@ -470,6 +477,7 @@ final class ReaderPlaybackController: ObservableObject {
         player.pause()
         isPlaying = false
         updateNowPlayingProgress()
+        EventLogStore.shared.record(.playback, "Tạm dừng", detail: playbackDetail())
     }
 
     private func resume() {
@@ -477,6 +485,12 @@ final class ReaderPlaybackController: ObservableObject {
         player.resume()
         isPlaying = true
         updateNowPlayingProgress()
+        EventLogStore.shared.record(.playback, "Tiếp tục phát", detail: playbackDetail())
+    }
+
+    private func playbackDetail() -> String? {
+        guard let book else { return nil }
+        return "\(book.title) — Chương \(chapterIndex + 1), câu \(currentSentenceIndex + 1)"
     }
 
     private func advance() {
@@ -521,6 +535,12 @@ final class ReaderPlaybackController: ObservableObject {
             isPlaying = true
             updateNowPlayingProgress()
             errorMessage = nil
+            // Every sentence that actually starts playing, whether from a
+            // manual Play press or auto-advancing to the next one — not
+            // just the user-initiated actions — so the history/log reflects
+            // what was actually read aloud (câu 1, câu 2, ... câu 100), not
+            // only "pressed play once."
+            EventLogStore.shared.record(.playback, "Phát câu \(currentSentenceIndex + 1)", detail: playbackDetail())
             // Keep the preload queue topped up now that a slot may have
             // freed (or the playhead moved) — see refillPreloadQueue().
             refillPreloadQueue()
@@ -532,6 +552,7 @@ final class ReaderPlaybackController: ObservableObject {
             isPlaying = false
             updateNowPlayingProgress()
             clearAutoStopState()
+            EventLogStore.shared.record(.error, "Không tạo được audio", detail: "\(playbackDetail() ?? "") — \(error.localizedDescription)")
         }
     }
 
@@ -579,13 +600,19 @@ final class ReaderPlaybackController: ObservableObject {
         let generation = self.generation
         let baseURL = SessionStore.baseURL
         // Re-checked per sentence (not cached for the whole chapter) so
-        // playback self-corrects the moment connectivity returns, and
-        // never mutates `voice`/its persisted UserDefaults value — the
-        // user's actual selection resumes automatically once back online.
+        // playback self-corrects the moment connectivity returns or the
+        // user logs in mid-chapter, and never mutates `voice`/its persisted
+        // UserDefaults value — the user's actual selection resumes
+        // automatically once back online / logged in.
         let isConnected = NetworkMonitor.shared.isConnected
+        // /api/tts stays behind login even though browsing/reading is now
+        // public (tts-webnovel's server.py) — a guest falls back to the
+        // on-device voice exactly like being offline does, same mechanism,
+        // just a different reason. ReaderView's footnote explains this.
+        let isLoggedIn = SessionStore.shared.isLoggedIn
         return Task {
             let data: Data
-            if voice.isOffline || !isConnected {
+            if voice.isOffline || !isConnected || !isLoggedIn {
                 // No network round trip — runs the bundled ONNX model
                 // right here on-device (see PiperOfflineTTSService).
                 data = try await PiperOfflineTTSService.shared.synthesize(text: text, speed: speed)

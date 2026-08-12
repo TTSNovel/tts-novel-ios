@@ -22,6 +22,7 @@ struct ReaderView: View {
 
     @EnvironmentObject private var playback: ReaderPlaybackController
     @EnvironmentObject private var network: NetworkMonitor
+    @EnvironmentObject private var session: SessionStore
     @Environment(\.scenePhase) private var scenePhase
     @State private var showingChapterList = false
 
@@ -53,10 +54,18 @@ struct ReaderView: View {
                     } else {
                         ProgressView().frame(maxWidth: .infinity)
                     }
-                    if !network.isConnected && playback.voice != .piperOffline {
-                        Text("Đang offline — tạm dùng giọng đọc ngoại tuyến")
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
+                    // /api/tts requires login even though reading itself is
+                    // public — ReaderPlaybackController.makeFetchTask falls
+                    // back to the on-device voice for the exact same two
+                    // reasons this footnote covers, so keep them in sync.
+                    if (!network.isConnected || !session.isLoggedIn) && playback.voice != .piperOffline {
+                        Text(
+                            network.isConnected
+                                ? "Chế độ khách — tạm dùng giọng đọc ngoại tuyến (đăng nhập ở Cài đặt để dùng giọng online)"
+                                : "Đang offline — tạm dùng giọng đọc ngoại tuyến"
+                        )
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
                     }
                     if isCurrentSession, let error = playback.errorMessage {
                         Text(error).font(.footnote).foregroundStyle(.red)

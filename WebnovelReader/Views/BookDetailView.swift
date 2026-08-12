@@ -70,6 +70,9 @@ struct BookDetailView: View {
         .navigationTitle(book.title)
         .navigationBarTitleDisplayMode(.inline)
         .readerSettingsToolbar()
+        .onAppear {
+            EventLogStore.shared.record(.navigation, "Mở sách", detail: book.title)
+        }
         .task {
             chapterTitles = await ChapterTitles.load(book: book)
         }

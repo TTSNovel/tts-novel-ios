@@ -60,6 +60,7 @@ final class DownloadManager: ObservableObject {
         guard !downloading.contains(book.id), book.n > 0 else { return }
         downloading.insert(book.id)
         progress[book.id] = 0
+        EventLogStore.shared.record(.download, "Bắt đầu tải xuống", detail: book.title)
         defer {
             downloading.remove(book.id)
             progress[book.id] = nil
@@ -79,16 +80,20 @@ final class DownloadManager: ObservableObject {
             try data.write(to: chaptersFileURL(book.id))
             try JSONEncoder().encode(book).write(to: metaFileURL(book.id))
             downloadedBookIDs.insert(book.id)
+            EventLogStore.shared.record(.download, "Tải xuống hoàn tất", detail: book.title)
         } catch {
             // Best-effort: chapters.json is only written on full success,
             // so isDownloaded() still reports false and a retry starts
             // clean instead of serving a half-downloaded book as complete.
+            EventLogStore.shared.record(.error, "Tải xuống thất bại", detail: "\(book.title): \(error.localizedDescription)")
         }
     }
 
     func deleteDownload(bookID: Int) {
+        let title = localBook(bookID: bookID)?.title
         try? fileManager.removeItem(at: bookDirectory(bookID))
         downloadedBookIDs.remove(bookID)
+        EventLogStore.shared.record(.download, "Xoá bản tải xuống", detail: title)
     }
 
     /// Bounded concurrency (4 in flight) — book.n can run into the

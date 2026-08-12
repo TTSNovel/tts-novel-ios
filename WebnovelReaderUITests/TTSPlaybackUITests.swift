@@ -44,6 +44,15 @@ final class TTSPlaybackUITests: XCTestCase {
 
         try login(app)
 
+        // Guest mode (see WebnovelReaderApp) may have already auto-resumed
+        // straight into ReaderView using local/synced progress before login
+        // even ran — back out to Library so the title lookup below has a
+        // known screen to search.
+        if app.buttons["playPauseButton"].exists {
+            app.navigationBars.buttons.element(boundBy: 0).tap()
+            app.navigationBars.buttons.element(boundBy: 0).tap()
+        }
+
         let titleText = config?.bookTitle ?? ""
         let bookRow = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", titleText)).firstMatch
         XCTAssertTrue(bookRow.waitForExistence(timeout: 15))
@@ -95,15 +104,28 @@ final class TTSPlaybackUITests: XCTestCase {
         option.tap()
     }
 
+    /// Guest mode (see WebnovelReaderApp) means the app lands directly on
+    /// Library without ever showing the login form — this test needs an
+    /// actual account (online voices require /api/tts, which stays behind
+    /// login even though browsing/reading is now public), so it opens
+    /// Settings and taps "Đăng nhập" explicitly instead of finding a
+    /// username field already on screen.
     private func login(_ app: XCUIApplication) throws {
-        let usernameField = app.textFields["usernameField"]
-        XCTAssertTrue(usernameField.waitForExistence(timeout: 5))
-        usernameField.tap()
-        usernameField.typeText(config?.username ?? "")
+        app.buttons["voiceMenuButton"].tap()
+        let settingsLoginButton = app.buttons["settingsLoginButton"]
+        if settingsLoginButton.waitForExistence(timeout: 5) {
+            settingsLoginButton.tap()
+            let usernameField = app.textFields["usernameField"]
+            XCTAssertTrue(usernameField.waitForExistence(timeout: 5))
+            usernameField.tap()
+            usernameField.typeText(config?.username ?? "")
 
-        app.secureTextFields["passwordField"].tap()
-        app.secureTextFields["passwordField"].typeText(config?.password ?? "")
+            app.secureTextFields["passwordField"].tap()
+            app.secureTextFields["passwordField"].typeText(config?.password ?? "")
 
-        app.buttons["loginButton"].tap()
+            app.buttons["loginButton"].tap()
+            XCTAssertTrue(app.buttons["Đăng xuất"].waitForExistence(timeout: 10), "Login should succeed and show Đăng xuất")
+        }
+        app.buttons["Xong"].tap()
     }
 }

@@ -6,16 +6,6 @@ import XCTest
 // stop the moment ReaderView leaves the screen.
 final class PlaybackPersistenceUITests: XCTestCase {
 
-    private struct Config: Decodable {
-        let username: String
-        let password: String
-    }
-
-    private let config: Config? = {
-        guard let data = FileManager.default.contents(atPath: "/tmp/tts_test_config.json") else { return nil }
-        return try? JSONDecoder().decode(Config.self, from: data)
-    }()
-
     override func setUpWithError() throws {
         continueAfterFailure = false
     }
@@ -24,14 +14,11 @@ final class PlaybackPersistenceUITests: XCTestCase {
         let app = XCUIApplication()
         app.launch()
 
-        let usernameField = app.textFields["usernameField"]
-        if usernameField.waitForExistence(timeout: 3) {
-            usernameField.tap()
-            usernameField.typeText(config?.username ?? "")
-            app.secureTextFields["passwordField"].tap()
-            app.secureTextFields["passwordField"].typeText(config?.password ?? "")
-            app.buttons["loginButton"].tap()
-        }
+        // Guest mode (see WebnovelReaderApp): playback works without login
+        // — a guest just gets the on-device voice instead of an online one
+        // (ReaderPlaybackController.makeFetchTask), which is irrelevant to
+        // what this test actually checks (does the play *state* persist
+        // across navigation) — no login step needed here.
 
         if app.buttons["playPauseButton"].waitForExistence(timeout: 10) {
             app.navigationBars.buttons.element(boundBy: 0).tap()

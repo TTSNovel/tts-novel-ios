@@ -111,6 +111,9 @@ struct LibraryView: View {
                     offlineBanner
                 }
             }
+            .onAppear {
+                EventLogStore.shared.record(.navigation, "Mở trang chủ")
+            }
             .task {
                 await loadBooks()
                 maybeAutoResume()

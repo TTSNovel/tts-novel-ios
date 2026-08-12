@@ -107,6 +107,26 @@ final class APIClient: @unchecked Sendable {
         return try JSONDecoder.readingProgress.decode([Int: ReadingProgress].self, from: data)
     }
 
+    /// Server-side counterpart: app/server.py's `/api/bug-report` route
+    /// (tts-webnovel repo) — writes the report + attached log entries to
+    /// site_dir/bug_reports/ for later review, same shared-bucket pattern
+    /// as progress.json.
+    func submitBugReport(
+        baseURL: URL, description: String, device: String, osVersion: String, appVersion: String, events: [AppEvent]
+    ) async throws {
+        var request = URLRequest(url: baseURL.appendingPathComponent("api/bug-report"))
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        let body = BugReportBody(
+            description: description, device: device, osVersion: osVersion, appVersion: appVersion,
+            events: events.map { BugReportEventBody(timestamp: $0.timestamp, category: $0.category.rawValue, message: $0.message, detail: $0.detail) }
+        )
+        request.httpBody = try JSONEncoder.readingProgress.encode(body)
+
+        let (_, response) = try await session.data(for: request)
+        try Self.checkOK(response)
+    }
+
     func postProgress(baseURL: URL, bookID: Int, chapterIndex: Int, sentenceIndex: Int) async throws -> ReadingProgress {
         var request = URLRequest(url: baseURL.appendingPathComponent("api/progress"))
         request.httpMethod = "POST"
@@ -131,6 +151,27 @@ private struct TTSRequestBody: Encodable {
     let text: String
     let speed: Double
     let model: String
+}
+
+private struct BugReportBody: Encodable {
+    let description: String
+    let device: String
+    let osVersion: String
+    let appVersion: String
+    let events: [BugReportEventBody]
+
+    enum CodingKeys: String, CodingKey {
+        case description, device, events
+        case osVersion = "os_version"
+        case appVersion = "app_version"
+    }
+}
+
+private struct BugReportEventBody: Encodable {
+    let timestamp: Date
+    let category: String
+    let message: String
+    let detail: String?
 }
 
 private struct ProgressRequestBody: Encodable {

@@ -1,7 +1,15 @@
 import SwiftUI
 
+/// Presented as a sheet from ReaderSettingsSheet, not the app's root screen
+/// — login is optional (see WebnovelReaderApp: guest mode reads the public
+/// catalog without ever needing this), reached only when the user actually
+/// wants an account (online voices, cross-device progress sync).
+/// Auto-dismisses itself on a successful login via the onChange below,
+/// same "just close after the thing you opened it for happens" pattern as
+/// BugReportView's success alert.
 struct LoginView: View {
     @EnvironmentObject private var session: SessionStore
+    @Binding var isPresented: Bool
 
     @State private var username = ""
     @State private var password = ""
@@ -37,13 +45,24 @@ struct LoginView: View {
                     }
                     .disabled(username.isEmpty || password.isEmpty || isLoggingIn)
                     .accessibilityIdentifier("loginButton")
+                } footer: {
+                    Text("Chỉ cần đăng nhập nếu bạn muốn nghe giọng đọc online hoặc đồng bộ tiến độ đọc giữa các thiết bị — duyệt và đọc sách không cần đăng nhập.")
                 }
             }
-            .navigationTitle("Novel Reader")
+            .navigationTitle("Đăng nhập")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Đóng") { isPresented = false }
+                }
+            }
+        }
+        .onChange(of: session.isLoggedIn) { _, loggedIn in
+            if loggedIn { isPresented = false }
         }
     }
 }
 
 #Preview {
-    LoginView().environmentObject(SessionStore.shared)
+    LoginView(isPresented: .constant(true)).environmentObject(SessionStore.shared)
 }

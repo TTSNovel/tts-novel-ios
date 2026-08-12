@@ -48,6 +48,11 @@
 		E737A4B4DB04177DA20C8D61 /* LibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B341D7BF826C02000149E75 /* LibraryView.swift */; };
 		EAE570E582ECF7A0E5F68BCA /* TextSegmentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65F1934BFB315721963575A7 /* TextSegmentation.swift */; };
 		FED5D0C4F738A6E4022D7274 /* espeak-ng-data in Resources */ = {isa = PBXBuildFile; fileRef = D7D04640EB80155C062EFE5C /* espeak-ng-data */; };
+		38F3978435AE4E40AAC69345 /* AppEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2255C02A2154138A099DA96 /* AppEvent.swift */; };
+		46D59FFF54604B91BB18FA9E /* EventLogStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6981E213C2A341EC874AED0B /* EventLogStore.swift */; };
+		9B0FE08E774C42E5B117CD0C /* ActionHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F80DB4FD5EED4130BD8914AC /* ActionHistoryView.swift */; };
+		2FBFF6728BED4290A4F9ABB5 /* BugReportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C62900F134814A55A5F61FDC /* BugReportView.swift */; };
+		2058A0C7A761464FB8C0A2CF /* BugReportAndHistoryUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86412867E4614E319CF6B01E /* BugReportAndHistoryUITests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -103,6 +108,11 @@
 		F60BA012E937FDC3266CEAAC /* BookDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookDetailView.swift; sourceTree = "<group>"; };
 		F71F4FEECB8FC120E2D7ACA3 /* ProgressStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressStore.swift; sourceTree = "<group>"; };
 		FE6217F8797409C3BC9D1BFC /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
+		D2255C02A2154138A099DA96 /* AppEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppEvent.swift; sourceTree = "<group>"; };
+		6981E213C2A341EC874AED0B /* EventLogStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventLogStore.swift; sourceTree = "<group>"; };
+		F80DB4FD5EED4130BD8914AC /* ActionHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActionHistoryView.swift; sourceTree = "<group>"; };
+		C62900F134814A55A5F61FDC /* BugReportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BugReportView.swift; sourceTree = "<group>"; };
+		86412867E4614E319CF6B01E /* BugReportAndHistoryUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BugReportAndHistoryUITests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -137,8 +147,10 @@
 		4449F0ED1D23BA692F01B8AA /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				F80DB4FD5EED4130BD8914AC /* ActionHistoryView.swift */,
 				F60BA012E937FDC3266CEAAC /* BookDetailView.swift */,
 				5117F1E588A2F64078970C56 /* BookRow.swift */,
+				C62900F134814A55A5F61FDC /* BugReportView.swift */,
 				253CFE7887D5A59D89E12AD5 /* ChapterListSheet.swift */,
 				6501E541F5688086EE375D88 /* ChapterTitles.swift */,
 				6D24D2C47B51D7655DCB2A4B /* CoverImage.swift */,
@@ -158,6 +170,7 @@
 			isa = PBXGroup;
 			children = (
 				DBDAC71CFDFC1EC6A3F6CD4E /* BookDetailActionsUITests.swift */,
+				86412867E4614E319CF6B01E /* BugReportAndHistoryUITests.swift */,
 				590CE78C2F18BB27ED8D519A /* ChapterListUITests.swift */,
 				BB44137B32FE2CC7F103757F /* LoginFlowUITests.swift */,
 				8DBCCF9522AFEE7CBAD6CA7D /* OfflineDownloadUITests.swift */,
@@ -181,6 +194,7 @@
 		550B93F910E6547AE6634665 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				D2255C02A2154138A099DA96 /* AppEvent.swift */,
 				D1B12EADCA0EFAF291FD9838 /* Book.swift */,
 				393BBC110CC5F516C47AD621 /* ReadingProgress.swift */,
 			);
@@ -210,6 +224,7 @@
 		9DD3E03A3F6B27D23E9B06BA /* Progress */ = {
 			isa = PBXGroup;
 			children = (
+				6981E213C2A341EC874AED0B /* EventLogStore.swift */,
 				F71F4FEECB8FC120E2D7ACA3 /* ProgressStore.swift */,
 			);
 			path = Progress;
@@ -380,17 +395,21 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9B0FE08E774C42E5B117CD0C /* ActionHistoryView.swift in Sources */,
 				9447EC2CEA1E4B3C0F55C341 /* APIClient.swift in Sources */,
+				38F3978435AE4E40AAC69345 /* AppEvent.swift in Sources */,
 				82E705700471517BACD99233 /* AudioPlaybackService.swift in Sources */,
 				1BB202042E037EAF2316FE48 /* Book.swift in Sources */,
 				057BB42A7DC6DA1662FFC305 /* BookDetailView.swift in Sources */,
 				329DA27C71D1EAD15CB7E3EF /* BookRow.swift in Sources */,
+				2FBFF6728BED4290A4F9ABB5 /* BugReportView.swift in Sources */,
 				91133D4F60ADB994746EBB32 /* ChapterFragmentParser.swift in Sources */,
 				712CC9D873EC43419CBADFFC /* ChapterListSheet.swift in Sources */,
 				814D74F701676CD7B17DB49D /* ChapterTitles.swift in Sources */,
 				E1D6DCC98BFD391488935A9C /* CoverImage.swift in Sources */,
 				405FB7143AFA70ACA00B3F7F /* DownloadManager.swift in Sources */,
 				CBCE947F9F049237E90DE1BB /* DownloadedBooksView.swift in Sources */,
+				46D59FFF54604B91BB18FA9E /* EventLogStore.swift in Sources */,
 				A5C0C56FA9DBCFB7E20E056E /* HistoryView.swift in Sources */,
 				62C269BBB96D7C16A2EB3462 /* Keychain.swift in Sources */,
 				E737A4B4DB04177DA20C8D61 /* LibraryView.swift in Sources */,
@@ -416,6 +435,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				62E40856A93A1A0D969DCA5B /* BookDetailActionsUITests.swift in Sources */,
+				2058A0C7A761464FB8C0A2CF /* BugReportAndHistoryUITests.swift in Sources */,
 				12F8A89E5D0FD951278E87D3 /* ChapterListUITests.swift in Sources */,
 				B1158413D4404F3BA886912F /* LoginFlowUITests.swift in Sources */,
 				525D00CEE7BDBD175A01D2E4 /* OfflineDownloadUITests.swift in Sources */,

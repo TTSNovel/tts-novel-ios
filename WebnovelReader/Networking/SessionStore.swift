@@ -40,6 +40,7 @@ final class SessionStore: ObservableObject {
             if NetworkMonitor.isNetworkError(error) {
                 isLoggedIn = true
                 isOfflineSession = true
+                EventLogStore.shared.record(.auth, "Khôi phục phiên offline")
             } else {
                 isLoggedIn = false
             }
@@ -53,10 +54,12 @@ final class SessionStore: ObservableObject {
             Keychain.saveCredentials(username: username, password: password)
             isLoggedIn = true
             isOfflineSession = false
+            EventLogStore.shared.record(.auth, "Đăng nhập")
         } catch {
             loginError = NetworkMonitor.isNetworkError(error)
                 ? "Không có kết nối mạng — vui lòng thử lại"
                 : "Đăng nhập thất bại — kiểm tra tài khoản/mật khẩu"
+            EventLogStore.shared.record(.error, "Đăng nhập thất bại", detail: loginError)
         }
     }
 
@@ -67,5 +70,6 @@ final class SessionStore: ObservableObject {
         if let cookies = HTTPCookieStorage.shared.cookies(for: Self.baseURL) {
             cookies.forEach { HTTPCookieStorage.shared.deleteCookie($0) }
         }
+        EventLogStore.shared.record(.auth, "Đăng xuất")
     }
 }

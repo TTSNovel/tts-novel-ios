@@ -8,6 +8,7 @@ struct WebnovelReaderApp: App {
     @StateObject private var progressStore = ProgressStore.shared
     @StateObject private var network = NetworkMonitor.shared
     @StateObject private var playback = ReaderPlaybackController.shared
+    @StateObject private var eventLog = EventLogStore.shared
 
     init() {
         // .playback (not .ambient/.soloAmbient) is what keeps audio going
@@ -19,7 +20,15 @@ struct WebnovelReaderApp: App {
             try AVAudioSession.sharedInstance().setCategory(.playback, mode: .spokenAudio)
             try AVAudioSession.sharedInstance().setActive(true)
         } catch {
-            print("AVAudioSession setup failed: \(error)")
+            // EventLogStore.shared is @MainActor-isolated; init() here isn't
+            // guaranteed to already be on that actor, so hop over explicitly
+            // rather than assuming — this is also the app's only remaining
+            // plain print()-only diagnostic, folded in here so EventLogStore
+            // is genuinely the one place the app logs anything.
+            let description = error.localizedDescription
+            Task { @MainActor in
+                EventLogStore.shared.record(.error, "Không thiết lập được AVAudioSession", detail: description)
+            }
         }
     }
 
@@ -28,10 +37,17 @@ struct WebnovelReaderApp: App {
             Group {
                 if session.isRestoring {
                     ProgressView()
-                } else if session.isLoggedIn {
-                    LibraryView()
                 } else {
-                    LoginView()
+                    // Guest mode is the default entry point now — the
+                    // server's book catalog/covers/chapters are public (see
+                    // _is_public_reading_path in tts-webnovel's server.py),
+                    // so LibraryView works whether or not `session` actually
+                    // has a valid login. LoginView is reachable from
+                    // ReaderSettingsSheet ("Đăng nhập") whenever the user
+                    // wants online voices or cross-device progress sync —
+                    // it's no longer a gate the user must pass before seeing
+                    // anything.
+                    LibraryView()
                 }
             }
             .environmentObject(session)
@@ -39,6 +55,7 @@ struct WebnovelReaderApp: App {
             .environmentObject(progressStore)
             .environmentObject(network)
             .environmentObject(playback)
+            .environmentObject(eventLog)
             .task {
                 await session.restoreSession()
                 if session.isLoggedIn && !session.isOfflineSession {
@@ -63,9 +80,9 @@ struct WebnovelReaderApp: App {
                 // content crashed with a missing-EnvironmentObject trap
                 // when it only relied on inheriting the one attached above
                 // (SwiftUI's WindowGroup root re-evaluates this Group's
-                // branches — ProgressView/LibraryView/LoginView — and hit a
-                // transient state where the overlay's environment wasn't
-                // attached yet). Belt-and-suspenders: attach directly.
+                // branches — ProgressView/LibraryView — and hit a transient
+                // state where the overlay's environment wasn't attached
+                // yet). Belt-and-suspenders: attach directly.
                 PlaybackBar()
                     .environmentObject(playback)
             }

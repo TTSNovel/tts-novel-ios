@@ -1,20 +1,12 @@
 import XCTest
 
 // One-off helper test to prep a downloaded book for manual offline-mode
-// verification (login -> open first book -> download it fully). Shares
-// TTSPlaybackUITests' /tmp/tts_test_config.json convention for real
-// credentials (never committed with real values).
+// verification (open first book -> download it fully). Guest mode (see
+// WebnovelReaderApp) means this no longer needs to log in first — book
+// browsing/covers/chapters/downloads are all public now (only TTS/
+// progress-sync/bug-report require an account — see
+// _is_public_reading_path in tts-webnovel's server.py).
 final class OfflineDownloadUITests: XCTestCase {
-
-    private struct Config: Decodable {
-        let username: String
-        let password: String
-    }
-
-    private let config: Config? = {
-        guard let data = FileManager.default.contents(atPath: "/tmp/tts_test_config.json") else { return nil }
-        return try? JSONDecoder().decode(Config.self, from: data)
-    }()
 
     override func setUpWithError() throws {
         continueAfterFailure = false
@@ -23,16 +15,6 @@ final class OfflineDownloadUITests: XCTestCase {
     func testDownloadFirstBook() throws {
         let app = XCUIApplication()
         app.launch()
-
-        let usernameField = app.textFields["usernameField"]
-        XCTAssertTrue(usernameField.waitForExistence(timeout: 5))
-        usernameField.tap()
-        usernameField.typeText(config?.username ?? "")
-
-        app.secureTextFields["passwordField"].tap()
-        app.secureTextFields["passwordField"].typeText(config?.password ?? "")
-
-        app.buttons["loginButton"].tap()
 
         let bookRow = app.buttons["bookRow"].firstMatch
         XCTAssertTrue(bookRow.waitForExistence(timeout: 20), "Library never showed a book row")

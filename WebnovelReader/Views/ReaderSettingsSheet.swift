@@ -9,6 +9,8 @@ struct ReaderSettingsSheet: View {
     @EnvironmentObject private var playback: ReaderPlaybackController
     @EnvironmentObject private var session: SessionStore
     @Binding var isPresented: Bool
+    @State private var showingBugReport = false
+    @State private var showingLogin = false
 
     var body: some View {
         NavigationStack {
@@ -55,9 +57,38 @@ struct ReaderSettingsSheet: View {
                 }
 
                 Section {
-                    Button("Đăng xuất", role: .destructive) {
-                        isPresented = false
-                        session.logout()
+                    NavigationLink {
+                        ActionHistoryView()
+                    } label: {
+                        Label("Nhật ký & lịch sử", systemImage: "clock.arrow.circlepath")
+                    }
+                    .accessibilityIdentifier("actionHistoryLink")
+
+                    Button {
+                        showingBugReport = true
+                    } label: {
+                        Label("Báo lỗi", systemImage: "ladybug")
+                    }
+                    .accessibilityIdentifier("bugReportLink")
+                }
+
+                Section {
+                    if session.isLoggedIn {
+                        Button("Đăng xuất", role: .destructive) {
+                            isPresented = false
+                            session.logout()
+                        }
+                    } else {
+                        Button {
+                            showingLogin = true
+                        } label: {
+                            Label("Đăng nhập", systemImage: "person.crop.circle.badge.checkmark")
+                        }
+                        .accessibilityIdentifier("settingsLoginButton")
+                    }
+                } footer: {
+                    if !session.isLoggedIn {
+                        Text("Đang dùng ở chế độ khách — đăng nhập để nghe giọng đọc online và đồng bộ tiến độ đọc giữa các thiết bị.")
                     }
                 }
             }
@@ -68,6 +99,12 @@ struct ReaderSettingsSheet: View {
                     Button("Xong") { isPresented = false }
                 }
             }
+            .sheet(isPresented: $showingBugReport) {
+                BugReportView(isPresented: $showingBugReport)
+            }
+            .sheet(isPresented: $showingLogin) {
+                LoginView(isPresented: $showingLogin)
+            }
         }
     }
 }
@@ -76,4 +113,5 @@ struct ReaderSettingsSheet: View {
     ReaderSettingsSheet(isPresented: .constant(true))
         .environmentObject(ReaderPlaybackController.shared)
         .environmentObject(SessionStore.shared)
+        .environmentObject(EventLogStore.shared)
 }

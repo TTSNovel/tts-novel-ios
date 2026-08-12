@@ -44,6 +44,13 @@ final class ProgressStore: ObservableObject {
     /// next refreshFromServer on another device) tries again later; the
     /// local copy is the source of truth for this device regardless.
     func syncToServer(bookID: Int) async {
+        // Guest (no login) can't push progress — /api/progress stays behind
+        // auth (see tts-webnovel's server.py) even though book browsing/
+        // reading itself is now public. Checked up front rather than just
+        // letting the request 401 into the catch below, to avoid a pointless
+        // network round trip on every chapter/sentence change while a guest
+        // is reading.
+        guard SessionStore.shared.isLoggedIn else { return }
         guard let entry = progress[bookID] else { return }
         do {
             let stored = try await APIClient.shared.postProgress(

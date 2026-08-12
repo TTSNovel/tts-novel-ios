@@ -9,16 +9,6 @@ import XCTest
 // particular book's content.
 final class ChapterListUITests: XCTestCase {
 
-    private struct Config: Decodable {
-        let username: String
-        let password: String
-    }
-
-    private let config: Config? = {
-        guard let data = FileManager.default.contents(atPath: "/tmp/tts_test_config.json") else { return nil }
-        return try? JSONDecoder().decode(Config.self, from: data)
-    }()
-
     override func setUpWithError() throws {
         continueAfterFailure = false
     }
@@ -27,14 +17,9 @@ final class ChapterListUITests: XCTestCase {
         let app = XCUIApplication()
         app.launch()
 
-        let usernameField = app.textFields["usernameField"]
-        if usernameField.waitForExistence(timeout: 3) {
-            usernameField.tap()
-            usernameField.typeText(config?.username ?? "")
-            app.secureTextFields["passwordField"].tap()
-            app.secureTextFields["passwordField"].typeText(config?.password ?? "")
-            app.buttons["loginButton"].tap()
-        }
+        // Guest mode (see WebnovelReaderApp): the app lands directly on
+        // Library, and browsing/reading chapter titles doesn't require
+        // login — no login step needed here.
 
         // May auto-resume straight into ReaderView — back out to Library
         // first so this test always starts from a known screen.
