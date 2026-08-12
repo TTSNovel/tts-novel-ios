@@ -649,8 +649,25 @@ final class ReaderPlaybackController: ObservableObject {
         sleepTimerTask = Task {
             try? await Task.sleep(nanoseconds: nanoseconds)
             guard !Task.isCancelled else { return }
-            self.stop()
+            self.autoStopFired()
         }
+    }
+
+    /// The sleep-timer firing must behave like the user pressing Pause, not
+    /// like abandoning the chapter: calling `stop()` here used to clear
+    /// `pendingResumeIndex`, the preload cache, and the loaded AVAudioPlayer
+    /// buffer, so the next Play press fell back to `start()`'s `startIndex =
+    /// pendingResumeIndex ?? 0` — silently restarting at the top of the
+    /// chapter instead of continuing from wherever playback actually was.
+    /// Reusing `pause()`'s exact effect (leaves `active` true, keeps the
+    /// player's buffered sentence and the preload queue intact) means the
+    /// next press correctly routes through `togglePlayback()`'s `resume()`
+    /// branch instead.
+    private func autoStopFired() {
+        guard active else { return }
+        pause()
+        syncProgress()
+        clearAutoStopState()
     }
 
     private func clearAutoStopState() {
