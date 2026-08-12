@@ -490,11 +490,15 @@ final class ReaderPlaybackController: ObservableObject {
         isPlaying = false
         updateNowPlayingProgress()
         EventLogStore.shared.record(.playback, "Tạm dừng", detail: playbackDetail())
+        // Pausing ends the current sleep-timer "session" — the countdown
+        // shouldn't keep ticking down (or fire) while nothing is playing.
+        // resume() starts a fresh one, same as a brand-new start().
+        clearAutoStopState()
     }
 
     private func resume() {
         guard active else { return }
-        sleepTimerExpired = false
+        scheduleAutoStop()
         player.resume()
         isPlaying = true
         updateNowPlayingProgress()
@@ -692,7 +696,6 @@ final class ReaderPlaybackController: ObservableObject {
         sleepTimerExpired = true
         pause()
         syncProgress()
-        clearAutoStopState()
     }
 
     private func clearAutoStopState() {

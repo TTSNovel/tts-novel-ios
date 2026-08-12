@@ -38,7 +38,7 @@ struct ReaderSettingsSheet: View {
                     Toggle("Tự động sang chương tiếp", isOn: $playback.autoNextChapter)
                     Picker("Hẹn giờ tắt", selection: $playback.autoStopMinutes) {
                         Text("Tắt").tag(0.0)
-                        ForEach([15.0, 30.0, 45.0, 60.0, 90.0, 120.0], id: \.self) { minutes in
+                        ForEach([5.0, 15.0, 30.0, 45.0, 60.0, 90.0, 120.0], id: \.self) { minutes in
                             Text("\(Int(minutes)) phút").tag(minutes)
                         }
                     }
