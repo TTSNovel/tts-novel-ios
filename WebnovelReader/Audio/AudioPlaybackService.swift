@@ -17,6 +17,14 @@ final class AudioPlaybackService: NSObject, ObservableObject {
     var onFinishedPlaying: (() -> Void)?
     var onNextChapter: (() -> Void)?
     var onPreviousChapter: (() -> Void)?
+    /// Lock-screen / Control-Center play & pause commands — routed out to
+    /// ReaderPlaybackController instead of calling resume()/pause() below
+    /// directly, same reasoning as onNextChapter/onPreviousChapter: only
+    /// the controller's own resume()/pause() re-arm the sleep timer
+    /// (scheduleAutoStop() / clearAutoStopState()) and keep its `isPlaying`
+    /// state in sync.
+    var onPlayCommand: (() -> Void)?
+    var onPauseCommand: (() -> Void)?
 
     override init() {
         super.init()
@@ -77,11 +85,11 @@ final class AudioPlaybackService: NSObject, ObservableObject {
         let center = MPRemoteCommandCenter.shared()
 
         center.playCommand.addTarget { [weak self] _ in
-            self?.resume()
+            self?.onPlayCommand?()
             return .success
         }
         center.pauseCommand.addTarget { [weak self] _ in
-            self?.pause()
+            self?.onPauseCommand?()
             return .success
         }
         center.nextTrackCommand.addTarget { [weak self] _ in

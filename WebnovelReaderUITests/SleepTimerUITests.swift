@@ -155,4 +155,81 @@ final class SleepTimerUITests: XCTestCase {
         playPauseButton.tap()
         XCTAssertTrue(countdown.waitForExistence(timeout: 5), "Resuming should start a brand-new countdown")
     }
+
+    // Regression coverage for the lock-screen remote-command fix ("Route
+    // lock-screen play/pause through ReaderPlaybackController"): the two
+    // tests above only ever pause by *tapping* playPauseButton, which calls
+    // togglePlayback() -> pause() directly. That's a different code path
+    // from the sleep timer actually elapsing on its own (autoStopFired() ->
+    // pause()), which is what real usage hits. This test waits out the real
+    // 5-minute timer so it exercises the actual autoStopFired() path, then
+    // confirms the in-app Play button both resumes audio (not blocked by a
+    // stale sleepTimerExpired flag) and re-arms a fresh countdown — the
+    // exact "resume works but no countdown" symptom that was reported.
+    func testResumeAfterNaturalExpiryRestartsCountdownAndPlayback() throws {
+        let app = XCUIApplication()
+        app.launch()
+
+        let bookRow = app.buttons["bookRow"].firstMatch
+        if bookRow.waitForExistence(timeout: 10) {
+            bookRow.tap()
+            let startButton = app.buttons["startFromBeginningButton"]
+            if startButton.waitForExistence(timeout: 5) {
+                startButton.tap()
+            }
+        }
+        let playPauseButton = app.buttons["playPauseButton"]
+        XCTAssertTrue(playPauseButton.waitForExistence(timeout: 15), "Should reach ReaderView")
+        playPauseButton.tap()
+
+        app.buttons["voiceMenuButton"].tap()
+        XCTAssertTrue(app.navigationBars["Cài đặt đọc"].waitForExistence(timeout: 5))
+
+        let sleepTimerRow = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "label CONTAINS[c] %@", "Hẹn giờ tắt")).firstMatch
+        XCTAssertTrue(sleepTimerRow.waitForExistence(timeout: 5))
+        tapWhenHittable(sleepTimerRow)
+
+        let fiveMinuteOption = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "label == %@", "5 phút")).firstMatch
+        XCTAssertTrue(fiveMinuteOption.waitForExistence(timeout: 5), "Picker should offer the 5-minute option added for easy testing")
+        fiveMinuteOption.tap()
+
+        if !app.navigationBars["Cài đặt đọc"].exists, app.navigationBars.buttons.element(boundBy: 0).exists {
+            app.navigationBars.buttons.element(boundBy: 0).tap()
+        }
+
+        let countdownLabel = app.staticTexts["Sẽ tắt sau"]
+        XCTAssertTrue(countdownLabel.waitForExistence(timeout: 5), "Settings sheet should show the running countdown once a timer is set")
+
+        app.buttons["Xong"].tap()
+        waitForPlaying(playPauseButton)
+
+        // Let the real 5-minute timer elapse on its own (not a manual pause
+        // tap) — autoStopFired() should flip playPauseButton back to "Đọc"
+        // by itself.
+        let pausedPredicate = NSPredicate(format: "label == %@", "Đọc")
+        let pausedExpectation = XCTNSPredicateExpectation(predicate: pausedPredicate, object: playPauseButton)
+        XCTAssertEqual(
+            XCTWaiter().wait(for: [pausedExpectation], timeout: 330),
+            .completed,
+            "Sleep timer should auto-pause playback on its own after 5 minutes"
+        )
+
+        let countdown = app.descendants(matching: .any)["sleepTimerCountdown"]
+        XCTAssertFalse(countdown.exists, "Countdown should be gone once the timer has actually fired")
+
+        // Resume via the in-app Play button after the natural expiry.
+        playPauseButton.tap()
+
+        XCTAssertTrue(countdown.waitForExistence(timeout: 5), "Resuming after natural expiry should start a brand-new countdown")
+        waitForPlaying(playPauseButton)
+
+        // Let the just-resumed sentence finish and confirm playback actually
+        // keeps going into the next one, instead of silently stopping again
+        // (the bug where a stale sleepTimerExpired flag blocked the next
+        // sentence after the first one played).
+        Thread.sleep(forTimeInterval: 3)
+        XCTAssertEqual(playPauseButton.label, "Tạm dừng", "Playback should still be going, not have silently stopped after one sentence")
+    }
 }

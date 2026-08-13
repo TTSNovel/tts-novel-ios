@@ -177,6 +177,8 @@ final class ReaderPlaybackController: ObservableObject {
         // ReaderView happens to be on screen.
         player.onNextChapter = { [weak self] in self?.remoteSkip(by: 1) }
         player.onPreviousChapter = { [weak self] in self?.remoteSkip(by: -1) }
+        player.onPlayCommand = { [weak self] in self?.remotePlay() }
+        player.onPauseCommand = { [weak self] in self?.remotePause() }
     }
 
     /// Called by ReaderView when it appears for a given book/chapter. If
@@ -337,6 +339,32 @@ final class ReaderPlaybackController: ObservableObject {
         } else {
             start()
         }
+    }
+
+    /// Lock-screen / Control-Center Play — unlike togglePlayback() (used by
+    /// the in-app button, which infers start/resume/pause from current
+    /// state), MPRemoteCommandCenter's play and pause are two separate,
+    /// non-toggling commands, so this always means "start playing".
+    /// Routes through the same resume()/start() the in-app button uses —
+    /// critically through scheduleAutoStop(), which resets
+    /// `sleepTimerExpired` and re-arms the countdown. Previously the lock
+    /// screen called AudioPlaybackService.resume() directly, bypassing all
+    /// of that: after a sleep-timer pause, `sleepTimerExpired` stayed true
+    /// forever, so the very next sentence silently refused to play (see
+    /// `playCurrentSentence`'s guard).
+    private func remotePlay() {
+        guard chapter != nil, !isPlaying else { return }
+        if active {
+            resume()
+        } else {
+            start()
+        }
+    }
+
+    private func remotePause() {
+        guard isPlaying else { return }
+        pause()
+        syncProgress()
     }
 
     func stop() {
