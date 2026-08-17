@@ -111,6 +111,10 @@ final class ReaderPlaybackController: ObservableObject {
     private var hasCheckedResume = false
 
     private var active = false
+    /// Set right when an AVAudioSession interruption (call/alarm/Maps
+    /// prompt) begins, cleared once consumed on .ended — see
+    /// player.onInterruptionBegan/onInterruptionEnded in init().
+    private var wasPlayingBeforeInterruption = false
     private var generation = 0
     /// Set by `prepareResume`, consumed by the next `start()` call so the
     /// first Play press after resuming lands on the saved sentence instead
@@ -179,6 +183,19 @@ final class ReaderPlaybackController: ObservableObject {
         player.onPreviousChapter = { [weak self] in self?.remoteSkip(by: -1) }
         player.onPlayCommand = { [weak self] in self?.remotePlay() }
         player.onPauseCommand = { [weak self] in self?.remotePause() }
+        // `wasPlayingBeforeInterruption` gates the resume so a call/alarm/
+        // Maps prompt that happens to land *after* the user already
+        // manually paused doesn't un-pause them the moment it ends.
+        player.onInterruptionBegan = { [weak self] in
+            guard let self else { return }
+            wasPlayingBeforeInterruption = isPlaying
+            remotePause()
+        }
+        player.onInterruptionEnded = { [weak self] in
+            guard let self, wasPlayingBeforeInterruption else { return }
+            wasPlayingBeforeInterruption = false
+            remotePlay()
+        }
     }
 
     /// Called by ReaderView when it appears for a given book/chapter. If

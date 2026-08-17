@@ -25,10 +25,59 @@ final class AudioPlaybackService: NSObject, ObservableObject {
     /// state in sync.
     var onPlayCommand: (() -> Void)?
     var onPauseCommand: (() -> Void)?
+    /// AVAudioSession.interruptionNotification .began/.ended (phone calls,
+    /// alarms, Maps/Siri voice prompts stealing the audio session
+    /// temporarily) — routed out to ReaderPlaybackController the same way
+    /// as the lock-screen commands above, so a transient interruption goes
+    /// through remotePause()/remotePlay() instead of leaving `isPlaying`
+    /// stuck on whatever it was before the interruption hit and playback
+    /// permanently paused once the other app's audio ends.
+    var onInterruptionBegan: (() -> Void)?
+    var onInterruptionEnded: (() -> Void)?
 
     override init() {
         super.init()
         configureRemoteCommands()
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleInterruptionNotification(_:)),
+            name: AVAudioSession.interruptionNotification,
+            object: nil
+        )
+    }
+
+    // `Notification`/its userInfo dictionary aren't Sendable, so the raw
+    // UInt values are pulled out here — still nonisolated, off the main
+    // actor — before hopping over, rather than sending the notification
+    // itself across the actor boundary.
+    @objc nonisolated private func handleInterruptionNotification(_ notification: Notification) {
+        guard
+            let info = notification.userInfo,
+            let rawType = info[AVAudioSessionInterruptionTypeKey] as? UInt
+        else { return }
+        let rawOptions = info[AVAudioSessionInterruptionOptionKey] as? UInt ?? 0
+        Task { @MainActor in
+            self.handleInterruption(rawType: rawType, rawOptions: rawOptions)
+        }
+    }
+
+    private func handleInterruption(rawType: UInt, rawOptions: UInt) {
+        guard let type = AVAudioSession.InterruptionType(rawValue: rawType) else { return }
+
+        switch type {
+        case .began:
+            onInterruptionBegan?()
+        case .ended:
+            guard AVAudioSession.InterruptionOptions(rawValue: rawOptions).contains(.shouldResume) else { return }
+            // The interrupting app may have deactivated the shared session;
+            // reactivate it before handing back to onInterruptionEnded's
+            // resume() so `player.play()` actually has audio hardware to
+            // play into.
+            try? AVAudioSession.sharedInstance().setActive(true)
+            onInterruptionEnded?()
+        @unknown default:
+            break
+        }
     }
 
     func play(data: Data) throws {
