@@ -18,6 +18,27 @@ struct BookDetailView: View {
     // isn't subject to that override, so .buttonStyle actually applies.
     @State private var pendingChapterIndex: Int?
     @State private var chapterTitles: [String]?
+    @State private var chapterSearchText = ""
+
+    /// Up to 5 most recent chapters, newest first. Hidden when the book is
+    /// short enough that it would just duplicate the full list below.
+    private var newestChapterIndices: [Int] {
+        guard book.n > 5 else { return [] }
+        return Array((book.n - 5..<book.n).reversed())
+    }
+
+    /// Local filter over every chapter — nil while the search field is
+    /// empty. All chapters are already loaded up front, so there's no need
+    /// to hit the network to search.
+    private var filteredChapterIndices: [Int]? {
+        let query = chapterSearchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !query.isEmpty else { return nil }
+        let queryNumber = Int(query)
+        return (0..<book.n).filter { index in
+            if let queryNumber, index + 1 == queryNumber { return true }
+            return chapterLabel(for: index).localizedCaseInsensitiveContains(query)
+        }
+    }
 
     var body: some View {
         List {
@@ -48,16 +69,33 @@ struct BookDetailView: View {
                     .listRowSeparator(.hidden)
             }
 
-            Section("Danh sách chương") {
-                ForEach(0..<book.n, id: \.self) { index in
-                    NavigationLink {
-                        ReaderView(book: book, chapterIndex: index)
-                    } label: {
-                        Text(chapterLabel(for: index))
+            if let filteredChapterIndices {
+                Section("Kết quả tìm kiếm") {
+                    if filteredChapterIndices.isEmpty {
+                        Text("Không tìm thấy chương phù hợp")
+                            .foregroundStyle(.secondary)
+                    } else {
+                        ForEach(filteredChapterIndices, id: \.self) { index in
+                            chapterRow(for: index)
+                        }
+                    }
+                }
+            } else {
+                if !newestChapterIndices.isEmpty {
+                    Section("Chương mới nhất") {
+                        ForEach(newestChapterIndices, id: \.self) { index in
+                            chapterRow(for: index)
+                        }
+                    }
+                }
+                Section("Tất cả chương") {
+                    ForEach(0..<book.n, id: \.self) { index in
+                        chapterRow(for: index)
                     }
                 }
             }
         }
+        .searchable(text: $chapterSearchText, prompt: "Tìm theo số chương hoặc tên")
         // Invisible spacer reserving the same bottom space as the real
         // PlaybackBar (see its doc comment) without a second real
         // PlaybackBar/playPauseButton.
@@ -75,6 +113,15 @@ struct BookDetailView: View {
         }
         .task {
             chapterTitles = await ChapterTitles.load(book: book)
+        }
+    }
+
+    @ViewBuilder
+    private func chapterRow(for index: Int) -> some View {
+        NavigationLink {
+            ReaderView(book: book, chapterIndex: index)
+        } label: {
+            Text(chapterLabel(for: index))
         }
     }
 
