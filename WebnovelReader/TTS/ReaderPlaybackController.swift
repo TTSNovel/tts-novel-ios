@@ -115,17 +115,24 @@ final class ReaderPlaybackController: ObservableObject {
     @Published var voice: TTSVoice {
         didSet { UserDefaults.standard.set(voice.rawValue, forKey: Keys.voice) }
     }
-    /// Which of the 4 bundled speaker presets `.vieNeuOffline` decodes with
-    /// (see VieNeuOfflineVoice) — irrelevant for every other `voice` case,
+    /// Which of the 4 bundled speaker presets `.vieNeuOfflineV2` decodes with
+    /// (see VieNeuOfflineV2Voice) — irrelevant for every other `voice` case,
     /// but kept as a single persisted setting rather than reset on model
-    /// switch, so it's remembered next time the user picks vieNeuOffline
+    /// switch, so it's remembered next time the user picks vieNeuOfflineV2
     /// again.
-    @Published var vieNeuOfflineVoice: VieNeuOfflineVoice {
-        didSet { UserDefaults.standard.set(vieNeuOfflineVoice.rawValue, forKey: Keys.vieNeuOfflineVoice) }
+    @Published var vieNeuOfflineV2Voice: VieNeuOfflineV2Voice {
+        didSet { UserDefaults.standard.set(vieNeuOfflineV2Voice.rawValue, forKey: Keys.vieNeuOfflineVoice) }
+    }
+    /// Which of the 14 bundled speaker presets `.vieNeuOfflineV3` decodes
+    /// with (see VieNeuOfflineV3Voice) — same rationale as
+    /// `vieNeuOfflineV2Voice` above, a separate persisted setting since V2
+    /// and V3 have entirely different preset sets.
+    @Published var vieNeuOfflineV3Voice: VieNeuOfflineV3Voice {
+        didSet { UserDefaults.standard.set(vieNeuOfflineV3Voice.rawValue, forKey: Keys.vieNeuOfflineV3Voice) }
     }
     /// Which of the 9 built-in reference speakers `.gwenTTS` clones (see
     /// GwenTTSSpeaker) — irrelevant for every other `voice` case, kept as a
-    /// single persisted setting like `vieNeuOfflineVoice` above.
+    /// single persisted setting like `vieNeuOfflineV2Voice` above.
     @Published var gwenTTSSpeaker: GwenTTSSpeaker {
         didSet { UserDefaults.standard.set(gwenTTSSpeaker.rawValue, forKey: Keys.gwenTTSSpeaker) }
     }
@@ -250,6 +257,40 @@ final class ReaderPlaybackController: ObservableObject {
     /// concurrency slot) so playback can hand over already-preloaded audio
     /// immediately instead of re-fetching it.
     private var preloadedData: [Int: Data] = [:]
+    /// In-memory prefetch cache for chapter *content* (title/text), separate
+    /// from `DownloadManager`'s all-or-nothing full-book offline store —
+    /// this is a small rolling window around whatever chapter is current, so
+    /// swiping/tapping into a neighboring chapter that was already prefetched
+    /// lands instantly instead of hitting the network cold. Trimmed by
+    /// `trimChapterCache()`, cleared entirely on a book switch in `open()`.
+    private var chapterCache: [Int: Chapter] = [:]
+    /// Guards `prefetchChapter(index:)` against firing a second redundant
+    /// fetch for an index that's already in flight — e.g. `loadChapter()`'s
+    /// own neighbor-prefetch and a pager slot's own "not cached yet" fallback
+    /// can both want the same index at once after a distant chapter jump.
+    private var chapterCacheInFlight: Set<Int> = []
+    /// Chapter index the next-chapter audio warm-up below is currently
+    /// targeting — nil while idle. Set only once `beginNextChapterAudioWarmup`
+    /// actually has content to work with and starts queuing fetches.
+    private var nextChapterPreloadIndex: Int?
+    /// The target chapter's sentence split, snapshotted at warm-up start.
+    /// `beginChapter` re-checks this against `Self.sentenceSequence(for:)`
+    /// for whatever chapter it's actually about to play before trusting
+    /// `nextChapterPreloadedData` below — guards against `chapterCache`
+    /// having been evicted/replaced with different content in the meantime.
+    private var nextChapterSentences: [String] = []
+    private var nextChapterAudioTasks: [Int: Task<Data, Error>] = [:]
+    private var nextChapterPreloadedData: [Int: Data] = [:]
+    /// How many of the next chapter's leading sentences to speculatively
+    /// synthesize ahead of time. Small and fixed — NOT `preloadAhead` — this
+    /// is speculative work for a chapter the user hasn't reached yet (and
+    /// might never continue into, e.g. backing out mid-chapter), kept cheap
+    /// regardless of how large the user's own preload-ahead setting is.
+    private let nextChapterWarmupCount = 5
+    /// Separate, smaller concurrency budget than `maxConcurrentFetches` —
+    /// this work is purely speculative and must not meaningfully compete
+    /// with the current chapter's own (playback-critical) preload fetches.
+    private let nextChapterWarmupBudget = 2
     private var sleepTimerTask: Task<Void, Never>?
     /// nil whenever no sleep timer is running — lets the UI show a live
     /// countdown via `Text(timerInterval:)` without polling.
@@ -274,6 +315,7 @@ final class ReaderPlaybackController: ObservableObject {
     private enum Keys {
         static let voice = "reader.model"
         static let vieNeuOfflineVoice = "reader.vieNeuOfflineVoice"
+        static let vieNeuOfflineV3Voice = "reader.vieNeuOfflineV3Voice"
         static let gwenTTSSpeaker = "reader.gwenTTSSpeaker"
         static let speed = "reader.speed"
         static let autoNext = "reader.autoNext"
@@ -283,9 +325,12 @@ final class ReaderPlaybackController: ObservableObject {
 
     private init() {
         voice = TTSVoice(rawValue: UserDefaults.standard.string(forKey: Keys.voice) ?? "") ?? .piperVi
-        vieNeuOfflineVoice = VieNeuOfflineVoice(
+        vieNeuOfflineV2Voice = VieNeuOfflineV2Voice(
             rawValue: UserDefaults.standard.string(forKey: Keys.vieNeuOfflineVoice) ?? ""
         ) ?? .thucDoan
+        vieNeuOfflineV3Voice = VieNeuOfflineV3Voice(
+            rawValue: UserDefaults.standard.string(forKey: Keys.vieNeuOfflineV3Voice) ?? ""
+        ) ?? .doanTrang
         gwenTTSSpeaker = GwenTTSSpeaker(
             rawValue: UserDefaults.standard.string(forKey: Keys.gwenTTSSpeaker) ?? ""
         ) ?? .yenNhi
@@ -300,8 +345,8 @@ final class ReaderPlaybackController: ObservableObject {
         // here instead of per-ReaderView, since the player itself is now
         // owned for the app's whole lifetime, not just while some
         // ReaderView happens to be on screen.
-        player.onNextChapter = { [weak self] in self?.remoteSkip(by: 1) }
-        player.onPreviousChapter = { [weak self] in self?.remoteSkip(by: -1) }
+        player.onNextChapter = { [weak self] in self?.skipChapter(by: 1) }
+        player.onPreviousChapter = { [weak self] in self?.skipChapter(by: -1) }
         player.onPlayCommand = { [weak self] in self?.remotePlay() }
         player.onPauseCommand = { [weak self] in self?.remotePause() }
         // `wasPlayingBeforeInterruption` gates the resume so a call/alarm/
@@ -336,6 +381,16 @@ final class ReaderPlaybackController: ObservableObject {
         // applyResumeIfNeeded (called from loadChapter() below) ever gets
         // to see it. This path needs to preserve whatever's actually saved.
         stop()
+        if self.book?.id != book.id {
+            // A different book's neighbor-chapter content is irrelevant
+            // (and would otherwise sit around unbounded in memory) —
+            // trimChapterCache() alone wouldn't catch this since its window
+            // is centered on chapterIndex, which is about to be overwritten
+            // anyway.
+            chapterCache = [:]
+            chapterCacheInFlight = []
+            cancelNextChapterWarmup()
+        }
         self.book = book
         self.chapterIndex = chapterIndex
         chapter = nil
@@ -365,13 +420,15 @@ final class ReaderPlaybackController: ObservableObject {
         await loadChapter()
     }
 
-    /// Lock-screen / remote next-track & previous-track — unlike goTo()
-    /// (manual toolbar browsing, which lands on the chapter without
-    /// playing), a remote skip command only fires while there's an active
-    /// listening session, so it should keep listening into the new chapter
-    /// the same way auto-next does. Falls back to goTo()'s plain-navigation
-    /// behavior when nothing was playing.
-    private func remoteSkip(by delta: Int) {
+    /// Lock-screen / remote next-track & previous-track, and swipe-left/
+    /// right chapter navigation in the reader — unlike goTo() (manual
+    /// toolbar/chapter-list browsing, which lands on the chapter without
+    /// playing), a skip only fires while there's an active listening
+    /// session, so it should keep listening into the new chapter the same
+    /// way auto-next does — a swipe shouldn't feel more aggressive about
+    /// auto-starting audio than the equivalent button tap. Falls back to
+    /// goTo()'s plain-navigation behavior when nothing was playing.
+    func skipChapter(by delta: Int) {
         guard let book else { return }
         let index = chapterIndex + delta
         guard index >= 0, index < book.n else { return }
@@ -412,6 +469,16 @@ final class ReaderPlaybackController: ObservableObject {
             return
         }
 
+        if let cached = chapterCache[chapterIndex] {
+            chapter = cached
+            player.updateNowPlaying(bookTitle: book.title, chapterTitle: cached.title)
+            applyResumeIfNeeded(cached)
+            resumeAutoPlayIfNeeded()
+            prefetchNeighborChapters()
+            trimChapterCache()
+            return
+        }
+
         do {
             let fetched = try await APIClient.shared.fetchChapter(
                 baseURL: SessionStore.baseURL, bookID: book.id, index: chapterIndex
@@ -421,6 +488,8 @@ final class ReaderPlaybackController: ObservableObject {
             player.updateNowPlaying(bookTitle: book.title, chapterTitle: fetched.title)
             applyResumeIfNeeded(fetched)
             resumeAutoPlayIfNeeded()
+            prefetchNeighborChapters()
+            trimChapterCache()
         } catch {
             guard generation == self.generation else { return }
             loadError = "Không tải được nội dung chương"
@@ -428,6 +497,59 @@ final class ReaderPlaybackController: ObservableObject {
             surfaceError(loadError!, detail: detail)
             EventLogStore.shared.record(.error, "Không tải được nội dung chương", detail: detail)
         }
+    }
+
+    /// Read access for ReaderView's non-live pager slots (the neighboring
+    /// chapters shown either side of whichever one is actually "current") —
+    /// returns whatever `prefetchChapter`/`loadChapter` has already stashed
+    /// in `chapterCache`, or nil if it hasn't landed yet.
+    func cachedChapter(index: Int) -> Chapter? {
+        chapterCache[index]
+    }
+
+    /// Fetches a single chapter's content into `chapterCache` without
+    /// disturbing any currently-loaded/playing chapter — used both
+    /// proactively (`prefetchNeighborChapters`) and reactively (a pager slot
+    /// that renders before its neighbor has been prefetched yet). Checks the
+    /// on-disk offline download first, same source `loadChapter` itself
+    /// prefers, before hitting the network.
+    func prefetchChapter(index: Int) async {
+        guard let book, index >= 0, index < book.n else { return }
+        guard chapterCache[index] == nil, !chapterCacheInFlight.contains(index) else { return }
+        chapterCacheInFlight.insert(index)
+        defer { chapterCacheInFlight.remove(index) }
+        if let local = DownloadManager.shared.localChapter(bookID: book.id, index: index) {
+            chapterCache[index] = local
+            return
+        }
+        do {
+            let fetched = try await APIClient.shared.fetchChapter(
+                baseURL: SessionStore.baseURL, bookID: book.id, index: index
+            )
+            chapterCache[index] = fetched
+        } catch {
+            // Silent — this is speculative work; `loadChapter`'s own
+            // network fetch (with its user-facing error surface) is what
+            // actually matters if the user navigates here before this
+            // retries on its own.
+        }
+    }
+
+    /// Kicks off (fire-and-forget) prefetching for the chapters immediately
+    /// before/after whatever just finished loading — called from both of
+    /// `loadChapter`'s success paths so neighbors stay warm as the user
+    /// reads/navigates forward or backward through a book.
+    private func prefetchNeighborChapters() {
+        Task { await prefetchChapter(index: chapterIndex - 1) }
+        Task { await prefetchChapter(index: chapterIndex + 1) }
+    }
+
+    /// Bounds `chapterCache`'s memory footprint on long books — keeps only a
+    /// small window around the current chapter, since anything further away
+    /// is no longer a plausible swipe/tap target.
+    private func trimChapterCache() {
+        let keepRange = (chapterIndex - 2)...(chapterIndex + 2)
+        chapterCache = chapterCache.filter { keepRange.contains($0.key) }
     }
 
     /// Only ever applies once per `open()` — i.e. once per fresh navigation
@@ -479,6 +601,20 @@ final class ReaderPlaybackController: ObservableObject {
         } else {
             start()
         }
+    }
+
+    /// Tapping a sentence's text in ReaderView jumps playback straight to it
+    /// — an explicit "read from here" action, distinct from `prepareResume`
+    /// (which only primes a position for the *next* Play press without
+    /// interrupting whatever's already playing). Stops whatever's currently
+    /// playing, reuses `prepareResume`'s exact preload-window seeding for
+    /// the tapped index, then immediately starts — the same `start()` path
+    /// a fresh cold-open resume takes once the user presses Play.
+    func seek(to index: Int) {
+        guard sentences.indices.contains(index) else { return }
+        stop()
+        prepareResume(sentenceIndex: index)
+        start()
     }
 
     /// Lock-screen / Control-Center Play — unlike togglePlayback() (used by
@@ -646,13 +782,33 @@ final class ReaderPlaybackController: ObservableObject {
         currentSentenceIndex = startIndex
         updateNowPlayingProgress()
         if resetPreload {
-            preloadedIndices = []
-            preloadedData = [:]
-            preloadedThroughIndex = startIndex - 1
-            preloadedPrefixCount = startIndex
-            preloadedDisplayCount = startIndex
-            preloadCursor = startIndex
-            cancelInFlightFetches()
+            // If the just-finished chapter's warm-up (see
+            // `beginNextChapterAudioWarmup`) already speculatively
+            // synthesized this exact chapter's opening sentences, seed from
+            // that instead of starting the preload window from empty — the
+            // whole point of the warm-up. The content-equality check (not
+            // just an index match) guards against `chapterCache` having
+            // been evicted/replaced with different content in the meantime.
+            if chapterIndex == nextChapterPreloadIndex, nextChapterSentences == sentences, !nextChapterPreloadedData.isEmpty {
+                preloadedData = nextChapterPreloadedData
+                preloadedIndices = Set(nextChapterPreloadedData.keys)
+                preloadedPrefixCount = startIndex
+                var next = startIndex
+                while preloadedIndices.contains(next) { next += 1 }
+                preloadedThroughIndex = next - 1
+                preloadedDisplayCount = preloadedPrefixCount + preloadedIndices.filter { $0 >= startIndex }.count
+                preloadCursor = max(startIndex, next)
+                cancelInFlightFetches()
+            } else {
+                preloadedIndices = []
+                preloadedData = [:]
+                preloadedThroughIndex = startIndex - 1
+                preloadedPrefixCount = startIndex
+                preloadedDisplayCount = startIndex
+                preloadCursor = startIndex
+                cancelInFlightFetches()
+            }
+            cancelNextChapterWarmup()
             generation += 1
         }
         active = true
@@ -836,12 +992,108 @@ final class ReaderPlaybackController: ObservableObject {
             preload(index: preloadCursor)
             preloadCursor += 1
         }
+        // Only once the current chapter's own window is fully *fetched*
+        // (not merely queued) — triggering while its tail is still
+        // in-flight would have this compete for CPU/network with exactly
+        // the fetches `waitForInitialBuffer` may be blocking on.
+        if preloadedThroughIndex >= boundary {
+            beginNextChapterAudioWarmup()
+        }
+    }
+
+    /// Speculatively pre-synthesizes the first few sentences of the *next*
+    /// chapter's audio once the current chapter's own preload window is
+    /// fully fetched (see the call site above) — so continuing playback
+    /// across a chapter boundary (auto-next, remote/swipe skip) has a head
+    /// start instead of restarting preloading from zero. Forward direction
+    /// only, by design — there's no equivalent warm-up for the previous
+    /// chapter.
+    private func beginNextChapterAudioWarmup() {
+        guard let book, chapterIndex < book.n - 1 else { return }
+        let targetIndex = chapterIndex + 1
+        if nextChapterPreloadIndex == targetIndex, !nextChapterSentences.isEmpty {
+            refillNextChapterWarmup()
+            return
+        }
+        guard let nextChapter = cachedChapter(index: targetIndex) else {
+            // Not prefetched yet — kick it off and retry once it lands.
+            // No-ops harmlessly if `loadChapter`'s own neighbor-prefetch is
+            // already in flight for the same index (`chapterCacheInFlight`).
+            Task {
+                await prefetchChapter(index: targetIndex)
+                guard self.chapterIndex + 1 == targetIndex else { return }
+                self.beginNextChapterAudioWarmup()
+            }
+            return
+        }
+        cancelNextChapterWarmup()
+        nextChapterPreloadIndex = targetIndex
+        nextChapterSentences = Self.sentenceSequence(for: nextChapter)
+        refillNextChapterWarmup()
+    }
+
+    private func refillNextChapterWarmup() {
+        guard !nextChapterSentences.isEmpty else { return }
+        let budget = min(nextChapterWarmupCount, nextChapterSentences.count)
+        var index = 0
+        while index < budget, nextChapterAudioTasks.count < nextChapterWarmupBudget {
+            if nextChapterPreloadedData[index] == nil, nextChapterAudioTasks[index] == nil {
+                nextChapterAudioTasks[index] = makeNextChapterWarmupTask(index: index)
+            }
+            index += 1
+        }
+    }
+
+    private func makeNextChapterWarmupTask(index: Int) -> Task<Data, Error> {
+        let text = nextChapterSentences[index]
+        let voice = self.voice
+        let vieNeuOfflineV2Voice = self.vieNeuOfflineV2Voice
+        let vieNeuOfflineV3Voice = self.vieNeuOfflineV3Voice
+        let gwenTTSSpeaker = self.gwenTTSSpeaker
+        let speed = self.speed
+        let baseURL = SessionStore.baseURL
+        let isConnected = NetworkMonitor.shared.isConnected
+        let isLoggedIn = SessionStore.shared.isLoggedIn
+        let targetIndex = nextChapterPreloadIndex
+        // Lower priority than the current chapter's own preload fetches
+        // (plain `Task { }` in `makeFetchTask`) — under CPU contention from
+        // on-device Piper/VieNeu synthesis, the scheduler should favor
+        // whatever's actually about to play over this speculative work.
+        return Task(priority: .utility) {
+            let data = try await self.synthesizeAudio(
+                text: text, voice: voice, vieNeuOfflineV2Voice: vieNeuOfflineV2Voice,
+                vieNeuOfflineV3Voice: vieNeuOfflineV3Voice, gwenTTSSpeaker: gwenTTSSpeaker,
+                speed: speed, baseURL: baseURL, isConnected: isConnected, isLoggedIn: isLoggedIn
+            )
+            self.markNextChapterWarmed(index: index, data: data, targetIndex: targetIndex)
+            return data
+        }
+    }
+
+    private func markNextChapterWarmed(index: Int, data: Data, targetIndex: Int?) {
+        guard targetIndex == nextChapterPreloadIndex else { return }
+        nextChapterPreloadedData[index] = data
+        nextChapterAudioTasks[index] = nil
+        refillNextChapterWarmup()
+    }
+
+    /// Cancels any in-flight warm-up fetches before dropping them — same
+    /// rationale as `cancelInFlightFetches()` — and clears the warm cache.
+    /// Called both when the warm-up's target chapter changes (superseded by
+    /// a different "next chapter") and once `beginChapter` has consumed it.
+    private func cancelNextChapterWarmup() {
+        for task in nextChapterAudioTasks.values { task.cancel() }
+        nextChapterAudioTasks = [:]
+        nextChapterPreloadedData = [:]
+        nextChapterPreloadIndex = nil
+        nextChapterSentences = []
     }
 
     private func makeFetchTask(index: Int) -> Task<Data, Error> {
         let text = sentences[index]
         let voice = self.voice
-        let vieNeuOfflineVoice = self.vieNeuOfflineVoice
+        let vieNeuOfflineV2Voice = self.vieNeuOfflineV2Voice
+        let vieNeuOfflineV3Voice = self.vieNeuOfflineV3Voice
         let gwenTTSSpeaker = self.gwenTTSSpeaker
         let speed = self.speed
         let generation = self.generation
@@ -858,25 +1110,56 @@ final class ReaderPlaybackController: ObservableObject {
         // just a different reason. ReaderView's footnote explains this.
         let isLoggedIn = SessionStore.shared.isLoggedIn
         return Task {
-            let data: Data
-            if voice == .vieNeuOffline {
-                // No network round trip — runs the bundled GGUF backbone +
-                // VieNeu-Codec ONNX decoder right here on-device (see
-                // VieNeuOfflineTTSService).
-                data = try await VieNeuOfflineTTSService.shared.synthesize(
-                    text: text, speed: speed, voice: vieNeuOfflineVoice
-                )
-            } else if voice.isOffline || !isConnected || !isLoggedIn {
-                // No network round trip — runs the bundled ONNX model
-                // right here on-device (see PiperOfflineTTSService).
-                data = try await PiperOfflineTTSService.shared.synthesize(text: text, speed: speed)
-            } else {
-                data = try await self.fetchOnlineAudioWithRetry(
-                    baseURL: baseURL, text: text, voice: voice, speed: speed, gwenSpeaker: gwenTTSSpeaker
-                )
-            }
+            let data = try await self.synthesizeAudio(
+                text: text, voice: voice, vieNeuOfflineV2Voice: vieNeuOfflineV2Voice,
+                vieNeuOfflineV3Voice: vieNeuOfflineV3Voice, gwenTTSSpeaker: gwenTTSSpeaker,
+                speed: speed, baseURL: baseURL, isConnected: isConnected, isLoggedIn: isLoggedIn
+            )
             self.markPreloaded(index: index, data: data, generation: generation)
             return data
+        }
+    }
+
+    /// Pure synthesis given an explicit voice/speed/connectivity snapshot —
+    /// no side effects on `audioTasks`/`preloadedData`/`generation`, so both
+    /// the current chapter's own fetch (`makeFetchTask`, via `markPreloaded`
+    /// afterward) and the next-chapter audio warm-up
+    /// (`beginNextChapterAudioWarmup`, via its own separate cache) can share
+    /// this exact online/offline branching + retry logic without
+    /// duplicating it.
+    private func synthesizeAudio(
+        text: String,
+        voice: TTSVoice,
+        vieNeuOfflineV2Voice: VieNeuOfflineV2Voice,
+        vieNeuOfflineV3Voice: VieNeuOfflineV3Voice,
+        gwenTTSSpeaker: GwenTTSSpeaker,
+        speed: Double,
+        baseURL: URL,
+        isConnected: Bool,
+        isLoggedIn: Bool
+    ) async throws -> Data {
+        if voice == .vieNeuOfflineV2 {
+            // No network round trip — runs the bundled GGUF backbone +
+            // VieNeu-Codec ONNX decoder right here on-device (see
+            // VieNeuOfflineV2TTSService).
+            return try await VieNeuOfflineV2TTSService.shared.synthesize(
+                text: text, speed: speed, voice: vieNeuOfflineV2Voice
+            )
+        } else if voice == .vieNeuOfflineV3 {
+            // No network round trip — runs the actual v3-Turbo backbone +
+            // MOSS codec through ONNX Runtime right here on-device (see
+            // VieNeuOfflineV3TTSService).
+            return try await VieNeuOfflineV3TTSService.shared.synthesize(
+                text: text, speed: speed, voice: vieNeuOfflineV3Voice
+            )
+        } else if voice.isOffline || !isConnected || !isLoggedIn {
+            // No network round trip — runs the bundled ONNX model right
+            // here on-device (see PiperOfflineTTSService).
+            return try await PiperOfflineTTSService.shared.synthesize(text: text, speed: speed)
+        } else {
+            return try await fetchOnlineAudioWithRetry(
+                baseURL: baseURL, text: text, voice: voice, speed: speed, gwenSpeaker: gwenTTSSpeaker
+            )
         }
     }
 

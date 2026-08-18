@@ -3,7 +3,7 @@ import Foundation
 /// The 9 built-in reference speakers baked into the tts-gpu Cloud Run image
 /// (tts-pipeline-infra's src/tts-gpu/gwen_data/ref_info.json) — each is a
 /// short reference clip + transcript the server conditions the voice clone
-/// on, not something synthesized on-device (unlike VieNeuOfflineVoice).
+/// on, not something synthesized on-device (unlike VieNeuOfflineV2Voice).
 /// Selecting one just adds a `speaker` field to the /api/tts request body;
 /// rawValues must match ref_info.json's keys exactly.
 enum GwenTTSSpeaker: String, CaseIterable, Identifiable, Codable {

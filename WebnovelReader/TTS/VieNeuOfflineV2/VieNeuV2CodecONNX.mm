@@ -1,14 +1,14 @@
-#import "VieNeuCodecONNX.h"
+#import "VieNeuV2CodecONNX.h"
 #include <onnxruntime/onnxruntime_cxx_api.h>
 #include <vector>
 
 static NSError *ortError(const char *what, const std::exception &e) {
     NSString *msg = [NSString stringWithFormat:@"%s: %s", what, e.what()];
-    return [NSError errorWithDomain:@"VieNeuCodecONNX" code:1
+    return [NSError errorWithDomain:@"VieNeuV2CodecONNX" code:1
                             userInfo:@{NSLocalizedDescriptionKey: msg}];
 }
 
-@implementation VieNeuCodecONNX {
+@implementation VieNeuV2CodecONNX {
     std::unique_ptr<Ort::Env> _env;
     std::unique_ptr<Ort::Session> _session;
 }
@@ -19,7 +19,7 @@ static NSError *ortError(const char *what, const std::exception &e) {
     try {
         _env = std::make_unique<Ort::Env>(ORT_LOGGING_LEVEL_WARNING, "VieNeuCodec");
         Ort::SessionOptions options;
-        // Modest thread count: the backbone (VieNeuLlamaBackbone) also runs
+        // Modest thread count: the backbone (VieNeuV2LlamaBackbone) also runs
         // CPU-bound on this same device around the same time (see its
         // n_gpu_layers=0 doc comment) -- avoid oversubscribing cores.
         options.SetIntraOpNumThreads(2);
@@ -60,7 +60,7 @@ static NSError *ortError(const char *what, const std::exception &e) {
         auto outputs = _session->Run(Ort::RunOptions{nullptr}, inputNames, inputs, 2, outputNames, 1);
         if (outputs.empty()) {
             if (error) {
-                *error = [NSError errorWithDomain:@"VieNeuCodecONNX" code:2
+                *error = [NSError errorWithDomain:@"VieNeuV2CodecONNX" code:2
                                           userInfo:@{NSLocalizedDescriptionKey: @"no output"}];
             }
             return nil;

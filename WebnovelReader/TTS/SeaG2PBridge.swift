@@ -4,6 +4,8 @@ enum SeaG2PError: Error {
     case dictionaryMissing
     case openFailed
     case phonemizeFailed
+    case normalizeFailed
+    case puncNormFailed
 }
 
 /// Thin Swift wrapper around SeaG2P.xcframework's C ABI (vendored,
@@ -27,6 +29,34 @@ actor SeaG2P {
         let ctx = try loadedContext()
         guard let out = text.withCString({ sea_g2p_phonemize(ctx, $0) }) else {
             throw SeaG2PError.phonemizeFailed
+        }
+        defer { sea_g2p_free_string(out) }
+        return String(cString: out)
+    }
+
+    /// Text-only normalization (numbers/dates/units/abbreviations spelled
+    /// out) with NO phonemization — used by VieNeuOfflineV3TextChunker to
+    /// measure/pack chunks the same way `sea_g2p.Normalizer.normalize_batch`
+    /// does server-side (chunk boundaries are decided on normalized TEXT
+    /// length, not phoneme length — see that file's doc comment). `puncNorm`
+    /// mirrors the Python call's own `punc_norm` flag; VieNeu's chunker calls
+    /// this with it OFF per sentence, then finalizes punctuation once per
+    /// whole chunk via `puncNorm(_:)` below.
+    func normalize(_ text: String, puncNorm: Bool) throws -> String {
+        let ctx = try loadedContext()
+        guard let out = text.withCString({ sea_g2p_normalize(ctx, $0, puncNorm) }) else {
+            throw SeaG2PError.normalizeFailed
+        }
+        defer { sea_g2p_free_string(out) }
+        return String(cString: out)
+    }
+
+    /// Standalone punctuation-normalization pass (short sentence -> forced
+    /// "."; long sentence missing a terminator -> "." appended) — matches
+    /// `sea_g2p.punc_norm`, doesn't need the dictionary context.
+    static func puncNorm(_ text: String) throws -> String {
+        guard let out = text.withCString({ sea_g2p_punc_norm($0) }) else {
+            throw SeaG2PError.puncNormFailed
         }
         defer { sea_g2p_free_string(out) }
         return String(cString: out)

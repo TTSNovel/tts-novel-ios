@@ -88,13 +88,13 @@ final class TTSPlaybackUITests: XCTestCase {
     /// on its Cloud Run GPU service, no fast path yet — see
     /// APIClient.synthesize's per-request timeout override) than the other
     /// voices' shared 30s, and it has an extra "Giọng đọc" speaker
-    /// sub-picker step (like VieNeuOfflineUITests) the other voices don't.
+    /// sub-picker step (like VieNeuOfflineV2UITests) the other voices don't.
     ///
     /// Deliberately does NOT reuse testPlayAudioForEveryVoice's
     /// login()-then-search-Library-by-title path — that path's own
     /// book-row lookup is separately flaky (see this class's KNOWN
     /// LIMITATION doc comment above) and gwen_tts needs online + logged-in
-    /// state, not a from-scratch login. Same trick as VieNeuOfflineUITests:
+    /// state, not a from-scratch login. Same trick as VieNeuOfflineV2UITests:
     /// guest-mode auto-resume already lands straight in ReaderView using
     /// whatever chapter a previous manual/test session left progress on,
     /// which is already logged-in + online if that prior session was.
@@ -119,7 +119,7 @@ final class TTSPlaybackUITests: XCTestCase {
         speakerOption.tap()
 
         // Unlike selectVoice() above, this needs an explicit sheet dismissal
-        // — see VieNeuOfflineUITests' doc comment: selecting a Picker row
+        // — see VieNeuOfflineV2UITests' doc comment: selecting a Picker row
         // does NOT auto-dismiss ReaderSettingsSheet, and without closing it
         // the playButton tap below can land on whatever sits underneath at
         // that screen position instead (the sheet is still on top).

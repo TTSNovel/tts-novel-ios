@@ -1,7 +1,7 @@
 import Foundation
 import llama
 
-enum VieNeuBackboneError: Error {
+enum VieNeuV2BackboneError: Error {
     case modelMissing
     case modelLoadFailed
     case contextInitFailed
@@ -15,10 +15,10 @@ enum VieNeuBackboneError: Error {
 /// text-completion loop — no TTS-specific wiring needed on this side, since
 /// the backbone just emits ordinary `<|speech_N|>` tokens as text
 /// (`turbo.py:_format_turbo_prompt` / `utils.extract_speech_ids`). Audio
-/// decode is a separate step (see VieNeuCodecDecoder) — this class only
+/// decode is a separate step (see VieNeuV2CodecDecoder) — this class only
 /// produces the audio-code integers.
-actor VieNeuLlamaBackbone {
-    static let shared = VieNeuLlamaBackbone()
+actor VieNeuV2LlamaBackbone {
+    static let shared = VieNeuV2LlamaBackbone()
 
     private var model: OpaquePointer?
     private var vocab: OpaquePointer?
@@ -31,7 +31,7 @@ actor VieNeuLlamaBackbone {
     /// the reference Python pipeline does.
     func generateSpeechCodes(phonemes: String, maxTokens: Int32 = 2048) throws -> [Int32] {
         let model = try loadedModel()
-        guard let vocab = llama_model_get_vocab(model) else { throw VieNeuBackboneError.modelLoadFailed }
+        guard let vocab = llama_model_get_vocab(model) else { throw VieNeuV2BackboneError.modelLoadFailed }
 
         let prompt = "<|speaker_16|><|TEXT_PROMPT_START|>\(phonemes)<|TEXT_PROMPT_END|><|SPEECH_GENERATION_START|>"
 
@@ -40,7 +40,7 @@ actor VieNeuLlamaBackbone {
         ctxParams.n_batch = 2048
         ctxParams.no_perf = true
         guard let ctx = llama_init_from_model(model, ctxParams) else {
-            throw VieNeuBackboneError.contextInitFailed
+            throw VieNeuV2BackboneError.contextInitFailed
         }
         defer { llama_free(ctx) }
 
@@ -49,7 +49,7 @@ actor VieNeuLlamaBackbone {
 
         var sparams = llama_sampler_chain_default_params()
         sparams.no_perf = true
-        guard let sampler = llama_sampler_chain_init(sparams) else { throw VieNeuBackboneError.contextInitFailed }
+        guard let sampler = llama_sampler_chain_init(sparams) else { throw VieNeuV2BackboneError.contextInitFailed }
         defer { llama_sampler_free(sampler) }
         llama_sampler_chain_add(sampler, llama_sampler_init_penalties(64, 1.15, 0.0, 0.0))
         llama_sampler_chain_add(sampler, llama_sampler_init_top_k(50))
@@ -73,7 +73,7 @@ actor VieNeuLlamaBackbone {
             let batch = llama_batch_get_one(buf.baseAddress, Int32(buf.count))
             return llama_decode(ctx, batch) == 0
         }
-        guard promptDecodeOK else { throw VieNeuBackboneError.decodeFailed }
+        guard promptDecodeOK else { throw VieNeuV2BackboneError.decodeFailed }
 
         // Persistent one-token buffer for the rest of the loop — reused in
         // place each step instead of taking `&` of a fresh local var per
@@ -96,7 +96,7 @@ actor VieNeuLlamaBackbone {
 
             stepToken.pointee = newToken
             let batch = llama_batch_get_one(stepToken, 1)
-            if llama_decode(ctx, batch) != 0 { throw VieNeuBackboneError.decodeFailed }
+            if llama_decode(ctx, batch) != 0 { throw VieNeuV2BackboneError.decodeFailed }
             produced += 1
         }
 
@@ -116,10 +116,10 @@ actor VieNeuLlamaBackbone {
 
     private func tokenize(vocab: OpaquePointer, text: String, addSpecial: Bool) throws -> [llama_token] {
         let n = -llama_tokenize(vocab, text, Int32(text.utf8.count), nil, 0, addSpecial, true)
-        guard n > 0 else { throw VieNeuBackboneError.tokenizeFailed }
+        guard n > 0 else { throw VieNeuV2BackboneError.tokenizeFailed }
         var tokens = [llama_token](repeating: 0, count: Int(n))
         let written = llama_tokenize(vocab, text, Int32(text.utf8.count), &tokens, n, addSpecial, true)
-        guard written >= 0 else { throw VieNeuBackboneError.tokenizeFailed }
+        guard written >= 0 else { throw VieNeuV2BackboneError.tokenizeFailed }
         return tokens
     }
 
@@ -132,7 +132,7 @@ actor VieNeuLlamaBackbone {
     private func loadedModel() throws -> OpaquePointer {
         if let model { return model }
         guard let path = Bundle.main.path(forResource: "vieneu-tts-v2-turbo", ofType: "gguf") else {
-            throw VieNeuBackboneError.modelMissing
+            throw VieNeuV2BackboneError.modelMissing
         }
         var params = llama_model_default_params()
         // CPU only (not the usual n_gpu_layers=99) — confirmed by direct
@@ -149,7 +149,7 @@ actor VieNeuLlamaBackbone {
         // doesn't just cost quality here, it costs speed too.
         params.n_gpu_layers = 0
         guard let loaded = llama_model_load_from_file(path, params) else {
-            throw VieNeuBackboneError.modelLoadFailed
+            throw VieNeuV2BackboneError.modelLoadFailed
         }
         model = loaded
         return loaded

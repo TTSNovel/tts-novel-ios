@@ -21,7 +21,7 @@ packages:
     url: https://github.com/k2-fsa/sherpa-onnx
     revision: 634265c9b57642fdd158120148785c89aa281c4b
   # ONNX Runtime C/C++ headers+binary for the VieNeu-Codec decode step
-  # (VieNeuCodecONNX.mm) — sherpa-onnx's bundled ORT only exposes its own
+  # (VieNeuV2CodecONNX.mm, and the VieNeuOfflineV3 pipeline) — sherpa-onnx's bundled ORT only exposes its own
   # high-level VITS/Kokoro-style pipelines, not a raw session API, so this
   # needs its own session. Deliberately the *same* package+exact version
   # SherpaOnnx itself pins (see its Package.swift) rather than Microsoft's
@@ -45,10 +45,20 @@ targets:
       # below as a folder reference (type: folder) instead of letting the
       # default recursive group pick it up, which would just flatten
       # every file inside it to the bundle root like any other resource.
+      # VieNeuOfflineV3 is also kept as a real subdirectory — unlike V2's
+      # loose (flattened) resource files, several of V3's 14 preset-voice
+      # filenames collide with V2's own (both ship a "voice_pham_tuyen.json"
+      # etc. with different content) — a folder reference keeps the two
+      # bundles namespaced apart instead of one silently clobbering the
+      # other at the flat bundle root.
       - path: WebnovelReader
         excludes:
           - "Resources/PiperOffline/espeak-ng-data/**"
+          - "Resources/VieNeuOfflineV3/**"
       - path: WebnovelReader/Resources/PiperOffline/espeak-ng-data
+        type: folder
+        buildPhase: resources
+      - path: WebnovelReader/Resources/VieNeuOfflineV3
         type: folder
         buildPhase: resources
     dependencies:
@@ -57,9 +67,11 @@ targets:
       - package: onnxruntime-libs
         product: onnxruntime-ios
       # Vendored (see WebnovelReader/Vendor/*/README-ish doc comments in
-      # the TTS/VieNeuOffline sources for how each was built): SeaG2P is a
-      # static lib (sea-g2p Rust core, PyO3 stripped); llama is the stock
-      # mainline llama.cpp dynamic xcframework (device + sim slices only).
+      # the TTS/VieNeuOfflineV2 sources for how each was built): SeaG2P is a
+      # static lib (sea-g2p Rust core, PyO3 stripped, shared by both V2 and
+      # V3 offline pipelines); llama is the stock mainline llama.cpp dynamic
+      # xcframework (device + sim slices only), used only by V2's GGUF
+      # backbone — V3 is pure ONNX, no llama.cpp involved.
       - framework: WebnovelReader/Vendor/SeaG2P.xcframework
         embed: false
       - framework: WebnovelReader/Vendor/llama.xcframework
@@ -71,7 +83,7 @@ targets:
         TARGETED_DEVICE_FAMILY: "1"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
-        SWIFT_OBJC_BRIDGING_HEADER: WebnovelReader/TTS/VieNeuOffline/VieNeuOffline-Bridging-Header.h
+        SWIFT_OBJC_BRIDGING_HEADER: WebnovelReader/TTS/VieNeu-Bridging-Header.h
         CLANG_CXX_LANGUAGE_STANDARD: "c++17"
     info:
       path: Generated-Info.plist

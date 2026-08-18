@@ -7,29 +7,36 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		01734EB50A00E0841EC71B45 /* VieNeuOfflineV2UITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F456FE71D617BD6DEC0F52A6 /* VieNeuOfflineV2UITests.swift */; };
+		0226209420B9D5D4D012FCDD /* VieNeuOfflineV3Voice.swift in Sources */ = {isa = PBXBuildFile; fileRef = F62B80CD7509A43E2A4F664E /* VieNeuOfflineV3Voice.swift */; };
 		057BB42A7DC6DA1662FFC305 /* BookDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F60BA012E937FDC3266CEAAC /* BookDetailView.swift */; };
 		0BDDA8058FCDA7E8B0FA23D2 /* SessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02A238C8FEF0622E96FC931A /* SessionStore.swift */; };
 		12F8A89E5D0FD951278E87D3 /* ChapterListUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 590CE78C2F18BB27ED8D519A /* ChapterListUITests.swift */; };
 		1A30F8BB4FD35394AAA420C5 /* ReaderSettingsToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CB0DB5D451A84BABAD77673 /* ReaderSettingsToolbar.swift */; };
 		1BB202042E037EAF2316FE48 /* Book.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1B12EADCA0EFAF291FD9838 /* Book.swift */; };
 		1E0E32AB31ED6A61637E53D9 /* llama.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 89F7E8C2E2FA78F23BC3571D /* llama.xcframework */; };
+		1E26333C809C1F0021169E8D /* ChapterPagerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0730CC98F5494A9E7990C15 /* ChapterPagerView.swift */; };
 		1EFD6360A2C903E322D7E5E2 /* WebnovelReaderApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCCFA3ECCF1BC534D815BE89 /* WebnovelReaderApp.swift */; };
-		272B8EF9C52E7DF8619BF28E /* VieNeuLlamaBackbone.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA31171C63667A0606B7526E /* VieNeuLlamaBackbone.swift */; };
 		288E6EF37C418E4E17F10599 /* sherpa-onnx in Frameworks */ = {isa = PBXBuildFile; productRef = 7077642E7C1882099C491E58 /* sherpa-onnx */; };
-		28A0F9F70531C73AD774BBF7 /* VieNeuOfflineUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 014778C776BDEF84CC3FB911 /* VieNeuOfflineUITests.swift */; };
-		49B2BCD8A1494EE4845A4135 /* PreloadBufferingUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86D3C2C1B53E4FC1A31291F4 /* PreloadBufferingUITests.swift */; };
 		2BB8C9D711E58934FA477FBC /* SeaG2P.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = B34AF307CC8604013EA477E1 /* SeaG2P.xcframework */; };
-		2CA637BB88DEB4D631AD6575 /* VieNeuOfflineVoice.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E5E71CE8D5DA0417F274A59 /* VieNeuOfflineVoice.swift */; };
 		329DA27C71D1EAD15CB7E3EF /* BookRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5117F1E588A2F64078970C56 /* BookRow.swift */; };
-		32ACB5E1CD159DCBB9D7A86D /* sea_g2p.bin in Resources */ = {isa = PBXBuildFile; fileRef = B7BB61800277446D777E374A /* sea_g2p.bin */; };
 		32E0B8A2018F84A81308C1D3 /* BugReportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51AD29C75DE56255A25DB912 /* BugReportView.swift */; };
 		33D575D0EB0BE195DE94E78F /* TTSVoice.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA4C129AEC16B23659D86A76 /* TTSVoice.swift */; };
+		39A1C364B1FCB30E0852323C /* VieNeuV3Npz.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA90ED1B18D38096102174B4 /* VieNeuV3Npz.swift */; };
 		3B239E1D125E36808FF2C928 /* LibraryUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47FD1E5D650E95E120358C8E /* LibraryUITests.swift */; };
+		3BAB887858683E8DC82FD6FA /* VieNeuV3OnnxSession.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2CF8611915842AC77FD8D799 /* VieNeuV3OnnxSession.mm */; };
+		3D6748A45EAD81D9487DF02B /* VieNeuOfflineV3TTSService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2808F07DDBCAA055B2D6ADF9 /* VieNeuOfflineV3TTSService.swift */; };
+		3E1CCA2AD7F895E1D6D59A1A /* voice_xuan_vinh.json in Resources */ = {isa = PBXBuildFile; fileRef = 94F8BCE1AAE2A8EA6A6EF8EC /* voice_xuan_vinh.json */; };
 		405FB7143AFA70ACA00B3F7F /* DownloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E323E4940121D8CD5ED4F589 /* DownloadManager.swift */; };
+		406B5832FCFC8955C3CB43E0 /* OfflineWavEncoding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F7B764ACADBCDD832A98421 /* OfflineWavEncoding.swift */; };
+		425949BECC924DA2CE4F1545 /* VieNeuV2LlamaBackbone.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7FCF36B29D80F0F7DAFCC6E9 /* VieNeuV2LlamaBackbone.swift */; };
 		4BD6C852923B36C639FF988B /* PlaybackBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38B2768DB2EF882C9504B517 /* PlaybackBar.swift */; };
+		4C123009177B239F38F4E159 /* VieNeuV2CodecONNX.mm in Sources */ = {isa = PBXBuildFile; fileRef = A2B7D7C9EC50448E43C367FE /* VieNeuV2CodecONNX.mm */; };
 		4C2FD0CE1A38BE36C260D241 /* SettingsAndPlaybarLayoutUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E77B7759E1190A621260BC2D /* SettingsAndPlaybarLayoutUITests.swift */; };
-		51F11E020505CB4937C8AC16 /* VieNeuOfflineTTSService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 071CA2A33B111AED63F779E3 /* VieNeuOfflineTTSService.swift */; };
+		4FC9E970FAD5DFCC90E0D662 /* SeaG2PBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BB91FD5BDF27C6EC3C7E3F3 /* SeaG2PBridge.swift */; };
 		525D00CEE7BDBD175A01D2E4 /* OfflineDownloadUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DBCCF9522AFEE7CBAD6CA7D /* OfflineDownloadUITests.swift */; };
+		529FEF5471455299CA1020B4 /* VieNeuOfflineV3 in Resources */ = {isa = PBXBuildFile; fileRef = 87DD5111A0DE3174C3194230 /* VieNeuOfflineV3 */; };
+		55C13A29FA0D2BA07DC14331 /* VieNeuOfflineV2TTSService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC2DD58615428784C26E486C /* VieNeuOfflineV2TTSService.swift */; };
 		589A1BFA8C2F69AA15C5B895 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4504947934A2B3AECF872F72 /* LoginView.swift */; };
 		5952907776FF164D7CFE6429 /* ReaderPlaybackController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D86948B589F016B404B328BE /* ReaderPlaybackController.swift */; };
 		5D9892CB3ADD91F8903A819C /* ResumeFlowUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A23CE4FF9D11C814434BC096 /* ResumeFlowUITests.swift */; };
@@ -37,19 +44,21 @@
 		612DFC120BB91EA4786463CC /* SeaG2P.xcframework in Resources */ = {isa = PBXBuildFile; fileRef = 3B05CE054BAB3AC0CFF89744 /* SeaG2P.xcframework */; };
 		62C269BBB96D7C16A2EB3462 /* Keychain.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6587C63291898026681CC4FC /* Keychain.swift */; };
 		62E40856A93A1A0D969DCA5B /* BookDetailActionsUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBDAC71CFDFC1EC6A3F6CD4E /* BookDetailActionsUITests.swift */; };
-		667DB15BF99F391AEDF27628 /* voice_xuan_vinh.json in Resources */ = {isa = PBXBuildFile; fileRef = B6A5AC3A370563AE10CC4635 /* voice_xuan_vinh.json */; };
 		712CC9D873EC43419CBADFFC /* ChapterListSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 253CFE7887D5A59D89E12AD5 /* ChapterListSheet.swift */; };
 		76AE30B0AD63D65505777EC5 /* BugReportAndHistoryUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0553A498B15C3928D1254ED /* BugReportAndHistoryUITests.swift */; };
-		7F07F90C1BF542A1823D6386 /* voice_bich_ngoc.json in Resources */ = {isa = PBXBuildFile; fileRef = 0AB3E443BF3F4310A7E50663 /* voice_bich_ngoc.json */; };
+		7EA4BE681E9DB6779C83EFAB /* VieNeuOfflineV2Voice.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55CB3F6DB5FF7C1BB4BBB5F6 /* VieNeuOfflineV2Voice.swift */; };
 		7F6655053DDE66F5844B0A78 /* ProgressStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F71F4FEECB8FC120E2D7ACA3 /* ProgressStore.swift */; };
 		814D74F701676CD7B17DB49D /* ChapterTitles.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6501E541F5688086EE375D88 /* ChapterTitles.swift */; };
+		82259FB68AFBC2AADC25AE26 /* voice_thuc_doan.json in Resources */ = {isa = PBXBuildFile; fileRef = B79807F48F57ED2F66B725D7 /* voice_thuc_doan.json */; };
 		82E705700471517BACD99233 /* AudioPlaybackService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39AFB5C424CB4F3411EF2E1C /* AudioPlaybackService.swift */; };
 		84CDE63B346CFA8781341F91 /* ReaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E57E5AABFA973BEC1EC6782 /* ReaderView.swift */; };
-		857BB0DD0C8D47E2F6DFD0AA /* voice_thuc_doan.json in Resources */ = {isa = PBXBuildFile; fileRef = FE6FE138C558C0D787D578DF /* voice_thuc_doan.json */; };
+		86B4D945C9B3CE1C351D9D6B /* VieNeuV3TextChunker.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA0C77D3EAC48D6783E4EFA2 /* VieNeuV3TextChunker.swift */; };
 		8B9DFD7D380097A7AE637604 /* PlaybackPersistenceUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39CB3F89A05B839BE6D59815 /* PlaybackPersistenceUITests.swift */; };
+		8D4B263D90CC3BDF178CE22A /* SwipeChapterNavigationUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 341E4EB55DA2D708E3E6ACAD /* SwipeChapterNavigationUITests.swift */; };
 		91133D4F60ADB994746EBB32 /* ChapterFragmentParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74B2204E8D3D938583F01489 /* ChapterFragmentParser.swift */; };
 		9447EC2CEA1E4B3C0F55C341 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE6217F8797409C3BC9D1BFC /* APIClient.swift */; };
-		A13D827B930F7AA5C5371ABE /* vieneu_decoder_int8.onnx in Resources */ = {isa = PBXBuildFile; fileRef = C81578AC01374386D963AD6D /* vieneu_decoder_int8.onnx */; };
+		9C2E323286400E45281A07A8 /* VieNeuOfflineV3UITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C5CD88A9E96A50D231575C0 /* VieNeuOfflineV3UITests.swift */; };
+		9D4351A5D86E7BC9B284A09E /* VieNeuV3OnnxEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9A3F1E3E248E006CE1A775E /* VieNeuV3OnnxEngine.swift */; };
 		A5C0C56FA9DBCFB7E20E056E /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D5515B19541614E3D26B666 /* HistoryView.swift */; };
 		ABCBDA0B1D0335FE4650CC24 /* ReadingProgress.swift in Sources */ = {isa = PBXBuildFile; fileRef = 393BBC110CC5F516C47AD621 /* ReadingProgress.swift */; };
 		AEFD1810A6923AFCB301959D /* tokens.txt in Resources */ = {isa = PBXBuildFile; fileRef = 2538B9C2D810DA7B997904AC /* tokens.txt */; };
@@ -58,29 +67,33 @@
 		B174696283E4D1D69C9A4ACA /* ReaderSettingsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CFD9E76D43D8E28A05E4A8A /* ReaderSettingsSheet.swift */; };
 		B7D6093B76C400A1944B4A5B /* AppEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FC0DBA8A2315C7C1CED0359 /* AppEvent.swift */; };
 		B84DBB1A50F6DE4212707CEE /* onnxruntime-ios in Frameworks */ = {isa = PBXBuildFile; productRef = 88FE71A7AB03DCCF5CC630FA /* onnxruntime-ios */; };
+		BB1256783F7FF215F55A6D99 /* PreloadBufferingUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A697616D2F5BEBE60837A03E /* PreloadBufferingUITests.swift */; };
 		BC7774DC5AA3F54E7F5C5299 /* vi_VN-vais1000-medium.onnx in Resources */ = {isa = PBXBuildFile; fileRef = 19BB4D3E4A9827CF125F6CC5 /* vi_VN-vais1000-medium.onnx */; };
 		C07E4012188E3816DA5474D9 /* SleepTimerUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F219E254BB907B7DA1E1118 /* SleepTimerUITests.swift */; };
 		C30C58DC9526D986385052DC /* PiperOfflineTTSService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67FCD507015BA179DEAFCA4B /* PiperOfflineTTSService.swift */; };
-		C7ECBB5468CEC1B1CE081534 /* VieNeuCodecDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99CD87F32551D547A6E8C57D /* VieNeuCodecDecoder.swift */; };
 		CA7ECBB0F96F47DE90BDDA58 /* TTSPlaybackUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91A32907F3C51AD7EB26D010 /* TTSPlaybackUITests.swift */; };
 		CBCE947F9F049237E90DE1BB /* DownloadedBooksView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F172F2EE00F7768439581E2 /* DownloadedBooksView.swift */; };
+		CBDC4645A2FA724D73D289AC /* TextSegmentationMergeUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66BAAE1683F2331178ACEE75 /* TextSegmentationMergeUITests.swift */; };
+		CD608C1D22254E481E45ED85 /* VieNeuV3BPETokenizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CFD8F3A4D87F09B341B7C08 /* VieNeuV3BPETokenizer.swift */; };
+		D30E07683D0457280765289C /* voice_pham_tuyen.json in Resources */ = {isa = PBXBuildFile; fileRef = 8885567368F5244DE28C3BF0 /* voice_pham_tuyen.json */; };
 		D39C6B967F49DC67497BB7B5 /* llama.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 89F7E8C2E2FA78F23BC3571D /* llama.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		D3D1F0401815EFF6BBF491EF /* VieNeuCodecONNX.mm in Sources */ = {isa = PBXBuildFile; fileRef = DD5017D740449AAC18E437BA /* VieNeuCodecONNX.mm */; };
 		D66070AB1B1E355AFEC029B0 /* ActionHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C80348C35F790F0DE254630B /* ActionHistoryView.swift */; };
 		D6F62CC98870A4F58B1207D0 /* GwenTTSSpeaker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BA0CF8E25015529341FCEF0 /* GwenTTSSpeaker.swift */; };
+		D7158B88F3220A553F7B322B /* voice_bich_ngoc.json in Resources */ = {isa = PBXBuildFile; fileRef = EDC84C2E8A1DD5ADBEEB01FB /* voice_bich_ngoc.json */; };
 		DDEE93E3E9DAFB7C2D0A1364 /* EventLogStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 517EE92EB602E9C3F69F581F /* EventLogStore.swift */; };
 		E1D6DCC98BFD391488935A9C /* CoverImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D24D2C47B51D7655DCB2A4B /* CoverImage.swift */; };
-		E2365CFC3A82E927C25445CF /* voice_pham_tuyen.json in Resources */ = {isa = PBXBuildFile; fileRef = C93F47D3E9A1CC1540D4FC67 /* voice_pham_tuyen.json */; };
 		E4E21985EA9A11DE76EE9640 /* AudioInterruptionUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 004CA44AC74B9034C629CF09 /* AudioInterruptionUITests.swift */; };
+		E507BB1F75B2C0B1AEA4554F /* sea_g2p.bin in Resources */ = {isa = PBXBuildFile; fileRef = EE3BDC6E3071EF88C43B9D16 /* sea_g2p.bin */; };
 		E56DBE4914F38CB525D0FE29 /* CoverImageCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB5E3C26D94F8123E9B0B710 /* CoverImageCache.swift */; };
 		E729385900ADBD810C521459 /* NetworkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E16D74A6AA8A1A5ED6CF291 /* NetworkMonitor.swift */; };
 		E737A4B4DB04177DA20C8D61 /* LibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B341D7BF826C02000149E75 /* LibraryView.swift */; };
 		EAE570E582ECF7A0E5F68BCA /* TextSegmentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65F1934BFB315721963575A7 /* TextSegmentation.swift */; };
-		EEAB8DEF6D413850E25BE7E8 /* vieneu-tts-v2-turbo.gguf in Resources */ = {isa = PBXBuildFile; fileRef = A0AF8BC7C995F21EBBE0175B /* vieneu-tts-v2-turbo.gguf */; };
 		EECB1B5D95B18D173977D4D3 /* HistoryUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DE0AA015D39DA0DBC6D56ED /* HistoryUITests.swift */; };
 		F3E8281AB3AE76425F8D9E36 /* DownloadedBooksUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0ACF87AD21DD365DC0A4287 /* DownloadedBooksUITests.swift */; };
-		F70F11DC7AB08D8E1A5B2A8A /* SeaG2PBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C253DDA9B593E312FA0186D /* SeaG2PBridge.swift */; };
 		F7789321C34C66899A40094C /* ChapterNavigationUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 512B6B9B75EDE35A5C0B1A79 /* ChapterNavigationUITests.swift */; };
+		F82B5F80BE2EB13C73AAB933 /* VieNeuV2CodecDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB87E7F5611D53CEA837235B /* VieNeuV2CodecDecoder.swift */; };
+		FB87FEED1B73B697FEB9CB0E /* vieneu_decoder_int8.onnx in Resources */ = {isa = PBXBuildFile; fileRef = 7917B06635A338F4CD154892 /* vieneu_decoder_int8.onnx */; };
+		FC675CAE16A795786661CA43 /* vieneu-tts-v2-turbo.gguf in Resources */ = {isa = PBXBuildFile; fileRef = AA48640480DCD2CDDCA59E6A /* vieneu-tts-v2-turbo.gguf */; };
 		FED5D0C4F738A6E4022D7274 /* espeak-ng-data in Resources */ = {isa = PBXBuildFile; fileRef = D7D04640EB80155C062EFE5C /* espeak-ng-data */; };
 /* End PBXBuildFile section */
 
@@ -110,33 +123,38 @@
 
 /* Begin PBXFileReference section */
 		004CA44AC74B9034C629CF09 /* AudioInterruptionUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioInterruptionUITests.swift; sourceTree = "<group>"; };
-		014778C776BDEF84CC3FB911 /* VieNeuOfflineUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VieNeuOfflineUITests.swift; sourceTree = "<group>"; };
-		86D3C2C1B53E4FC1A31291F4 /* PreloadBufferingUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreloadBufferingUITests.swift; sourceTree = "<group>"; };
 		02A238C8FEF0622E96FC931A /* SessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStore.swift; sourceTree = "<group>"; };
-		071CA2A33B111AED63F779E3 /* VieNeuOfflineTTSService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VieNeuOfflineTTSService.swift; sourceTree = "<group>"; };
-		0AB3E443BF3F4310A7E50663 /* voice_bich_ngoc.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = voice_bich_ngoc.json; sourceTree = "<group>"; };
 		19BB4D3E4A9827CF125F6CC5 /* vi_VN-vais1000-medium.onnx */ = {isa = PBXFileReference; path = "vi_VN-vais1000-medium.onnx"; sourceTree = "<group>"; };
+		1BB91FD5BDF27C6EC3C7E3F3 /* SeaG2PBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeaG2PBridge.swift; sourceTree = "<group>"; };
+		1C5CD88A9E96A50D231575C0 /* VieNeuOfflineV3UITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VieNeuOfflineV3UITests.swift; sourceTree = "<group>"; };
 		1F172F2EE00F7768439581E2 /* DownloadedBooksView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadedBooksView.swift; sourceTree = "<group>"; };
 		2538B9C2D810DA7B997904AC /* tokens.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = tokens.txt; sourceTree = "<group>"; };
 		253CFE7887D5A59D89E12AD5 /* ChapterListSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChapterListSheet.swift; sourceTree = "<group>"; };
+		2808F07DDBCAA055B2D6ADF9 /* VieNeuOfflineV3TTSService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VieNeuOfflineV3TTSService.swift; sourceTree = "<group>"; };
+		2CF8611915842AC77FD8D799 /* VieNeuV3OnnxSession.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = VieNeuV3OnnxSession.mm; sourceTree = "<group>"; };
 		2CFD9E76D43D8E28A05E4A8A /* ReaderSettingsSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReaderSettingsSheet.swift; sourceTree = "<group>"; };
 		2E16D74A6AA8A1A5ED6CF291 /* NetworkMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkMonitor.swift; sourceTree = "<group>"; };
+		2F7B764ACADBCDD832A98421 /* OfflineWavEncoding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineWavEncoding.swift; sourceTree = "<group>"; };
+		341E4EB55DA2D708E3E6ACAD /* SwipeChapterNavigationUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwipeChapterNavigationUITests.swift; sourceTree = "<group>"; };
 		38B2768DB2EF882C9504B517 /* PlaybackBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackBar.swift; sourceTree = "<group>"; };
 		393BBC110CC5F516C47AD621 /* ReadingProgress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadingProgress.swift; sourceTree = "<group>"; };
 		39AFB5C424CB4F3411EF2E1C /* AudioPlaybackService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioPlaybackService.swift; sourceTree = "<group>"; };
 		39CB3F89A05B839BE6D59815 /* PlaybackPersistenceUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackPersistenceUITests.swift; sourceTree = "<group>"; };
 		3B05CE054BAB3AC0CFF89744 /* SeaG2P.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = SeaG2P.xcframework; sourceTree = "<group>"; };
-		3C253DDA9B593E312FA0186D /* SeaG2PBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeaG2PBridge.swift; sourceTree = "<group>"; };
 		4504947934A2B3AECF872F72 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
 		47FD1E5D650E95E120358C8E /* LibraryUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryUITests.swift; sourceTree = "<group>"; };
+		4CFD8F3A4D87F09B341B7C08 /* VieNeuV3BPETokenizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VieNeuV3BPETokenizer.swift; sourceTree = "<group>"; };
 		5117F1E588A2F64078970C56 /* BookRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookRow.swift; sourceTree = "<group>"; };
 		512B6B9B75EDE35A5C0B1A79 /* ChapterNavigationUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChapterNavigationUITests.swift; sourceTree = "<group>"; };
 		517EE92EB602E9C3F69F581F /* EventLogStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventLogStore.swift; sourceTree = "<group>"; };
 		51AD29C75DE56255A25DB912 /* BugReportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BugReportView.swift; sourceTree = "<group>"; };
+		55CB3F6DB5FF7C1BB4BBB5F6 /* VieNeuOfflineV2Voice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VieNeuOfflineV2Voice.swift; sourceTree = "<group>"; };
+		5820BF99535AA4318F7F6700 /* VieNeu-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "VieNeu-Bridging-Header.h"; sourceTree = "<group>"; };
 		590CE78C2F18BB27ED8D519A /* ChapterListUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChapterListUITests.swift; sourceTree = "<group>"; };
 		6501E541F5688086EE375D88 /* ChapterTitles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChapterTitles.swift; sourceTree = "<group>"; };
 		6587C63291898026681CC4FC /* Keychain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Keychain.swift; sourceTree = "<group>"; };
 		65F1934BFB315721963575A7 /* TextSegmentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextSegmentation.swift; sourceTree = "<group>"; };
+		66BAAE1683F2331178ACEE75 /* TextSegmentationMergeUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextSegmentationMergeUITests.swift; sourceTree = "<group>"; };
 		67FCD507015BA179DEAFCA4B /* PiperOfflineTTSService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PiperOfflineTTSService.swift; sourceTree = "<group>"; };
 		6CB0DB5D451A84BABAD77673 /* ReaderSettingsToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReaderSettingsToolbar.swift; sourceTree = "<group>"; };
 		6D24D2C47B51D7655DCB2A4B /* CoverImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoverImage.swift; sourceTree = "<group>"; };
@@ -144,47 +162,56 @@
 		6F219E254BB907B7DA1E1118 /* SleepTimerUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepTimerUITests.swift; sourceTree = "<group>"; };
 		6FC0DBA8A2315C7C1CED0359 /* AppEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppEvent.swift; sourceTree = "<group>"; };
 		74B2204E8D3D938583F01489 /* ChapterFragmentParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChapterFragmentParser.swift; sourceTree = "<group>"; };
+		79067B8D8AC3562FF716853F /* VieNeuV2CodecONNX.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = VieNeuV2CodecONNX.h; sourceTree = "<group>"; };
+		7917B06635A338F4CD154892 /* vieneu_decoder_int8.onnx */ = {isa = PBXFileReference; path = vieneu_decoder_int8.onnx; sourceTree = "<group>"; };
 		7D5515B19541614E3D26B666 /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
 		7F7F486752D8DBD33832BEFF /* llama.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = llama.xcframework; sourceTree = "<group>"; };
+		7FCF36B29D80F0F7DAFCC6E9 /* VieNeuV2LlamaBackbone.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VieNeuV2LlamaBackbone.swift; sourceTree = "<group>"; };
+		87DD5111A0DE3174C3194230 /* VieNeuOfflineV3 */ = {isa = PBXFileReference; lastKnownFileType = folder; name = VieNeuOfflineV3; path = WebnovelReader/Resources/VieNeuOfflineV3; sourceTree = SOURCE_ROOT; };
+		8885567368F5244DE28C3BF0 /* voice_pham_tuyen.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = voice_pham_tuyen.json; sourceTree = "<group>"; };
 		89F7E8C2E2FA78F23BC3571D /* llama.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = llama.xcframework; path = WebnovelReader/Vendor/llama.xcframework; sourceTree = "<group>"; };
 		8B341D7BF826C02000149E75 /* LibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryView.swift; sourceTree = "<group>"; };
 		8BA0CF8E25015529341FCEF0 /* GwenTTSSpeaker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GwenTTSSpeaker.swift; sourceTree = "<group>"; };
 		8DBCCF9522AFEE7CBAD6CA7D /* OfflineDownloadUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineDownloadUITests.swift; sourceTree = "<group>"; };
-		8E5E71CE8D5DA0417F274A59 /* VieNeuOfflineVoice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VieNeuOfflineVoice.swift; sourceTree = "<group>"; };
 		91A32907F3C51AD7EB26D010 /* TTSPlaybackUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TTSPlaybackUITests.swift; sourceTree = "<group>"; };
-		99CD87F32551D547A6E8C57D /* VieNeuCodecDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VieNeuCodecDecoder.swift; sourceTree = "<group>"; };
+		94F8BCE1AAE2A8EA6A6EF8EC /* voice_xuan_vinh.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = voice_xuan_vinh.json; sourceTree = "<group>"; };
 		9DE0AA015D39DA0DBC6D56ED /* HistoryUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryUITests.swift; sourceTree = "<group>"; };
-		A0AF8BC7C995F21EBBE0175B /* vieneu-tts-v2-turbo.gguf */ = {isa = PBXFileReference; path = "vieneu-tts-v2-turbo.gguf"; sourceTree = "<group>"; };
 		A23CE4FF9D11C814434BC096 /* ResumeFlowUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResumeFlowUITests.swift; sourceTree = "<group>"; };
-		AA31171C63667A0606B7526E /* VieNeuLlamaBackbone.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VieNeuLlamaBackbone.swift; sourceTree = "<group>"; };
+		A2B7D7C9EC50448E43C367FE /* VieNeuV2CodecONNX.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = VieNeuV2CodecONNX.mm; sourceTree = "<group>"; };
+		A697616D2F5BEBE60837A03E /* PreloadBufferingUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreloadBufferingUITests.swift; sourceTree = "<group>"; };
+		A9A3F1E3E248E006CE1A775E /* VieNeuV3OnnxEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VieNeuV3OnnxEngine.swift; sourceTree = "<group>"; };
+		AA48640480DCD2CDDCA59E6A /* vieneu-tts-v2-turbo.gguf */ = {isa = PBXFileReference; path = "vieneu-tts-v2-turbo.gguf"; sourceTree = "<group>"; };
 		B0ACF87AD21DD365DC0A4287 /* DownloadedBooksUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadedBooksUITests.swift; sourceTree = "<group>"; };
 		B34AF307CC8604013EA477E1 /* SeaG2P.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = SeaG2P.xcframework; path = WebnovelReader/Vendor/SeaG2P.xcframework; sourceTree = "<group>"; };
-		B6A5AC3A370563AE10CC4635 /* voice_xuan_vinh.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = voice_xuan_vinh.json; sourceTree = "<group>"; };
-		B7BB61800277446D777E374A /* sea_g2p.bin */ = {isa = PBXFileReference; lastKnownFileType = archive.macbinary; path = sea_g2p.bin; sourceTree = "<group>"; };
+		B79807F48F57ED2F66B725D7 /* voice_thuc_doan.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = voice_thuc_doan.json; sourceTree = "<group>"; };
 		BB44137B32FE2CC7F103757F /* LoginFlowUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginFlowUITests.swift; sourceTree = "<group>"; };
 		BCCFA3ECCF1BC534D815BE89 /* WebnovelReaderApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebnovelReaderApp.swift; sourceTree = "<group>"; };
 		C0E38D3C42826F7665A2F966 /* WebnovelReaderUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = WebnovelReaderUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C2F97CC55E8520B59C8800BB /* WebnovelReader.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = WebnovelReader.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C80348C35F790F0DE254630B /* ActionHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActionHistoryView.swift; sourceTree = "<group>"; };
-		C81578AC01374386D963AD6D /* vieneu_decoder_int8.onnx */ = {isa = PBXFileReference; path = vieneu_decoder_int8.onnx; sourceTree = "<group>"; };
-		C93F47D3E9A1CC1540D4FC67 /* voice_pham_tuyen.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = voice_pham_tuyen.json; sourceTree = "<group>"; };
+		CA0C77D3EAC48D6783E4EFA2 /* VieNeuV3TextChunker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VieNeuV3TextChunker.swift; sourceTree = "<group>"; };
 		CA3F21C8B4954B34AA708570 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		CA90ED1B18D38096102174B4 /* VieNeuV3Npz.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VieNeuV3Npz.swift; sourceTree = "<group>"; };
 		D0553A498B15C3928D1254ED /* BugReportAndHistoryUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BugReportAndHistoryUITests.swift; sourceTree = "<group>"; };
+		D0730CC98F5494A9E7990C15 /* ChapterPagerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChapterPagerView.swift; sourceTree = "<group>"; };
 		D1B12EADCA0EFAF291FD9838 /* Book.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Book.swift; sourceTree = "<group>"; };
-		D42A1547452D51E696EABC57 /* VieNeuOffline-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "VieNeuOffline-Bridging-Header.h"; sourceTree = "<group>"; };
 		D7D04640EB80155C062EFE5C /* espeak-ng-data */ = {isa = PBXFileReference; lastKnownFileType = folder; name = "espeak-ng-data"; path = "WebnovelReader/Resources/PiperOffline/espeak-ng-data"; sourceTree = SOURCE_ROOT; };
 		D86948B589F016B404B328BE /* ReaderPlaybackController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReaderPlaybackController.swift; sourceTree = "<group>"; };
 		DBDAC71CFDFC1EC6A3F6CD4E /* BookDetailActionsUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookDetailActionsUITests.swift; sourceTree = "<group>"; };
-		DD5017D740449AAC18E437BA /* VieNeuCodecONNX.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = VieNeuCodecONNX.mm; sourceTree = "<group>"; };
+		DC2DD58615428784C26E486C /* VieNeuOfflineV2TTSService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VieNeuOfflineV2TTSService.swift; sourceTree = "<group>"; };
 		E323E4940121D8CD5ED4F589 /* DownloadManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadManager.swift; sourceTree = "<group>"; };
 		E77B7759E1190A621260BC2D /* SettingsAndPlaybarLayoutUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsAndPlaybarLayoutUITests.swift; sourceTree = "<group>"; };
 		EA4C129AEC16B23659D86A76 /* TTSVoice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TTSVoice.swift; sourceTree = "<group>"; };
-		F4ED99982A9DBFB112A82853 /* VieNeuCodecONNX.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = VieNeuCodecONNX.h; sourceTree = "<group>"; };
+		EDC84C2E8A1DD5ADBEEB01FB /* voice_bich_ngoc.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = voice_bich_ngoc.json; sourceTree = "<group>"; };
+		EE3BDC6E3071EF88C43B9D16 /* sea_g2p.bin */ = {isa = PBXFileReference; lastKnownFileType = archive.macbinary; path = sea_g2p.bin; sourceTree = "<group>"; };
+		F456FE71D617BD6DEC0F52A6 /* VieNeuOfflineV2UITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VieNeuOfflineV2UITests.swift; sourceTree = "<group>"; };
+		F55A261982C8D40BDB397A6E /* VieNeuV3OnnxSession.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = VieNeuV3OnnxSession.h; sourceTree = "<group>"; };
 		F60BA012E937FDC3266CEAAC /* BookDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookDetailView.swift; sourceTree = "<group>"; };
+		F62B80CD7509A43E2A4F664E /* VieNeuOfflineV3Voice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VieNeuOfflineV3Voice.swift; sourceTree = "<group>"; };
 		F71F4FEECB8FC120E2D7ACA3 /* ProgressStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressStore.swift; sourceTree = "<group>"; };
 		FB5E3C26D94F8123E9B0B710 /* CoverImageCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoverImageCache.swift; sourceTree = "<group>"; };
+		FB87E7F5611D53CEA837235B /* VieNeuV2CodecDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VieNeuV2CodecDecoder.swift; sourceTree = "<group>"; };
 		FE6217F8797409C3BC9D1BFC /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
-		FE6FE138C558C0D787D578DF /* voice_thuc_doan.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = voice_thuc_doan.json; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -202,19 +229,17 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		1A7802AA0C078DB385116A97 /* VieNeuOffline */ = {
+		154247BDADE4A820E6C88687 /* VieNeuOfflineV2 */ = {
 			isa = PBXGroup;
 			children = (
-				3C253DDA9B593E312FA0186D /* SeaG2PBridge.swift */,
-				99CD87F32551D547A6E8C57D /* VieNeuCodecDecoder.swift */,
-				F4ED99982A9DBFB112A82853 /* VieNeuCodecONNX.h */,
-				DD5017D740449AAC18E437BA /* VieNeuCodecONNX.mm */,
-				AA31171C63667A0606B7526E /* VieNeuLlamaBackbone.swift */,
-				D42A1547452D51E696EABC57 /* VieNeuOffline-Bridging-Header.h */,
-				071CA2A33B111AED63F779E3 /* VieNeuOfflineTTSService.swift */,
-				8E5E71CE8D5DA0417F274A59 /* VieNeuOfflineVoice.swift */,
+				7917B06635A338F4CD154892 /* vieneu_decoder_int8.onnx */,
+				AA48640480DCD2CDDCA59E6A /* vieneu-tts-v2-turbo.gguf */,
+				EDC84C2E8A1DD5ADBEEB01FB /* voice_bich_ngoc.json */,
+				8885567368F5244DE28C3BF0 /* voice_pham_tuyen.json */,
+				B79807F48F57ED2F66B725D7 /* voice_thuc_doan.json */,
+				94F8BCE1AAE2A8EA6A6EF8EC /* voice_xuan_vinh.json */,
 			);
-			path = VieNeuOffline;
+			path = VieNeuOfflineV2;
 			sourceTree = "<group>";
 		};
 		24C4D85E293F450B527D8A2F /* WebnovelReader */ = {
@@ -243,6 +268,7 @@
 				5117F1E588A2F64078970C56 /* BookRow.swift */,
 				51AD29C75DE56255A25DB912 /* BugReportView.swift */,
 				253CFE7887D5A59D89E12AD5 /* ChapterListSheet.swift */,
+				D0730CC98F5494A9E7990C15 /* ChapterPagerView.swift */,
 				6501E541F5688086EE375D88 /* ChapterTitles.swift */,
 				6D24D2C47B51D7655DCB2A4B /* CoverImage.swift */,
 				1F172F2EE00F7768439581E2 /* DownloadedBooksView.swift */,
@@ -270,13 +296,16 @@
 				47FD1E5D650E95E120358C8E /* LibraryUITests.swift */,
 				BB44137B32FE2CC7F103757F /* LoginFlowUITests.swift */,
 				8DBCCF9522AFEE7CBAD6CA7D /* OfflineDownloadUITests.swift */,
-				86D3C2C1B53E4FC1A31291F4 /* PreloadBufferingUITests.swift */,
 				39CB3F89A05B839BE6D59815 /* PlaybackPersistenceUITests.swift */,
+				A697616D2F5BEBE60837A03E /* PreloadBufferingUITests.swift */,
 				A23CE4FF9D11C814434BC096 /* ResumeFlowUITests.swift */,
 				E77B7759E1190A621260BC2D /* SettingsAndPlaybarLayoutUITests.swift */,
 				6F219E254BB907B7DA1E1118 /* SleepTimerUITests.swift */,
+				341E4EB55DA2D708E3E6ACAD /* SwipeChapterNavigationUITests.swift */,
+				66BAAE1683F2331178ACEE75 /* TextSegmentationMergeUITests.swift */,
 				91A32907F3C51AD7EB26D010 /* TTSPlaybackUITests.swift */,
-				014778C776BDEF84CC3FB911 /* VieNeuOfflineUITests.swift */,
+				F456FE71D617BD6DEC0F52A6 /* VieNeuOfflineV2UITests.swift */,
+				1C5CD88A9E96A50D231575C0 /* VieNeuOfflineV3UITests.swift */,
 			);
 			path = WebnovelReaderUITests;
 			sourceTree = "<group>";
@@ -298,6 +327,19 @@
 				45EBAC9FE28B9AD9E9B26EC2 /* Frameworks */,
 				842308F4F81D147E7A905121 /* Products */,
 			);
+			sourceTree = "<group>";
+		};
+		4B2E13EB26AE6A36E54043EC /* VieNeuOfflineV2 */ = {
+			isa = PBXGroup;
+			children = (
+				DC2DD58615428784C26E486C /* VieNeuOfflineV2TTSService.swift */,
+				55CB3F6DB5FF7C1BB4BBB5F6 /* VieNeuOfflineV2Voice.swift */,
+				FB87E7F5611D53CEA837235B /* VieNeuV2CodecDecoder.swift */,
+				79067B8D8AC3562FF716853F /* VieNeuV2CodecONNX.h */,
+				A2B7D7C9EC50448E43C367FE /* VieNeuV2CodecONNX.mm */,
+				7FCF36B29D80F0F7DAFCC6E9 /* VieNeuV2LlamaBackbone.swift */,
+			);
+			path = VieNeuOfflineV2;
 			sourceTree = "<group>";
 		};
 		550B93F910E6547AE6634665 /* Models */ = {
@@ -323,27 +365,17 @@
 			isa = PBXGroup;
 			children = (
 				8BA0CF8E25015529341FCEF0 /* GwenTTSSpeaker.swift */,
+				2F7B764ACADBCDD832A98421 /* OfflineWavEncoding.swift */,
 				67FCD507015BA179DEAFCA4B /* PiperOfflineTTSService.swift */,
 				D86948B589F016B404B328BE /* ReaderPlaybackController.swift */,
+				1BB91FD5BDF27C6EC3C7E3F3 /* SeaG2PBridge.swift */,
 				65F1934BFB315721963575A7 /* TextSegmentation.swift */,
 				EA4C129AEC16B23659D86A76 /* TTSVoice.swift */,
-				1A7802AA0C078DB385116A97 /* VieNeuOffline */,
+				5820BF99535AA4318F7F6700 /* VieNeu-Bridging-Header.h */,
+				4B2E13EB26AE6A36E54043EC /* VieNeuOfflineV2 */,
+				F6AFC1275785D0EEFCF07047 /* VieNeuOfflineV3 */,
 			);
 			path = TTS;
-			sourceTree = "<group>";
-		};
-		83CF871F2EAB94D1573A3FF6 /* VieNeuOffline */ = {
-			isa = PBXGroup;
-			children = (
-				B7BB61800277446D777E374A /* sea_g2p.bin */,
-				C81578AC01374386D963AD6D /* vieneu_decoder_int8.onnx */,
-				A0AF8BC7C995F21EBBE0175B /* vieneu-tts-v2-turbo.gguf */,
-				0AB3E443BF3F4310A7E50663 /* voice_bich_ngoc.json */,
-				C93F47D3E9A1CC1540D4FC67 /* voice_pham_tuyen.json */,
-				FE6FE138C558C0D787D578DF /* voice_thuc_doan.json */,
-				B6A5AC3A370563AE10CC4635 /* voice_xuan_vinh.json */,
-			);
-			path = VieNeuOffline;
 			sourceTree = "<group>";
 		};
 		842308F4F81D147E7A905121 /* Products */ = {
@@ -376,8 +408,10 @@
 			isa = PBXGroup;
 			children = (
 				CA3F21C8B4954B34AA708570 /* Assets.xcassets */,
+				EE3BDC6E3071EF88C43B9D16 /* sea_g2p.bin */,
+				87DD5111A0DE3174C3194230 /* VieNeuOfflineV3 */,
 				B341071D5232D01B72A1F877 /* PiperOffline */,
-				83CF871F2EAB94D1573A3FF6 /* VieNeuOffline */,
+				154247BDADE4A820E6C88687 /* VieNeuOfflineV2 */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -426,6 +460,21 @@
 				02A238C8FEF0622E96FC931A /* SessionStore.swift */,
 			);
 			path = Networking;
+			sourceTree = "<group>";
+		};
+		F6AFC1275785D0EEFCF07047 /* VieNeuOfflineV3 */ = {
+			isa = PBXGroup;
+			children = (
+				2808F07DDBCAA055B2D6ADF9 /* VieNeuOfflineV3TTSService.swift */,
+				F62B80CD7509A43E2A4F664E /* VieNeuOfflineV3Voice.swift */,
+				4CFD8F3A4D87F09B341B7C08 /* VieNeuV3BPETokenizer.swift */,
+				CA90ED1B18D38096102174B4 /* VieNeuV3Npz.swift */,
+				A9A3F1E3E248E006CE1A775E /* VieNeuV3OnnxEngine.swift */,
+				F55A261982C8D40BDB397A6E /* VieNeuV3OnnxSession.h */,
+				2CF8611915842AC77FD8D799 /* VieNeuV3OnnxSession.mm */,
+				CA0C77D3EAC48D6783E4EFA2 /* VieNeuV3TextChunker.swift */,
+			);
+			path = VieNeuOfflineV3;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -522,17 +571,18 @@
 			files = (
 				60D547ECFC0BF5D6FBA4D62A /* Assets.xcassets in Resources */,
 				612DFC120BB91EA4786463CC /* SeaG2P.xcframework in Resources */,
+				529FEF5471455299CA1020B4 /* VieNeuOfflineV3 in Resources */,
 				FED5D0C4F738A6E4022D7274 /* espeak-ng-data in Resources */,
 				B1473715559DFF5AAA834D42 /* llama.xcframework in Resources */,
-				32ACB5E1CD159DCBB9D7A86D /* sea_g2p.bin in Resources */,
+				E507BB1F75B2C0B1AEA4554F /* sea_g2p.bin in Resources */,
 				AEFD1810A6923AFCB301959D /* tokens.txt in Resources */,
 				BC7774DC5AA3F54E7F5C5299 /* vi_VN-vais1000-medium.onnx in Resources */,
-				EEAB8DEF6D413850E25BE7E8 /* vieneu-tts-v2-turbo.gguf in Resources */,
-				A13D827B930F7AA5C5371ABE /* vieneu_decoder_int8.onnx in Resources */,
-				7F07F90C1BF542A1823D6386 /* voice_bich_ngoc.json in Resources */,
-				E2365CFC3A82E927C25445CF /* voice_pham_tuyen.json in Resources */,
-				857BB0DD0C8D47E2F6DFD0AA /* voice_thuc_doan.json in Resources */,
-				667DB15BF99F391AEDF27628 /* voice_xuan_vinh.json in Resources */,
+				FC675CAE16A795786661CA43 /* vieneu-tts-v2-turbo.gguf in Resources */,
+				FB87FEED1B73B697FEB9CB0E /* vieneu_decoder_int8.onnx in Resources */,
+				D7158B88F3220A553F7B322B /* voice_bich_ngoc.json in Resources */,
+				D30E07683D0457280765289C /* voice_pham_tuyen.json in Resources */,
+				82259FB68AFBC2AADC25AE26 /* voice_thuc_doan.json in Resources */,
+				3E1CCA2AD7F895E1D6D59A1A /* voice_xuan_vinh.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -553,6 +603,7 @@
 				32E0B8A2018F84A81308C1D3 /* BugReportView.swift in Sources */,
 				91133D4F60ADB994746EBB32 /* ChapterFragmentParser.swift in Sources */,
 				712CC9D873EC43419CBADFFC /* ChapterListSheet.swift in Sources */,
+				1E26333C809C1F0021169E8D /* ChapterPagerView.swift in Sources */,
 				814D74F701676CD7B17DB49D /* ChapterTitles.swift in Sources */,
 				E1D6DCC98BFD391488935A9C /* CoverImage.swift in Sources */,
 				E56DBE4914F38CB525D0FE29 /* CoverImageCache.swift in Sources */,
@@ -565,6 +616,7 @@
 				E737A4B4DB04177DA20C8D61 /* LibraryView.swift in Sources */,
 				589A1BFA8C2F69AA15C5B895 /* LoginView.swift in Sources */,
 				E729385900ADBD810C521459 /* NetworkMonitor.swift in Sources */,
+				406B5832FCFC8955C3CB43E0 /* OfflineWavEncoding.swift in Sources */,
 				C30C58DC9526D986385052DC /* PiperOfflineTTSService.swift in Sources */,
 				4BD6C852923B36C639FF988B /* PlaybackBar.swift in Sources */,
 				7F6655053DDE66F5844B0A78 /* ProgressStore.swift in Sources */,
@@ -573,15 +625,22 @@
 				1A30F8BB4FD35394AAA420C5 /* ReaderSettingsToolbar.swift in Sources */,
 				84CDE63B346CFA8781341F91 /* ReaderView.swift in Sources */,
 				ABCBDA0B1D0335FE4650CC24 /* ReadingProgress.swift in Sources */,
-				F70F11DC7AB08D8E1A5B2A8A /* SeaG2PBridge.swift in Sources */,
+				4FC9E970FAD5DFCC90E0D662 /* SeaG2PBridge.swift in Sources */,
 				0BDDA8058FCDA7E8B0FA23D2 /* SessionStore.swift in Sources */,
 				33D575D0EB0BE195DE94E78F /* TTSVoice.swift in Sources */,
 				EAE570E582ECF7A0E5F68BCA /* TextSegmentation.swift in Sources */,
-				C7ECBB5468CEC1B1CE081534 /* VieNeuCodecDecoder.swift in Sources */,
-				D3D1F0401815EFF6BBF491EF /* VieNeuCodecONNX.mm in Sources */,
-				272B8EF9C52E7DF8619BF28E /* VieNeuLlamaBackbone.swift in Sources */,
-				51F11E020505CB4937C8AC16 /* VieNeuOfflineTTSService.swift in Sources */,
-				2CA637BB88DEB4D631AD6575 /* VieNeuOfflineVoice.swift in Sources */,
+				55C13A29FA0D2BA07DC14331 /* VieNeuOfflineV2TTSService.swift in Sources */,
+				7EA4BE681E9DB6779C83EFAB /* VieNeuOfflineV2Voice.swift in Sources */,
+				3D6748A45EAD81D9487DF02B /* VieNeuOfflineV3TTSService.swift in Sources */,
+				0226209420B9D5D4D012FCDD /* VieNeuOfflineV3Voice.swift in Sources */,
+				F82B5F80BE2EB13C73AAB933 /* VieNeuV2CodecDecoder.swift in Sources */,
+				4C123009177B239F38F4E159 /* VieNeuV2CodecONNX.mm in Sources */,
+				425949BECC924DA2CE4F1545 /* VieNeuV2LlamaBackbone.swift in Sources */,
+				CD608C1D22254E481E45ED85 /* VieNeuV3BPETokenizer.swift in Sources */,
+				39A1C364B1FCB30E0852323C /* VieNeuV3Npz.swift in Sources */,
+				9D4351A5D86E7BC9B284A09E /* VieNeuV3OnnxEngine.swift in Sources */,
+				3BAB887858683E8DC82FD6FA /* VieNeuV3OnnxSession.mm in Sources */,
+				86B4D945C9B3CE1C351D9D6B /* VieNeuV3TextChunker.swift in Sources */,
 				1EFD6360A2C903E322D7E5E2 /* WebnovelReaderApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -600,13 +659,16 @@
 				3B239E1D125E36808FF2C928 /* LibraryUITests.swift in Sources */,
 				B1158413D4404F3BA886912F /* LoginFlowUITests.swift in Sources */,
 				525D00CEE7BDBD175A01D2E4 /* OfflineDownloadUITests.swift in Sources */,
-				49B2BCD8A1494EE4845A4135 /* PreloadBufferingUITests.swift in Sources */,
 				8B9DFD7D380097A7AE637604 /* PlaybackPersistenceUITests.swift in Sources */,
+				BB1256783F7FF215F55A6D99 /* PreloadBufferingUITests.swift in Sources */,
 				5D9892CB3ADD91F8903A819C /* ResumeFlowUITests.swift in Sources */,
 				4C2FD0CE1A38BE36C260D241 /* SettingsAndPlaybarLayoutUITests.swift in Sources */,
 				C07E4012188E3816DA5474D9 /* SleepTimerUITests.swift in Sources */,
+				8D4B263D90CC3BDF178CE22A /* SwipeChapterNavigationUITests.swift in Sources */,
 				CA7ECBB0F96F47DE90BDDA58 /* TTSPlaybackUITests.swift in Sources */,
-				28A0F9F70531C73AD774BBF7 /* VieNeuOfflineUITests.swift in Sources */,
+				CBDC4645A2FA724D73D289AC /* TextSegmentationMergeUITests.swift in Sources */,
+				01734EB50A00E0841EC71B45 /* VieNeuOfflineV2UITests.swift in Sources */,
+				9C2E323286400E45281A07A8 /* VieNeuOfflineV3UITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -715,7 +777,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = dev.yanglong.webnovelreader;
 				PRODUCT_NAME = WebnovelReader;
 				SDKROOT = iphoneos;
-				SWIFT_OBJC_BRIDGING_HEADER = "WebnovelReader/TTS/VieNeuOffline/VieNeuOffline-Bridging-Header.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "WebnovelReader/TTS/VieNeu-Bridging-Header.h";
 				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
@@ -821,7 +883,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = dev.yanglong.webnovelreader;
 				PRODUCT_NAME = WebnovelReader;
 				SDKROOT = iphoneos;
-				SWIFT_OBJC_BRIDGING_HEADER = "WebnovelReader/TTS/VieNeuOffline/VieNeuOffline-Bridging-Header.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "WebnovelReader/TTS/VieNeu-Bridging-Header.h";
 				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;

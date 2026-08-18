@@ -1,7 +1,7 @@
 import XCTest
 
 // One-off manual verification for the on-device VieNeu-TTS pipeline
-// (VieNeuOfflineTTSService: sea-g2p -> llama.cpp GGUF backbone -> ONNX
+// (VieNeuOfflineV2TTSService: sea-g2p -> llama.cpp GGUF backbone -> ONNX
 // Runtime codec decode). Deliberately does NOT reuse
 // TTSPlaybackUITests.login()/book navigation (that path needs real
 // credentials in /tmp/tts_test_config.json and has a known "book row not
@@ -9,12 +9,12 @@ import XCTest
 // straight into ReaderView from local/synced progress when there already
 // is some, which is all this needs: no network, no login, just the
 // offline voice.
-final class VieNeuOfflineUITests: XCTestCase {
+final class VieNeuOfflineV2UITests: XCTestCase {
     override func setUpWithError() throws {
         continueAfterFailure = false
     }
 
-    func testVieNeuOfflinePlays() throws {
+    func testVieNeuOfflineV2Plays() throws {
         let app = XCUIApplication()
         app.launch()
 
@@ -27,16 +27,16 @@ final class VieNeuOfflineUITests: XCTestCase {
         // only opens the popup list; the option itself is a separate tap
         // on the button that then appears.
         app.buttons["modelPicker"].tap()
-        let option = app.buttons["VieNeu-TTS (offline)"]
-        XCTAssertTrue(option.waitForExistence(timeout: 5), "vieNeuOffline voice option not in menu")
+        let option = app.buttons["VieNeu-TTS v2 (offline)"]
+        XCTAssertTrue(option.waitForExistence(timeout: 5), "vieNeuOfflineV2 voice option not in menu")
         option.tap()
 
-        // Selecting vieNeuOffline should reveal the "Giọng đọc" preset
+        // Selecting vieNeuOfflineV2 should reveal the "Giọng đọc" preset
         // picker (ReaderSettingsSheet only shows it once the chosen model
         // actually has more than one voice) — exercise switching it too,
         // not just that it's present.
-        let voicePicker = app.buttons["vieNeuOfflineVoicePicker"]
-        XCTAssertTrue(voicePicker.waitForExistence(timeout: 5), "Giọng đọc preset picker should appear for vieNeuOffline")
+        let voicePicker = app.buttons["vieNeuOfflineV2VoicePicker"]
+        XCTAssertTrue(voicePicker.waitForExistence(timeout: 5), "Giọng đọc preset picker should appear for vieNeuOfflineV2")
         voicePicker.tap()
         let presetOption = app.buttons["Xuân Vĩnh (Nam - Miền Nam)"]
         XCTAssertTrue(presetOption.waitForExistence(timeout: 5), "expected preset option not in Giọng đọc menu")
@@ -55,7 +55,7 @@ final class VieNeuOfflineUITests: XCTestCase {
         let playing = NSPredicate(format: "label CONTAINS[c] %@", "Tạm dừng")
         let expectation = XCTNSPredicateExpectation(predicate: playing, object: playButton)
         // Generous timeout: ~5-6s of CPU-bound autoregressive generation
-        // per sentence (see VieNeuLlamaBackbone's n_gpu_layers=0 doc
+        // per sentence (see VieNeuV2LlamaBackbone's n_gpu_layers=0 doc
         // comment — Metal offload is faster to dispatch but numerically
         // broken for this backbone, so this stays CPU-only), and
         // ReaderPlaybackController preloads up to preloadAhead (default
@@ -63,6 +63,6 @@ final class VieNeuOfflineUITests: XCTestCase {
         // the sentence actually needed for playback can end up queued
         // behind several others.
         let result = XCTWaiter().wait(for: [expectation], timeout: 150)
-        XCTAssertEqual(result, .completed, "vieNeuOffline: play button never switched to the playing state")
+        XCTAssertEqual(result, .completed, "vieNeuOfflineV2: play button never switched to the playing state")
     }
 }

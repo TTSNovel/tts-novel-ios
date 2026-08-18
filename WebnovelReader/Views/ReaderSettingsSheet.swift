@@ -31,25 +31,38 @@ struct ReaderSettingsSheet: View {
                     .accessibilityIdentifier("modelPicker")
                 }
 
-                // Only vieNeuOffline currently has more than one selectable
-                // speaker preset (see VieNeuOfflineVoice) — every other
+                // vieNeuOfflineV2/V3 currently have more than one selectable
+                // speaker preset (see VieNeuOfflineV2Voice) — every other
                 // model has a single fixed voice, so this section only
                 // shows up once there's an actual choice to make.
-                if playback.voice == .vieNeuOffline {
+                if playback.voice == .vieNeuOfflineV2 {
                     Section("Giọng đọc") {
-                        Picker("Giọng đọc", selection: $playback.vieNeuOfflineVoice) {
-                            ForEach(VieNeuOfflineVoice.allCases) { preset in
+                        Picker("Giọng đọc", selection: $playback.vieNeuOfflineV2Voice) {
+                            ForEach(VieNeuOfflineV2Voice.allCases) { preset in
                                 Text(preset.displayName).tag(preset)
                             }
                         }
                         .pickerStyle(.menu)
                         .tint(.secondary)
-                        .accessibilityIdentifier("vieNeuOfflineVoicePicker")
+                        .accessibilityIdentifier("vieNeuOfflineV2VoicePicker")
+                    }
+                }
+
+                if playback.voice == .vieNeuOfflineV3 {
+                    Section("Giọng đọc") {
+                        Picker("Giọng đọc", selection: $playback.vieNeuOfflineV3Voice) {
+                            ForEach(VieNeuOfflineV3Voice.allCases) { preset in
+                                Text(preset.displayName).tag(preset)
+                            }
+                        }
+                        .pickerStyle(.menu)
+                        .tint(.secondary)
+                        .accessibilityIdentifier("vieNeuOfflineV3VoicePicker")
                     }
                 }
 
                 // gwen_tts's 9 built-in reference speakers (see
-                // GwenTTSSpeaker) — same pattern as vieNeuOffline above.
+                // GwenTTSSpeaker) — same pattern as vieNeuOfflineV2 above.
                 if playback.voice == .gwenTTS {
                     Section("Giọng đọc") {
                         Picker("Giọng đọc", selection: $playback.gwenTTSSpeaker) {

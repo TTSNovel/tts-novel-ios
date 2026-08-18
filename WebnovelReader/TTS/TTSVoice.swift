@@ -22,11 +22,20 @@ enum TTSVoice: String, CaseIterable, Identifiable, Codable {
     case piperOffline = "piper_offline"
     // Local-only, like piperOffline — never sent to /api/tts. Runs VieNeu's
     // legacy v2-Turbo checkpoint (llama.cpp GGUF backbone + VieNeu-Codec ONNX
-    // decode) entirely on-device via VieNeuOfflineTTSService. A different
+    // decode) entirely on-device via VieNeuOfflineV2TTSService. A different
     // checkpoint from the online "vieneu" voice (server runs v3-Turbo), so
     // the voice/quality differs — same VI/EN code-switching capability
-    // (shared sea-g2p phonemizer) either way.
-    case vieNeuOffline = "vieneu_offline"
+    // (shared sea-g2p phonemizer) either way. Kept the rawValue "vieneu_
+    // offline" (pre-dating the "V2" rename) so existing installs' persisted
+    // UserDefaults selection isn't silently reset.
+    case vieNeuOfflineV2 = "vieneu_offline"
+    // Local-only, like vieNeuOfflineV2 — never sent to /api/tts. Runs the
+    // actual v3-Turbo checkpoint the online "vieneu" voice uses (pure ONNX:
+    // prefill/acoustic/decode-step backbone + MOSS codec, no llama.cpp)
+    // entirely on-device via VieNeuOfflineV3TTSService — see that package's
+    // doc comments for the pipeline. Architecturally unrelated to v2 beyond
+    // sharing the sea-g2p phonemizer, hence the separate package.
+    case vieNeuOfflineV3 = "vieneu_offline_v3"
 
     var id: String { rawValue }
 
@@ -37,9 +46,10 @@ enum TTSVoice: String, CaseIterable, Identifiable, Codable {
         case .vieNeu: return "VieNeu-TTS"
         case .gwenTTS: return "Gwen-TTS (voice clone)"
         case .piperOffline: return "Piper (offline)"
-        case .vieNeuOffline: return "VieNeu-TTS (offline)"
+        case .vieNeuOfflineV2: return "VieNeu-TTS v2 (offline)"
+        case .vieNeuOfflineV3: return "VieNeu-TTS v3 (offline)"
         }
     }
 
-    var isOffline: Bool { self == .piperOffline || self == .vieNeuOffline }
+    var isOffline: Bool { self == .piperOffline || self == .vieNeuOfflineV2 || self == .vieNeuOfflineV3 }
 }
