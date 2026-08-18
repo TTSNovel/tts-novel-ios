@@ -17,6 +17,7 @@
 		272B8EF9C52E7DF8619BF28E /* VieNeuLlamaBackbone.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA31171C63667A0606B7526E /* VieNeuLlamaBackbone.swift */; };
 		288E6EF37C418E4E17F10599 /* sherpa-onnx in Frameworks */ = {isa = PBXBuildFile; productRef = 7077642E7C1882099C491E58 /* sherpa-onnx */; };
 		28A0F9F70531C73AD774BBF7 /* VieNeuOfflineUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 014778C776BDEF84CC3FB911 /* VieNeuOfflineUITests.swift */; };
+		49B2BCD8A1494EE4845A4135 /* PreloadBufferingUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86D3C2C1B53E4FC1A31291F4 /* PreloadBufferingUITests.swift */; };
 		2BB8C9D711E58934FA477FBC /* SeaG2P.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = B34AF307CC8604013EA477E1 /* SeaG2P.xcframework */; };
 		2CA637BB88DEB4D631AD6575 /* VieNeuOfflineVoice.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E5E71CE8D5DA0417F274A59 /* VieNeuOfflineVoice.swift */; };
 		329DA27C71D1EAD15CB7E3EF /* BookRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5117F1E588A2F64078970C56 /* BookRow.swift */; };
@@ -110,6 +111,7 @@
 /* Begin PBXFileReference section */
 		004CA44AC74B9034C629CF09 /* AudioInterruptionUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioInterruptionUITests.swift; sourceTree = "<group>"; };
 		014778C776BDEF84CC3FB911 /* VieNeuOfflineUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VieNeuOfflineUITests.swift; sourceTree = "<group>"; };
+		86D3C2C1B53E4FC1A31291F4 /* PreloadBufferingUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreloadBufferingUITests.swift; sourceTree = "<group>"; };
 		02A238C8FEF0622E96FC931A /* SessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStore.swift; sourceTree = "<group>"; };
 		071CA2A33B111AED63F779E3 /* VieNeuOfflineTTSService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VieNeuOfflineTTSService.swift; sourceTree = "<group>"; };
 		0AB3E443BF3F4310A7E50663 /* voice_bich_ngoc.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = voice_bich_ngoc.json; sourceTree = "<group>"; };
@@ -268,6 +270,7 @@
 				47FD1E5D650E95E120358C8E /* LibraryUITests.swift */,
 				BB44137B32FE2CC7F103757F /* LoginFlowUITests.swift */,
 				8DBCCF9522AFEE7CBAD6CA7D /* OfflineDownloadUITests.swift */,
+				86D3C2C1B53E4FC1A31291F4 /* PreloadBufferingUITests.swift */,
 				39CB3F89A05B839BE6D59815 /* PlaybackPersistenceUITests.swift */,
 				A23CE4FF9D11C814434BC096 /* ResumeFlowUITests.swift */,
 				E77B7759E1190A621260BC2D /* SettingsAndPlaybarLayoutUITests.swift */,
@@ -597,6 +600,7 @@
 				3B239E1D125E36808FF2C928 /* LibraryUITests.swift in Sources */,
 				B1158413D4404F3BA886912F /* LoginFlowUITests.swift in Sources */,
 				525D00CEE7BDBD175A01D2E4 /* OfflineDownloadUITests.swift in Sources */,
+				49B2BCD8A1494EE4845A4135 /* PreloadBufferingUITests.swift in Sources */,
 				8B9DFD7D380097A7AE637604 /* PlaybackPersistenceUITests.swift in Sources */,
 				5D9892CB3ADD91F8903A819C /* ResumeFlowUITests.swift in Sources */,
 				4C2FD0CE1A38BE36C260D241 /* SettingsAndPlaybarLayoutUITests.swift in Sources */,

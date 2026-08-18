@@ -38,7 +38,26 @@ final class ReaderPlaybackController: ObservableObject {
     /// everything before the resume point is treated as already "through"
     /// without needing to actually be fetched (see `prepareResume`), and a
     /// plain count would silently exclude that prefix.
+    ///
+    /// This is the right value for *gating* (`waitForInitialBuffer` needs
+    /// guaranteed-in-order-ready audio), but a poor one for a *progress
+    /// display*: fetches complete out of order (concurrent, network/CPU
+    /// timing varies), so this can sit frozen behind one slow straggler
+    /// while a dozen sentences *ahead* of it have actually already
+    /// finished, then jump straight to the target the moment the straggler
+    /// lands — see `preloadedDisplayCount` for the number that's actually
+    /// meant to be shown incrementing sentence-by-sentence.
     @Published private(set) var preloadedThroughIndex = -1
+    /// Sentences with ready audio, counted as they actually finish
+    /// (regardless of fetch order) plus whatever prefix `prepareResume`/
+    /// `beginChapter` credited as already-good without fetching — the
+    /// "N" PlaybackBar's "⇩N/total" and buffered-progress bar should show.
+    /// Deliberately separate from `preloadedThroughIndex`: that one only
+    /// advances contiguously (see its doc comment), which reads as the
+    /// progress bar doing nothing for a while and then jumping straight to
+    /// the target once the slowest in-window fetch finally lands, instead
+    /// of ticking up as each sentence's audio actually becomes ready.
+    @Published private(set) var preloadedDisplayCount = 0
     /// Mirrors `player.isPlaying`, but as this object's own @Published
     /// property — PlaybackBar only observes ReaderPlaybackController, so a
     /// change on the (separate) AudioPlaybackService object doesn't by
@@ -48,6 +67,35 @@ final class ReaderPlaybackController: ObservableObject {
     /// explicitly at every play/pause/resume/stop/finish transition below.
     @Published private(set) var isPlaying = false
     @Published var errorMessage: String?
+    /// Bumped alongside every user-facing error surfaced above (both this
+    /// and `loadError`) — WebnovelReaderApp observes this to pop an
+    /// app-wide alert regardless of which screen is currently on screen.
+    /// `errorMessage`/`loadError` alone aren't enough: they only render
+    /// inline on ReaderView, which isn't guaranteed to be visible since
+    /// playback keeps going in the background across navigation (that's the
+    /// whole point of this controller being app-wide) — without this, the
+    /// only place an error was ever actually noticeable was EventLogStore's
+    /// history screen. A counter (rather than reacting to `lastErrorMessage`
+    /// changing) also alerts on a second failure whose text happens to
+    /// repeat verbatim, which a plain equality-based onChange would miss.
+    ///
+    /// `lastErrorMessage` deliberately carries the same full detail
+    /// (book/chapter/sentence + underlying error) as the matching
+    /// EventLogStore entry, not the short, generic text `errorMessage`/
+    /// `loadError` show inline — this alert is the one place most users will
+    /// actually see an error, so it should say exactly what went wrong
+    /// rather than send them digging through history for the detail.
+    @Published private(set) var lastErrorMessage: String?
+    @Published private(set) var errorEventID = 0
+
+    private func surfaceError(_ message: String, detail: String?) {
+        if let detail, !detail.isEmpty {
+            lastErrorMessage = "\(message)\n\(detail)"
+        } else {
+            lastErrorMessage = message
+        }
+        errorEventID += 1
+    }
     /// Set by PlaybackBar's title tap (it lives outside any NavigationStack
     /// — see its doc comment — so it can't use NavigationLink directly);
     /// LibraryView observes this and pushes the route onto its own
@@ -100,12 +148,16 @@ final class ReaderPlaybackController: ObservableObject {
             if active { scheduleAutoStop() }
         }
     }
-    /// Max concurrent sentence-audio fetches allowed at once — user-
-    /// configurable (Cài đặt đọc). NOT a fixed look-ahead distance from the
-    /// playhead: `refillPreloadQueue()` keeps this many in flight
-    /// continuously, sliding forward through the rest of the chapter as
-    /// each one completes, whether or not playback is actually active
-    /// (raising this immediately tops up to the new limit).
+    /// How many sentences ahead of the playhead to keep buffered — user-
+    /// configurable (Cài đặt đọc, "Số câu tải trước"). A look-ahead
+    /// *distance*, not a concurrency limit: `refillPreloadQueue()` queues
+    /// every sentence up to `currentSentenceIndex + preloadAhead`, but only
+    /// `maxConcurrentFetches` of those actually fetch at once (see there) —
+    /// raising this to 20+ widens how far ahead buffering reaches without
+    /// spraying 20 requests at the network/backend simultaneously. Keeps
+    /// buffering whether or not playback is actually active (raising this
+    /// immediately tops up to the new window), and survives a voice/speed
+    /// change mid-chapter (see `voice`'s didSet).
     @Published var preloadAhead: Int {
         didSet {
             UserDefaults.standard.set(preloadAhead, forKey: Keys.preloadAhead)
@@ -138,12 +190,59 @@ final class ReaderPlaybackController: ObservableObject {
     /// ever moves forward. Reset to the chapter's start index in
     /// `beginChapter`/`prepareResume`.
     private var preloadCursor = 0
+    /// How many leading sentences `preloadedDisplayCount` should credit
+    /// without a matching `preloadedIndices` entry — the chapter's start
+    /// index on a fresh `beginChapter`, or the resume position on
+    /// `prepareResume` (mirrors `preloadedThroughIndex`'s `startIndex - 1`/
+    /// `sentenceIndex - 1` seeding, just as a count instead of an index).
+    private var preloadedPrefixCount = 0
+    /// Real cap on simultaneous in-flight fetches, independent of
+    /// `preloadAhead` — that setting is how *far* ahead to buffer, this is
+    /// how many of that window's fetches actually run at once. Keeping this
+    /// small regardless of how large `preloadAhead` is set to (up to 20 in
+    /// settings) avoids bursting the TTS backend with a wall of
+    /// simultaneous requests; `refillPreloadQueue()` tops back up to this
+    /// count every time a fetch completes, so the window still fills in
+    /// full, just a few sentences at a time instead of all at once.
+    private let maxConcurrentFetches = 3
+    /// Extra attempts (beyond the first) for a single sentence's *online*
+    /// TTS fetch, on top of the first try — offline synthesis (VieNeu/
+    /// Piper) never goes through this, since a local failure isn't
+    /// transient the way a dropped connection is. Added after GCP Cloud Run
+    /// logs for tts-gpu showed `429 "no available instance"` responses and
+    /// a client-visible "The network connection was lost" right when the
+    /// server's own log had a multi-minute gap — the *same* sentence text
+    /// then succeeded moments later on the app's next manual retry. A
+    /// short, capped number of automatic retries here catches exactly that
+    /// case without a user having to notice playback stopped and press Play
+    /// again themselves. Capped (not unbounded) so a hard failure — wrong
+    /// voice config, revoked auth — still surfaces promptly instead of
+    /// silently stalling playback for a long chain of doomed retries.
+    private let maxTTSFetchRetries = 2
     /// One fetch per sentence index, started either by the main play
     /// loop or by look-ahead prefetch — awaiting the same Task twice
     /// (once from prefetch, once from playback reaching that index) just
     /// returns the cached result, same idea as reader.js's
     /// `preloadCache[i]` Promise map.
     private var audioTasks: [Int: Task<Data, Error>] = [:]
+
+    /// Cancels every in-flight fetch before dropping them — plain
+    /// `audioTasks = [:]` (what every reset site here used to do) drops the
+    /// dictionary's references but does NOT stop the underlying `Task`s:
+    /// they keep running to completion in the background, burning CPU on
+    /// synthesis for a chapter/generation nobody's waiting on anymore.
+    /// Concretely, on-device Piper/VieNeu synthesis is CPU-bound, so a
+    /// still-running orphaned fetch from a chapter the user already left
+    /// competes for the same cores as the *new* chapter's own preload —
+    /// observed as a single sentence taking 20+ seconds instead of a
+    /// fraction of that. `markPreloaded`'s generation check already made
+    /// orphaned results harmless once they eventually land, but nothing
+    /// previously made them stop *promptly*.
+    private func cancelInFlightFetches() {
+        for task in audioTasks.values { task.cancel() }
+        audioTasks = [:]
+    }
+
     private var preloadedIndices: Set<Int> = []
     /// Actual fetched audio bytes, kept once a fetch completes — separate
     /// from `audioTasks` (in-flight only; an entry is removed from there
@@ -325,7 +424,9 @@ final class ReaderPlaybackController: ObservableObject {
         } catch {
             guard generation == self.generation else { return }
             loadError = "Không tải được nội dung chương"
-            EventLogStore.shared.record(.error, "Không tải được nội dung chương", detail: "\(book.title) — Chương \(chapterIndex + 1): \(error.localizedDescription)")
+            let detail = "\(book.title) — Chương \(chapterIndex + 1): \(error.localizedDescription)"
+            surfaceError(loadError!, detail: detail)
+            EventLogStore.shared.record(.error, "Không tải được nội dung chương", detail: detail)
         }
     }
 
@@ -409,10 +510,12 @@ final class ReaderPlaybackController: ObservableObject {
     func stop() {
         active = false
         generation += 1
-        audioTasks = [:]
+        cancelInFlightFetches()
         preloadedIndices = []
         preloadedData = [:]
         preloadedThroughIndex = -1
+        preloadedPrefixCount = 0
+        preloadedDisplayCount = 0
         pendingResumeIndex = nil
         clearAutoStopState()
         player.stop()
@@ -511,8 +614,10 @@ final class ReaderPlaybackController: ObservableObject {
         preloadedIndices = []
         preloadedData = [:]
         preloadedThroughIndex = sentenceIndex - 1
+        preloadedPrefixCount = sentenceIndex
+        preloadedDisplayCount = sentenceIndex
         preloadCursor = sentenceIndex
-        audioTasks = [:]
+        cancelInFlightFetches()
         refillPreloadQueue()
     }
 
@@ -544,12 +649,54 @@ final class ReaderPlaybackController: ObservableObject {
             preloadedIndices = []
             preloadedData = [:]
             preloadedThroughIndex = startIndex - 1
+            preloadedPrefixCount = startIndex
+            preloadedDisplayCount = startIndex
             preloadCursor = startIndex
-            audioTasks = [:]
+            cancelInFlightFetches()
             generation += 1
         }
         active = true
-        Task { await playCurrentSentence(generation: generation) }
+        let generation = self.generation
+        refillPreloadQueue()
+        // Show the loading spinner across the buffer wait below, not just
+        // across the single-sentence fetch inside playCurrentSentence —
+        // otherwise pressing Play on a cold chapter (no cache yet) shows no
+        // feedback at all until the whole buffer wait finishes.
+        isLoadingAudio = true
+        Task {
+            await waitForInitialBuffer(startIndex: startIndex, generation: generation)
+            await playCurrentSentence(generation: generation)
+        }
+    }
+
+    /// Waits for the preload window to actually fill up to `preloadAhead`
+    /// sentences (or the end of the chapter, whichever is sooner) before
+    /// the first sentence starts playing — so a cold start (no cache yet)
+    /// buffers ahead first instead of playing sentence 1 immediately and
+    /// then catching up to the fetch queue sentence by sentence, which is
+    /// what made playback stutter right after pressing Play on a fresh
+    /// chapter. If preloading already had a head start (see
+    /// `prepareResume`), this resolves immediately since the target is
+    /// already met.
+    ///
+    /// Bounded by a timeout so a single stuck fetch (e.g. a preload task
+    /// whose offline synthesis is still contending for CPU with an
+    /// orphaned fetch from a chapter just left — see
+    /// `cancelInFlightFetches()` — or, for the online path, one that's
+    /// exhausted `fetchOnlineAudioWithRetry`'s retries and failed for good)
+    /// can't hang playback forever; past that, it just starts with
+    /// whatever is ready, same as before this existed. 60s errs generous:
+    /// on-device CPU-bound synthesis (Piper/VieNeu) for a full 20-sentence
+    /// window has no hard latency bound, and this is a backstop against a
+    /// stuck fetch, not the common-case wait.
+    private func waitForInitialBuffer(startIndex: Int, generation: Int) async {
+        guard sentences.indices.contains(startIndex) else { return }
+        let boundary = min(startIndex + preloadAhead - 1, sentences.count - 1)
+        let deadline = Date().addingTimeInterval(60)
+        while preloadedThroughIndex < boundary {
+            guard active, generation == self.generation, Date() < deadline else { return }
+            try? await Task.sleep(nanoseconds: 150_000_000)
+        }
     }
 
     private func pause() {
@@ -585,7 +732,15 @@ final class ReaderPlaybackController: ObservableObject {
     }
 
     private func playCurrentSentence(generation: Int) async {
-        guard active, generation == self.generation else { return }
+        // isLoadingAudio may already be true from beginChapter's initial-
+        // buffer wait (see waitForInitialBuffer) — reset it here too, since
+        // this guard can now be the first thing to see a stop()/chapter
+        // switch that happened *during* that wait, and stop() itself
+        // doesn't touch isLoadingAudio.
+        guard active, generation == self.generation else {
+            isLoadingAudio = false
+            return
+        }
         guard currentSentenceIndex < sentences.count else {
             // Ran out of sentences normally — end of chapter. Sleep timer
             // is deliberately left running here: resumeAutoPlayIfNeeded may
@@ -594,6 +749,7 @@ final class ReaderPlaybackController: ObservableObject {
             // happen (see abandonSleepTimerIfIdle()).
             active = false
             isPlaying = false
+            isLoadingAudio = false
             highlightedSentenceIndex = nil
             updateNowPlayingProgress()
             handleChapterFinished()
@@ -635,11 +791,13 @@ final class ReaderPlaybackController: ObservableObject {
             isLoadingAudio = false
             guard generation == self.generation else { return }
             errorMessage = "Không tạo được audio — thử lại hoặc đổi giọng đọc"
+            let detail = "\(playbackDetail() ?? "") — \(error.localizedDescription)"
+            surfaceError("Không tạo được audio", detail: detail)
             active = false
             isPlaying = false
             updateNowPlayingProgress()
             clearAutoStopState()
-            EventLogStore.shared.record(.error, "Không tạo được audio", detail: "\(playbackDetail() ?? "") — \(error.localizedDescription)")
+            EventLogStore.shared.record(.error, "Không tạo được audio", detail: detail)
         }
     }
 
@@ -674,7 +832,7 @@ final class ReaderPlaybackController: ObservableObject {
     private func refillPreloadQueue() {
         guard !sentences.isEmpty else { return }
         let boundary = min(currentSentenceIndex + preloadAhead, sentences.count - 1)
-        while preloadCursor <= boundary {
+        while preloadCursor <= boundary, audioTasks.count < maxConcurrentFetches {
             preload(index: preloadCursor)
             preloadCursor += 1
         }
@@ -713,7 +871,7 @@ final class ReaderPlaybackController: ObservableObject {
                 // right here on-device (see PiperOfflineTTSService).
                 data = try await PiperOfflineTTSService.shared.synthesize(text: text, speed: speed)
             } else {
-                data = try await APIClient.shared.synthesize(
+                data = try await self.fetchOnlineAudioWithRetry(
                     baseURL: baseURL, text: text, voice: voice, speed: speed, gwenSpeaker: gwenTTSSpeaker
                 )
             }
@@ -722,16 +880,63 @@ final class ReaderPlaybackController: ObservableObject {
         }
     }
 
+    /// Retries a failed *online* TTS fetch up to `maxTTSFetchRetries` more
+    /// times (see its doc comment), but only for errors that look transient
+    /// — a dropped/timed-out connection, or the server queue rejecting the
+    /// request (429) / a backend hiccup (5xx). Retrying `.notAuthenticated`
+    /// or a malformed response would just burn through the retry budget on
+    /// a failure that can't self-resolve, delaying the moment the real
+    /// error reaches the user. Linear backoff (1s, then 2s) rather than
+    /// immediate retry, giving the Cloud Run GPU fleet a moment to free up
+    /// an instance instead of hammering it again right away.
+    private func fetchOnlineAudioWithRetry(
+        baseURL: URL, text: String, voice: TTSVoice, speed: Double, gwenSpeaker: GwenTTSSpeaker?
+    ) async throws -> Data {
+        var attempt = 0
+        while true {
+            do {
+                return try await APIClient.shared.synthesize(
+                    baseURL: baseURL, text: text, voice: voice, speed: speed, gwenSpeaker: gwenSpeaker
+                )
+            } catch {
+                guard attempt < maxTTSFetchRetries, Self.isRetryableTTSError(error) else { throw error }
+                attempt += 1
+                try await Task.sleep(nanoseconds: UInt64(attempt) * 1_000_000_000)
+            }
+        }
+    }
+
+    private static func isRetryableTTSError(_ error: Error) -> Bool {
+        if let apiError = error as? APIError {
+            switch apiError {
+            case .httpStatus(let code): return code == 429 || (500...599).contains(code)
+            case .invalidResponse: return true
+            case .notAuthenticated: return false
+            }
+        }
+        if let urlError = error as? URLError {
+            switch urlError.code {
+            case .networkConnectionLost, .timedOut, .notConnectedToInternet, .dnsLookupFailed, .cannotConnectToHost, .cannotFindHost:
+                return true
+            default:
+                return false
+            }
+        }
+        return false
+    }
+
     /// Stores the fetched audio, removes it from `audioTasks` (it's done —
     /// no longer "in flight"), advances the contiguous
-    /// `preloadedThroughIndex` frontier, and calls `refillPreloadQueue()`
-    /// in case the window has since slid forward (currentSentenceIndex
-    /// advanced) enough to include a new sentence.
+    /// `preloadedThroughIndex` frontier and the order-independent
+    /// `preloadedDisplayCount`, and calls `refillPreloadQueue()` in case the
+    /// window has since slid forward (currentSentenceIndex advanced) enough
+    /// to include a new sentence.
     private func markPreloaded(index: Int, data: Data, generation: Int) {
         guard generation == self.generation else { return }
         preloadedData[index] = data
         audioTasks[index] = nil
         preloadedIndices.insert(index)
+        preloadedDisplayCount = preloadedPrefixCount + preloadedIndices.count
         var next = preloadedThroughIndex + 1
         while preloadedIndices.contains(next) {
             preloadedThroughIndex = next

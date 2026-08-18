@@ -9,6 +9,13 @@ struct WebnovelReaderApp: App {
     @StateObject private var network = NetworkMonitor.shared
     @StateObject private var playback = ReaderPlaybackController.shared
     @StateObject private var eventLog = EventLogStore.shared
+    // Local copy of playback.lastErrorMessage, captured only when
+    // errorEventID actually changes (see ReaderPlaybackController's doc
+    // comment on that pair) — driving the alert straight off
+    // playback.lastErrorMessage would re-show it every time this Group
+    // re-renders for an unrelated reason, since optionals don't have a
+    // "was just dismissed" state of their own.
+    @State private var alertMessage: String?
 
     init() {
         // .playback (not .ambient/.soloAmbient) is what keeps audio going
@@ -85,6 +92,17 @@ struct WebnovelReaderApp: App {
                 // yet). Belt-and-suspenders: attach directly.
                 PlaybackBar()
                     .environmentObject(playback)
+            }
+            .onChange(of: playback.errorEventID) { _, _ in
+                alertMessage = playback.lastErrorMessage
+            }
+            .alert("Lỗi", isPresented: Binding(
+                get: { alertMessage != nil },
+                set: { isPresented in if !isPresented { alertMessage = nil } }
+            )) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(alertMessage ?? "")
             }
         }
     }

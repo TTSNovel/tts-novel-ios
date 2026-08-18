@@ -107,17 +107,27 @@ struct PlaybackBar: View {
                         Text("\(min(playback.currentSentenceIndex + 1, playback.sentenceCount))/\(playback.sentenceCount)")
                             .font(.caption2)
                             .foregroundStyle(.secondary)
-                        // Specific "preloaded through sentence N" number,
-                        // separate from the read-position counter — a
-                        // gray-fill bar alone only showed a fraction, not
-                        // which exact sentence preload had actually reached.
-                        // Same "N/total" shape as the read-position counter
-                        // instead of a bare number, so it's unambiguous
-                        // this is also relative to the chapter's total.
+                            .accessibilityIdentifier("readPositionText")
+                        // Specific "sentences preloaded" count, separate
+                        // from the read-position counter — a gray-fill bar
+                        // alone only showed a fraction, not how many
+                        // sentences preload had actually finished. Same
+                        // "N/total" shape as the read-position counter
+                        // instead of a bare number, so it's unambiguous this
+                        // is also relative to the chapter's total.
+                        // `preloadedDisplayCount`, not `preloadedThroughIndex
+                        // + 1` — the latter only advances contiguously (see
+                        // its doc comment), which reads as this number
+                        // freezing while one slow straggler fetch blocks a
+                        // dozen already-finished sentences ahead of it, then
+                        // jumping straight to the target the instant that
+                        // straggler lands, instead of ticking up smoothly as
+                        // each sentence's audio actually becomes ready.
                         if playback.preloadedThroughIndex >= 0 {
-                            Text("⇩\(min(playback.preloadedThroughIndex + 1, playback.sentenceCount))/\(playback.sentenceCount)")
+                            Text("⇩\(min(playback.preloadedDisplayCount, playback.sentenceCount))/\(playback.sentenceCount)")
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
+                                .accessibilityIdentifier("preloadPositionText")
                         }
                     }
                     .padding(.bottom, 4)
@@ -195,17 +205,18 @@ struct PlaybackBar: View {
         return Double(min(playback.currentSentenceIndex + 1, playback.sentenceCount)) / Double(playback.sentenceCount)
     }
 
-    // Deliberately mirrors the "⇩N/total" text above (preloadedThroughIndex),
-    // NOT playback.preloadedCount — preloadedCount is a raw count of
-    // sentences actually fetched *this session*, which undercounts on a
-    // resume: prepareResume seeds preloadedThroughIndex at (resume position
-    // - 1) since everything before that was already read/doesn't need
-    // preloading, but those skipped sentences never enter preloadedCount.
-    // Using preloadedCount here made this gray fill visibly stop short of
-    // where the "⇩N/total" number said preload had actually reached.
+    // Mirrors the "⇩N/total" text above — playback.preloadedDisplayCount,
+    // NOT preloadedThroughIndex + 1. An earlier version used a raw
+    // this-session fetch count here, which undercounted on a resume
+    // (prepareResume treats everything before the resume position as
+    // already good without fetching it, so a raw count silently excluded
+    // that prefix) — preloadedDisplayCount includes that prefix, so it
+    // doesn't have that gap, while still — unlike preloadedThroughIndex —
+    // ticking up as each sentence's fetch actually finishes instead of
+    // freezing behind whichever one in the window is slowest.
     private var preloadProgressValue: Double {
         guard playback.sentenceCount > 0 else { return 0 }
-        return Double(playback.preloadedThroughIndex + 1) / Double(playback.sentenceCount)
+        return Double(playback.preloadedDisplayCount) / Double(playback.sentenceCount)
     }
 }
 
