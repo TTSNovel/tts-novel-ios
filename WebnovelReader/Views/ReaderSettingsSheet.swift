@@ -15,14 +15,30 @@ struct ReaderSettingsSheet: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Giọng đọc") {
-                    Picker("Giọng đọc", selection: $playback.voice) {
+                Section("Model") {
+                    Picker("Model", selection: $playback.voice) {
                         ForEach(TTSVoice.allCases) { voice in
                             Text(voice.displayName).tag(voice)
                         }
                     }
-                    .pickerStyle(.inline)
-                    .labelsHidden()
+                    .pickerStyle(.menu)
+                    .accessibilityIdentifier("modelPicker")
+                }
+
+                // Only vieNeuOffline currently has more than one selectable
+                // speaker preset (see VieNeuOfflineVoice) — every other
+                // model has a single fixed voice, so this section only
+                // shows up once there's an actual choice to make.
+                if playback.voice == .vieNeuOffline {
+                    Section("Giọng đọc") {
+                        Picker("Giọng đọc", selection: $playback.vieNeuOfflineVoice) {
+                            ForEach(VieNeuOfflineVoice.allCases) { preset in
+                                Text(preset.displayName).tag(preset)
+                            }
+                        }
+                        .pickerStyle(.menu)
+                        .accessibilityIdentifier("vieNeuOfflineVoicePicker")
+                    }
                 }
 
                 Section("Tốc độ đọc") {

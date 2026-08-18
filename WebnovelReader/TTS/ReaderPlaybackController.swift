@@ -67,6 +67,14 @@ final class ReaderPlaybackController: ObservableObject {
     @Published var voice: TTSVoice {
         didSet { UserDefaults.standard.set(voice.rawValue, forKey: Keys.voice) }
     }
+    /// Which of the 4 bundled speaker presets `.vieNeuOffline` decodes with
+    /// (see VieNeuOfflineVoice) — irrelevant for every other `voice` case,
+    /// but kept as a single persisted setting rather than reset on model
+    /// switch, so it's remembered next time the user picks vieNeuOffline
+    /// again.
+    @Published var vieNeuOfflineVoice: VieNeuOfflineVoice {
+        didSet { UserDefaults.standard.set(vieNeuOfflineVoice.rawValue, forKey: Keys.vieNeuOfflineVoice) }
+    }
     @Published var speed: Double {
         didSet {
             UserDefaults.standard.set(speed, forKey: Keys.speed)
@@ -160,6 +168,7 @@ final class ReaderPlaybackController: ObservableObject {
 
     private enum Keys {
         static let voice = "reader.model"
+        static let vieNeuOfflineVoice = "reader.vieNeuOfflineVoice"
         static let speed = "reader.speed"
         static let autoNext = "reader.autoNext"
         static let autoStopMinutes = "reader.autoStopMinutes"
@@ -168,6 +177,9 @@ final class ReaderPlaybackController: ObservableObject {
 
     private init() {
         voice = TTSVoice(rawValue: UserDefaults.standard.string(forKey: Keys.voice) ?? "") ?? .piperVi
+        vieNeuOfflineVoice = VieNeuOfflineVoice(
+            rawValue: UserDefaults.standard.string(forKey: Keys.vieNeuOfflineVoice) ?? ""
+        ) ?? .thucDoan
         let savedSpeed = UserDefaults.standard.double(forKey: Keys.speed)
         speed = savedSpeed > 0 ? savedSpeed : 1.0
         autoNextChapter = UserDefaults.standard.bool(forKey: Keys.autoNext)
@@ -661,6 +673,7 @@ final class ReaderPlaybackController: ObservableObject {
     private func makeFetchTask(index: Int) -> Task<Data, Error> {
         let text = sentences[index]
         let voice = self.voice
+        let vieNeuOfflineVoice = self.vieNeuOfflineVoice
         let speed = self.speed
         let generation = self.generation
         let baseURL = SessionStore.baseURL
@@ -681,7 +694,9 @@ final class ReaderPlaybackController: ObservableObject {
                 // No network round trip — runs the bundled GGUF backbone +
                 // VieNeu-Codec ONNX decoder right here on-device (see
                 // VieNeuOfflineTTSService).
-                data = try await VieNeuOfflineTTSService.shared.synthesize(text: text, speed: speed)
+                data = try await VieNeuOfflineTTSService.shared.synthesize(
+                    text: text, speed: speed, voice: vieNeuOfflineVoice
+                )
             } else if voice.isOffline || !isConnected || !isLoggedIn {
                 // No network round trip — runs the bundled ONNX model
                 // right here on-device (see PiperOfflineTTSService).

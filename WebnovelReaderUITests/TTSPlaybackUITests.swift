@@ -95,10 +95,12 @@ final class TTSPlaybackUITests: XCTestCase {
     }
 
     private func selectVoice(_ name: String, app: XCUIApplication) {
-        // Both Pickers inside the Menu render as one flat list of Cells
-        // (voice options, a divider, then speed options) rather than
-        // nested submenus — no intermediate "Giọng đọc" tap needed.
+        // modelPicker is a .menu-style Picker (a dropdown) inside
+        // ReaderSettingsSheet's "Model" section — opening the sheet alone
+        // doesn't expose the voice options as buttons; the picker itself
+        // has to be tapped first to pop the option list open.
         app.buttons["voiceMenuButton"].tap()
+        app.buttons["modelPicker"].tap()
         let option = app.buttons[name]
         XCTAssertTrue(option.waitForExistence(timeout: 5), "voice option '\(name)' not found in menu")
         option.tap()

@@ -23,10 +23,10 @@ actor VieNeuOfflineTTSService {
 
     private init() {}
 
-    func synthesize(text: String, speed: Double) async throws -> Data {
+    func synthesize(text: String, speed: Double, voice: VieNeuOfflineVoice) async throws -> Data {
         let phonemes = try await SeaG2P.shared.phonemize(text)
         let codes = try await VieNeuLlamaBackbone.shared.generateSpeechCodes(phonemes: phonemes)
-        var pcm = try await VieNeuCodecDecoder.shared.decode(codes: codes)
+        var pcm = try await VieNeuCodecDecoder.shared.decode(codes: codes, voice: voice)
         guard !pcm.isEmpty else { throw VieNeuOfflineError.noAudioGenerated }
 
         if speed != 1.0, speed > 0 {

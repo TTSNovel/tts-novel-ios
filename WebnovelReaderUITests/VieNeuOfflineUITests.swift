@@ -22,9 +22,25 @@ final class VieNeuOfflineUITests: XCTestCase {
         XCTAssertTrue(playButton.waitForExistence(timeout: 10), "expected guest-mode auto-resume into a chapter")
 
         app.buttons["voiceMenuButton"].tap()
+
+        // modelPicker is a .menu-style Picker (a dropdown) — tapping it
+        // only opens the popup list; the option itself is a separate tap
+        // on the button that then appears.
+        app.buttons["modelPicker"].tap()
         let option = app.buttons["VieNeu-TTS (offline)"]
         XCTAssertTrue(option.waitForExistence(timeout: 5), "vieNeuOffline voice option not in menu")
         option.tap()
+
+        // Selecting vieNeuOffline should reveal the "Giọng đọc" preset
+        // picker (ReaderSettingsSheet only shows it once the chosen model
+        // actually has more than one voice) — exercise switching it too,
+        // not just that it's present.
+        let voicePicker = app.buttons["vieNeuOfflineVoicePicker"]
+        XCTAssertTrue(voicePicker.waitForExistence(timeout: 5), "Giọng đọc preset picker should appear for vieNeuOffline")
+        voicePicker.tap()
+        let presetOption = app.buttons["Xuân Vĩnh (Nam - Miền Nam)"]
+        XCTAssertTrue(presetOption.waitForExistence(timeout: 5), "expected preset option not in Giọng đọc menu")
+        presetOption.tap()
 
         // voiceMenuButton opens the full "Cài đặt đọc" sheet (ReaderSettingsSheet),
         // not a lightweight dropdown — selecting a Picker row does NOT
