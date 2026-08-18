@@ -22,6 +22,12 @@ struct ReaderSettingsSheet: View {
                         }
                     }
                     .pickerStyle(.menu)
+                    // .menu tints the selected-value text + chevron with
+                    // the app's accent color (blue) by default — .tint
+                    // here overrides that so it reads as a plain secondary-
+                    // gray value, matching every other row in this Form
+                    // (e.g. "Hẹn giờ tắt").
+                    .tint(.secondary)
                     .accessibilityIdentifier("modelPicker")
                 }
 
@@ -37,6 +43,7 @@ struct ReaderSettingsSheet: View {
                             }
                         }
                         .pickerStyle(.menu)
+                        .tint(.secondary)
                         .accessibilityIdentifier("vieNeuOfflineVoicePicker")
                     }
                 }
