@@ -13,6 +13,13 @@ enum TTSVoice: String, CaseIterable, Identifiable, Codable {
     case googleTTS = "google_tts"
     case vieNeu = "vieneu"
     case piperOffline = "piper_offline"
+    // Local-only, like piperOffline — never sent to /api/tts. Runs VieNeu's
+    // legacy v2-Turbo checkpoint (llama.cpp GGUF backbone + VieNeu-Codec ONNX
+    // decode) entirely on-device via VieNeuOfflineTTSService. A different
+    // checkpoint from the online "vieneu" voice (server runs v3-Turbo), so
+    // the voice/quality differs — same VI/EN code-switching capability
+    // (shared sea-g2p phonemizer) either way.
+    case vieNeuOffline = "vieneu_offline"
 
     var id: String { rawValue }
 
@@ -22,8 +29,9 @@ enum TTSVoice: String, CaseIterable, Identifiable, Codable {
         case .googleTTS: return "Google Cloud TTS"
         case .vieNeu: return "VieNeu-TTS"
         case .piperOffline: return "Piper (offline)"
+        case .vieNeuOffline: return "VieNeu-TTS (offline)"
         }
     }
 
-    var isOffline: Bool { self == .piperOffline }
+    var isOffline: Bool { self == .piperOffline || self == .vieNeuOffline }
 }

@@ -677,7 +677,12 @@ final class ReaderPlaybackController: ObservableObject {
         let isLoggedIn = SessionStore.shared.isLoggedIn
         return Task {
             let data: Data
-            if voice.isOffline || !isConnected || !isLoggedIn {
+            if voice == .vieNeuOffline {
+                // No network round trip — runs the bundled GGUF backbone +
+                // VieNeu-Codec ONNX decoder right here on-device (see
+                // VieNeuOfflineTTSService).
+                data = try await VieNeuOfflineTTSService.shared.synthesize(text: text, speed: speed)
+            } else if voice.isOffline || !isConnected || !isLoggedIn {
                 // No network round trip — runs the bundled ONNX model
                 // right here on-device (see PiperOfflineTTSService).
                 data = try await PiperOfflineTTSService.shared.synthesize(text: text, speed: speed)

@@ -58,7 +58,7 @@ struct ReaderView: View {
                     // public — ReaderPlaybackController.makeFetchTask falls
                     // back to the on-device voice for the exact same two
                     // reasons this footnote covers, so keep them in sync.
-                    if (!network.isConnected || !session.isLoggedIn) && playback.voice != .piperOffline {
+                    if (!network.isConnected || !session.isLoggedIn) && !playback.voice.isOffline {
                         Text(
                             network.isConnected
                                 ? "Chế độ khách — tạm dùng giọng đọc ngoại tuyến (đăng nhập ở Cài đặt để dùng giọng online)"
