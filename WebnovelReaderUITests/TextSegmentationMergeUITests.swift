@@ -68,7 +68,9 @@ final class TextSegmentationMergeUITests: XCTestCase {
         XCTAssertTrue(playButton.waitForExistence(timeout: 10))
         playButton.tap()
 
-        let quotedSentence = app.staticTexts
+        // Each sentence row is a real Button now (see ChapterPagerView's
+        // doc comment on why), not a StaticText.
+        let quotedSentence = app.buttons
             .matching(NSPredicate(format: "label CONTAINS %@", "Hướng Du khẽ thốt lên"))
             .firstMatch
         XCTAssertTrue(quotedSentence.waitForExistence(timeout: 10), "expected the sentence containing 'Hướng Du khẽ thốt lên'")

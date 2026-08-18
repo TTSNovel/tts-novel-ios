@@ -249,23 +249,49 @@ private struct ChapterPageContent: View {
             VStack(alignment: .leading, spacing: 6) {
                 ForEach(Array(playback.sentences.enumerated()), id: \.offset) { sentenceIndex, sentence in
                     let isHighlighted = sentenceIndex == playback.highlightedSentenceIndex
-                    Text(sentence)
-                        .font(sentenceIndex == 0 ? .title2.bold() : .body)
-                        .id(sentenceIndex)
-                        .padding(.vertical, 2)
-                        .padding(.horizontal, 4)
-                        .background(isHighlighted ? Color.readingHighlight : Color.clear)
-                        .clipShape(RoundedRectangle(cornerRadius: 4))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 4)
-                                .strokeBorder(Color.readingHighlightOutline, lineWidth: isHighlighted ? 2 : 0)
-                        )
-                        // Tapping a line jumps read-aloud straight to it —
-                        // contentShape widens the hit target to the full
-                        // padded row instead of just the glyphs themselves.
-                        .contentShape(Rectangle())
-                        .onTapGesture { playback.seek(to: sentenceIndex) }
-                        .accessibilityIdentifier("sentenceText_\(sentenceIndex)")
+                    // A real Button, not Text+.onTapGesture: this row sits
+                    // inside 3 nested pan/scroll surfaces (UIPageViewController's
+                    // own horizontal-paging UIScrollView, wrapping this
+                    // vertical SwiftUI ScrollView) — a bare .onTapGesture is
+                    // just a loose UITapGestureRecognizer with no priority
+                    // arrangement against those ancestors, so it's a
+                    // coin-flip which one wins a given touch. A real control
+                    // like Button gets the same "ancestor scroll views must
+                    // let my gesture fail first" relationship every List row
+                    // already relies on. .buttonStyle(.plain) strips
+                    // Button's default chrome/tint so the row still looks
+                    // exactly like the plain Text label it replaces — all
+                    // the actual visual state (background/border) lives on
+                    // the label content below, untouched by the button
+                    // style. See ReaderPlaybackController.seek's doc
+                    // comment for why taps could stop registering here.
+                    Button {
+                        playback.seek(to: sentenceIndex)
+                    } label: {
+                        Text(sentence)
+                            .font(sentenceIndex == 0 ? .title2.bold() : .body)
+                            // Explicit — .plain buttons shouldn't tint text,
+                            // but this exact codebase has hit accidental
+                            // accent-color text on a button label before
+                            // (see "Fix blue accent text on the Model/Giọng
+                            // đọc dropdown rows"); stating it plainly here
+                            // costs nothing and rules that class of bug out.
+                            .foregroundStyle(.primary)
+                            .padding(.vertical, 2)
+                            .padding(.horizontal, 4)
+                            .background(isHighlighted ? Color.readingHighlight : Color.clear)
+                            .clipShape(RoundedRectangle(cornerRadius: 4))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 4)
+                                    .strokeBorder(Color.readingHighlightOutline, lineWidth: isHighlighted ? 2 : 0)
+                            )
+                            // Widens the tap target to the full padded row
+                            // instead of just the glyphs themselves.
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .id(sentenceIndex)
+                    .accessibilityIdentifier("sentenceText_\(sentenceIndex)")
                 }
             }
         }

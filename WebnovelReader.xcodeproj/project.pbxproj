@@ -12,11 +12,13 @@
 		057BB42A7DC6DA1662FFC305 /* BookDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F60BA012E937FDC3266CEAAC /* BookDetailView.swift */; };
 		0BDDA8058FCDA7E8B0FA23D2 /* SessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02A238C8FEF0622E96FC931A /* SessionStore.swift */; };
 		12F8A89E5D0FD951278E87D3 /* ChapterListUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 590CE78C2F18BB27ED8D519A /* ChapterListUITests.swift */; };
+		179AED399EF62CC333779EF3 /* TapSeekAfterAutoAdvanceUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC0ED3C4F36F5C39C88477E6 /* TapSeekAfterAutoAdvanceUITests.swift */; };
 		1A30F8BB4FD35394AAA420C5 /* ReaderSettingsToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CB0DB5D451A84BABAD77673 /* ReaderSettingsToolbar.swift */; };
 		1BB202042E037EAF2316FE48 /* Book.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1B12EADCA0EFAF291FD9838 /* Book.swift */; };
 		1E0E32AB31ED6A61637E53D9 /* llama.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 89F7E8C2E2FA78F23BC3571D /* llama.xcframework */; };
 		1E26333C809C1F0021169E8D /* ChapterPagerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0730CC98F5494A9E7990C15 /* ChapterPagerView.swift */; };
 		1EFD6360A2C903E322D7E5E2 /* WebnovelReaderApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCCFA3ECCF1BC534D815BE89 /* WebnovelReaderApp.swift */; };
+		2485DFD67EE0DEF62885FE99 /* SelectPersistsAcrossChapterNavigationUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D44E9F6922443881D20F71F /* SelectPersistsAcrossChapterNavigationUITests.swift */; };
 		288E6EF37C418E4E17F10599 /* sherpa-onnx in Frameworks */ = {isa = PBXBuildFile; productRef = 7077642E7C1882099C491E58 /* sherpa-onnx */; };
 		2BB8C9D711E58934FA477FBC /* SeaG2P.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = B34AF307CC8604013EA477E1 /* SeaG2P.xcframework */; };
 		329DA27C71D1EAD15CB7E3EF /* BookRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5117F1E588A2F64078970C56 /* BookRow.swift */; };
@@ -151,6 +153,7 @@
 		55CB3F6DB5FF7C1BB4BBB5F6 /* VieNeuOfflineV2Voice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VieNeuOfflineV2Voice.swift; sourceTree = "<group>"; };
 		5820BF99535AA4318F7F6700 /* VieNeu-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "VieNeu-Bridging-Header.h"; sourceTree = "<group>"; };
 		590CE78C2F18BB27ED8D519A /* ChapterListUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChapterListUITests.swift; sourceTree = "<group>"; };
+		5D44E9F6922443881D20F71F /* SelectPersistsAcrossChapterNavigationUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectPersistsAcrossChapterNavigationUITests.swift; sourceTree = "<group>"; };
 		6501E541F5688086EE375D88 /* ChapterTitles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChapterTitles.swift; sourceTree = "<group>"; };
 		6587C63291898026681CC4FC /* Keychain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Keychain.swift; sourceTree = "<group>"; };
 		65F1934BFB315721963575A7 /* TextSegmentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextSegmentation.swift; sourceTree = "<group>"; };
@@ -202,6 +205,7 @@
 		E323E4940121D8CD5ED4F589 /* DownloadManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadManager.swift; sourceTree = "<group>"; };
 		E77B7759E1190A621260BC2D /* SettingsAndPlaybarLayoutUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsAndPlaybarLayoutUITests.swift; sourceTree = "<group>"; };
 		EA4C129AEC16B23659D86A76 /* TTSVoice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TTSVoice.swift; sourceTree = "<group>"; };
+		EC0ED3C4F36F5C39C88477E6 /* TapSeekAfterAutoAdvanceUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TapSeekAfterAutoAdvanceUITests.swift; sourceTree = "<group>"; };
 		EDC84C2E8A1DD5ADBEEB01FB /* voice_bich_ngoc.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = voice_bich_ngoc.json; sourceTree = "<group>"; };
 		EE3BDC6E3071EF88C43B9D16 /* sea_g2p.bin */ = {isa = PBXFileReference; lastKnownFileType = archive.macbinary; path = sea_g2p.bin; sourceTree = "<group>"; };
 		F456FE71D617BD6DEC0F52A6 /* VieNeuOfflineV2UITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VieNeuOfflineV2UITests.swift; sourceTree = "<group>"; };
@@ -299,9 +303,11 @@
 				39CB3F89A05B839BE6D59815 /* PlaybackPersistenceUITests.swift */,
 				A697616D2F5BEBE60837A03E /* PreloadBufferingUITests.swift */,
 				A23CE4FF9D11C814434BC096 /* ResumeFlowUITests.swift */,
+				5D44E9F6922443881D20F71F /* SelectPersistsAcrossChapterNavigationUITests.swift */,
 				E77B7759E1190A621260BC2D /* SettingsAndPlaybarLayoutUITests.swift */,
 				6F219E254BB907B7DA1E1118 /* SleepTimerUITests.swift */,
 				341E4EB55DA2D708E3E6ACAD /* SwipeChapterNavigationUITests.swift */,
+				EC0ED3C4F36F5C39C88477E6 /* TapSeekAfterAutoAdvanceUITests.swift */,
 				66BAAE1683F2331178ACEE75 /* TextSegmentationMergeUITests.swift */,
 				91A32907F3C51AD7EB26D010 /* TTSPlaybackUITests.swift */,
 				F456FE71D617BD6DEC0F52A6 /* VieNeuOfflineV2UITests.swift */,
@@ -662,10 +668,12 @@
 				8B9DFD7D380097A7AE637604 /* PlaybackPersistenceUITests.swift in Sources */,
 				BB1256783F7FF215F55A6D99 /* PreloadBufferingUITests.swift in Sources */,
 				5D9892CB3ADD91F8903A819C /* ResumeFlowUITests.swift in Sources */,
+				2485DFD67EE0DEF62885FE99 /* SelectPersistsAcrossChapterNavigationUITests.swift in Sources */,
 				4C2FD0CE1A38BE36C260D241 /* SettingsAndPlaybarLayoutUITests.swift in Sources */,
 				C07E4012188E3816DA5474D9 /* SleepTimerUITests.swift in Sources */,
 				8D4B263D90CC3BDF178CE22A /* SwipeChapterNavigationUITests.swift in Sources */,
 				CA7ECBB0F96F47DE90BDDA58 /* TTSPlaybackUITests.swift in Sources */,
+				179AED399EF62CC333779EF3 /* TapSeekAfterAutoAdvanceUITests.swift in Sources */,
 				CBDC4645A2FA724D73D289AC /* TextSegmentationMergeUITests.swift in Sources */,
 				01734EB50A00E0841EC71B45 /* VieNeuOfflineV2UITests.swift in Sources */,
 				9C2E323286400E45281A07A8 /* VieNeuOfflineV3UITests.swift in Sources */,

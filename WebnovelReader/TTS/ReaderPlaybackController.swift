@@ -464,7 +464,7 @@ final class ReaderPlaybackController: ObservableObject {
         if let local = DownloadManager.shared.localChapter(bookID: book.id, index: chapterIndex) {
             chapter = local
             player.updateNowPlaying(bookTitle: book.title, chapterTitle: local.title)
-            applyResumeIfNeeded(local)
+            prepareSentencesForDisplay(local)
             resumeAutoPlayIfNeeded()
             return
         }
@@ -472,7 +472,7 @@ final class ReaderPlaybackController: ObservableObject {
         if let cached = chapterCache[chapterIndex] {
             chapter = cached
             player.updateNowPlaying(bookTitle: book.title, chapterTitle: cached.title)
-            applyResumeIfNeeded(cached)
+            prepareSentencesForDisplay(cached)
             resumeAutoPlayIfNeeded()
             prefetchNeighborChapters()
             trimChapterCache()
@@ -486,7 +486,7 @@ final class ReaderPlaybackController: ObservableObject {
             guard generation == self.generation else { return }
             chapter = fetched
             player.updateNowPlaying(bookTitle: book.title, chapterTitle: fetched.title)
-            applyResumeIfNeeded(fetched)
+            prepareSentencesForDisplay(fetched)
             resumeAutoPlayIfNeeded()
             prefetchNeighborChapters()
             trimChapterCache()
@@ -552,17 +552,31 @@ final class ReaderPlaybackController: ObservableObject {
         chapterCache = chapterCache.filter { keepRange.contains($0.key) }
     }
 
-    /// Only ever applies once per `open()` — i.e. once per fresh navigation
-    /// into a book/chapter — matching "open app -> jump to saved chapter +
-    /// highlight saved sentence" without re-jumping on every subsequent
-    /// auto-advance or manual browse within the same session.
-    private func applyResumeIfNeeded(_ chapter: Chapter) {
-        guard !hasCheckedResume, let book else { return }
-        hasCheckedResume = true
-        guard let saved = ProgressStore.shared.localProgress(bookID: book.id), saved.chapterIndex == chapterIndex else {
-            return
+    /// Populates `sentences`/highlight for whichever chapter just loaded —
+    /// called unconditionally from every `loadChapter()` success path, not
+    /// just the ones that end up auto-playing. The reader's tap-to-select
+    /// rows (see `seek(to:)`) only exist when `sentences` is non-empty
+    /// (ReaderView/ChapterPagerView fall back to plain, non-interactive
+    /// text otherwise) — before this, that array was only ever filled by
+    /// `beginChapter()` (pressing Play, or auto-continuing into the next
+    /// chapter while already playing), so manually swiping to or picking a
+    /// chapter *without* already playing left `sentences` empty and the
+    /// whole select feature silently disappeared until Play was pressed.
+    ///
+    /// Only the very first chapter load of a session (`hasCheckedResume`
+    /// false, reset in `open()`) considers the saved cross-launch resume
+    /// position; every other chapter load (manual swipe/goTo, or
+    /// auto-next) starts at sentence 0 — landing on a chapter should show
+    /// its top, not silently re-jump to an unrelated old position.
+    private func prepareSentencesForDisplay(_ chapter: Chapter) {
+        var resumeIndex = 0
+        if !hasCheckedResume {
+            hasCheckedResume = true
+            if let book, let saved = ProgressStore.shared.localProgress(bookID: book.id), saved.chapterIndex == chapterIndex {
+                resumeIndex = saved.sentenceIndex
+            }
         }
-        prepareResume(sentenceIndex: saved.sentenceIndex)
+        prepareResume(sentenceIndex: resumeIndex)
     }
 
     private func resumeAutoPlayIfNeeded() {
@@ -603,18 +617,36 @@ final class ReaderPlaybackController: ObservableObject {
         }
     }
 
-    /// Tapping a sentence's text in ReaderView jumps playback straight to it
-    /// — an explicit "read from here" action, distinct from `prepareResume`
-    /// (which only primes a position for the *next* Play press without
-    /// interrupting whatever's already playing). Stops whatever's currently
-    /// playing, reuses `prepareResume`'s exact preload-window seeding for
-    /// the tapped index, then immediately starts — the same `start()` path
-    /// a fresh cold-open resume takes once the user presses Play.
+    /// Tapping a sentence's text in ReaderView selects it as the read-aloud
+    /// position — highlights it and primes preloading from there — WITHOUT
+    /// starting audio. Selecting is a "point at where to read from" action,
+    /// distinct from actually pressing Play; only `togglePlayback()`
+    /// starts/resumes sound. Reuses `prepareResume`'s exact preload-window
+    /// seeding for the tapped index, same priming a fresh cold-open resume
+    /// gets before the user's first Play press.
+    ///
+    /// Always logs on entry (before the range guard) — reported symptom is
+    /// "tapping a sentence stops doing anything after a while," which could
+    /// mean either the tap gesture itself stops reaching this method (a
+    /// SwiftUI/UIKit gesture-recognition conflict — the ChapterPagerView doc
+    /// comment covers the nested UIPageViewController/ScrollView touch
+    /// handling this sits inside) or that it's reached but silently guarded
+    /// out. If a future report shows no "Bấm chọn câu" entry at all for a
+    /// tap the user remembers making, that's the former; if the entry is
+    /// there but nothing happened, it's the latter — ActionHistoryView is
+    /// how to tell the two apart without a live debugger attached.
     func seek(to index: Int) {
-        guard sentences.indices.contains(index) else { return }
+        let detail = book.map { "\($0.title) — Chương \(chapterIndex + 1), câu \(index + 1)" }
+        EventLogStore.shared.record(.navigation, "Bấm chọn câu \(index + 1)", detail: detail)
+        guard sentences.indices.contains(index) else {
+            EventLogStore.shared.record(
+                .error, "Bấm chọn câu ngoài phạm vi",
+                detail: "\(detail ?? "") — chỉ có \(sentences.count) câu"
+            )
+            return
+        }
         stop()
         prepareResume(sentenceIndex: index)
-        start()
     }
 
     /// Lock-screen / Control-Center Play — unlike togglePlayback() (used by

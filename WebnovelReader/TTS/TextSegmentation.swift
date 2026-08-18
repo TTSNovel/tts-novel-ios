@@ -125,11 +125,17 @@ enum TextSegmentation {
         return merged
     }
 
+    /// Comma boundaries, but only the ones outside any open quote — a plain
+    /// `,\s*` regex split doesn't know a comma inside a quote isn't a safe
+    /// cut point either (confirmed in the wild: a `<p>` reading `“Ngươi nói
+    /// xong chưa? Nói xong thì cúp máy đi, nhé.” Hướng Du...` split right at
+    /// "đi, nhé" — same unmatched-quote failure mode `mergeUnbalancedQuotes`
+    /// above exists to prevent, just one level down).
     private static func chunkByComma(_ sentence: String) -> [String] {
         guard sentence.count > maxChars else { return [sentence] }
         var chunks: [String] = []
         var current = ""
-        for part in sentence.split(separator: /,\s*/).map(String.init) {
+        for part in splitOutsideQuotes(sentence, on: ",") {
             let next = current.isEmpty ? part : current + ", " + part
             if next.count > maxChars, !current.isEmpty {
                 chunks.append(current)
@@ -140,5 +146,29 @@ enum TextSegmentation {
         }
         if !current.isEmpty { chunks.append(current) }
         return chunks
+    }
+
+    private static func splitOutsideQuotes(_ text: String, on separator: Character) -> [String] {
+        var parts: [String] = []
+        var current = ""
+        var depth = 0
+        var inStraightQuote = false
+        for ch in text {
+            if ch == "\"" {
+                inStraightQuote.toggle()
+            } else if openToClose[ch] != nil {
+                depth += 1
+            } else if closingQuoteChars.contains(ch), depth > 0 {
+                depth -= 1
+            }
+            if ch == separator, depth == 0, !inStraightQuote {
+                parts.append(current)
+                current = ""
+            } else {
+                current.append(ch)
+            }
+        }
+        parts.append(current)
+        return parts.map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
     }
 }
