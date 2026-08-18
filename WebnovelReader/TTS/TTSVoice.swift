@@ -12,6 +12,13 @@ enum TTSVoice: String, CaseIterable, Identifiable, Codable {
     case piperVi = "piper_vi"
     case googleTTS = "google_tts"
     case vieNeu = "vieneu"
+    // gwen-tts (Qwen3-TTS-0.6B finetune), GPU-backed voice cloning —
+    // separate Cloud Run service (tts-gpu, see tts-pipeline-infra), routed
+    // there by the server proxy same as reader.js. Much slower than the
+    // other server-side voices (measured 10-90s per sentence, autoregressive
+    // decode with no fast path) — see the per-request timeout override in
+    // APIClient.synthesize.
+    case gwenTTS = "gwen_tts"
     case piperOffline = "piper_offline"
     // Local-only, like piperOffline — never sent to /api/tts. Runs VieNeu's
     // legacy v2-Turbo checkpoint (llama.cpp GGUF backbone + VieNeu-Codec ONNX
@@ -28,6 +35,7 @@ enum TTSVoice: String, CaseIterable, Identifiable, Codable {
         case .piperVi: return "Piper VN"
         case .googleTTS: return "Google Cloud TTS"
         case .vieNeu: return "VieNeu-TTS"
+        case .gwenTTS: return "Gwen-TTS (voice clone)"
         case .piperOffline: return "Piper (offline)"
         case .vieNeuOffline: return "VieNeu-TTS (offline)"
         }

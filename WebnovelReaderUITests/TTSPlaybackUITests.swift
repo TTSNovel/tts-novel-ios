@@ -83,6 +83,59 @@ final class TTSPlaybackUITests: XCTestCase {
         }
     }
 
+    /// Separate from testPlayAudioForEveryVoice's loop for two reasons:
+    /// gwen_tts needs a much longer timeout (measured 10-90+s per sentence
+    /// on its Cloud Run GPU service, no fast path yet — see
+    /// APIClient.synthesize's per-request timeout override) than the other
+    /// voices' shared 30s, and it has an extra "Giọng đọc" speaker
+    /// sub-picker step (like VieNeuOfflineUITests) the other voices don't.
+    ///
+    /// Deliberately does NOT reuse testPlayAudioForEveryVoice's
+    /// login()-then-search-Library-by-title path — that path's own
+    /// book-row lookup is separately flaky (see this class's KNOWN
+    /// LIMITATION doc comment above) and gwen_tts needs online + logged-in
+    /// state, not a from-scratch login. Same trick as VieNeuOfflineUITests:
+    /// guest-mode auto-resume already lands straight in ReaderView using
+    /// whatever chapter a previous manual/test session left progress on,
+    /// which is already logged-in + online if that prior session was.
+    func testGwenTTSPlaysWithSelectedSpeaker() throws {
+        let app = XCUIApplication()
+        app.launch()
+
+        let playButton = app.buttons["playPauseButton"]
+        XCTAssertTrue(playButton.waitForExistence(timeout: 10), "expected auto-resume into a chapter (requires prior reading progress + an already-logged-in session)")
+
+        app.buttons["voiceMenuButton"].tap()
+        app.buttons["modelPicker"].tap()
+        let gwenOption = app.buttons["Gwen-TTS (voice clone)"]
+        XCTAssertTrue(gwenOption.waitForExistence(timeout: 5), "gwen_tts voice option not in menu")
+        gwenOption.tap()
+
+        let speakerPicker = app.buttons["gwenTTSSpeakerPicker"]
+        XCTAssertTrue(speakerPicker.waitForExistence(timeout: 5), "Giọng đọc speaker picker should appear for gwen_tts")
+        speakerPicker.tap()
+        let speakerOption = app.buttons["Diệu Linh"]
+        XCTAssertTrue(speakerOption.waitForExistence(timeout: 5), "expected speaker option not in Giọng đọc menu")
+        speakerOption.tap()
+
+        // Unlike selectVoice() above, this needs an explicit sheet dismissal
+        // — see VieNeuOfflineUITests' doc comment: selecting a Picker row
+        // does NOT auto-dismiss ReaderSettingsSheet, and without closing it
+        // the playButton tap below can land on whatever sits underneath at
+        // that screen position instead (the sheet is still on top).
+        app.buttons["Xong"].tap()
+
+        playButton.tap()
+        let playing = NSPredicate(format: "label CONTAINS[c] %@", "Tạm dừng")
+        let expectation = XCTNSPredicateExpectation(predicate: playing, object: playButton)
+        // Generous timeout matching APIClient.synthesize's 200s override —
+        // covers both a cold GPU instance (~60s) and slow decode.
+        let result = XCTWaiter().wait(for: [expectation], timeout: 200)
+        XCTAssertEqual(result, .completed, "gwen_tts: play button never switched to the playing state")
+
+        playButton.tap() // pause before ending the test
+    }
+
     /// A real (non-mock) List row can report `exists == true` slightly
     /// before it's `hittable` — e.g. while its AsyncImage cover is still
     /// laying out — where a plain `.tap()` throws "Failed to not

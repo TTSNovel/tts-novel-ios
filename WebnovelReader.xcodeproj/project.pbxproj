@@ -66,6 +66,7 @@
 		D39C6B967F49DC67497BB7B5 /* llama.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 89F7E8C2E2FA78F23BC3571D /* llama.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		D3D1F0401815EFF6BBF491EF /* VieNeuCodecONNX.mm in Sources */ = {isa = PBXBuildFile; fileRef = DD5017D740449AAC18E437BA /* VieNeuCodecONNX.mm */; };
 		D66070AB1B1E355AFEC029B0 /* ActionHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C80348C35F790F0DE254630B /* ActionHistoryView.swift */; };
+		D6F62CC98870A4F58B1207D0 /* GwenTTSSpeaker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BA0CF8E25015529341FCEF0 /* GwenTTSSpeaker.swift */; };
 		DDEE93E3E9DAFB7C2D0A1364 /* EventLogStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 517EE92EB602E9C3F69F581F /* EventLogStore.swift */; };
 		E1D6DCC98BFD391488935A9C /* CoverImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D24D2C47B51D7655DCB2A4B /* CoverImage.swift */; };
 		E2365CFC3A82E927C25445CF /* voice_pham_tuyen.json in Resources */ = {isa = PBXBuildFile; fileRef = C93F47D3E9A1CC1540D4FC67 /* voice_pham_tuyen.json */; };
@@ -145,6 +146,7 @@
 		7F7F486752D8DBD33832BEFF /* llama.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = llama.xcframework; sourceTree = "<group>"; };
 		89F7E8C2E2FA78F23BC3571D /* llama.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = llama.xcframework; path = WebnovelReader/Vendor/llama.xcframework; sourceTree = "<group>"; };
 		8B341D7BF826C02000149E75 /* LibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryView.swift; sourceTree = "<group>"; };
+		8BA0CF8E25015529341FCEF0 /* GwenTTSSpeaker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GwenTTSSpeaker.swift; sourceTree = "<group>"; };
 		8DBCCF9522AFEE7CBAD6CA7D /* OfflineDownloadUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineDownloadUITests.swift; sourceTree = "<group>"; };
 		8E5E71CE8D5DA0417F274A59 /* VieNeuOfflineVoice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VieNeuOfflineVoice.swift; sourceTree = "<group>"; };
 		91A32907F3C51AD7EB26D010 /* TTSPlaybackUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TTSPlaybackUITests.swift; sourceTree = "<group>"; };
@@ -317,6 +319,7 @@
 		776D0AC67A146637CA1512FD /* TTS */ = {
 			isa = PBXGroup;
 			children = (
+				8BA0CF8E25015529341FCEF0 /* GwenTTSSpeaker.swift */,
 				67FCD507015BA179DEAFCA4B /* PiperOfflineTTSService.swift */,
 				D86948B589F016B404B328BE /* ReaderPlaybackController.swift */,
 				65F1934BFB315721963575A7 /* TextSegmentation.swift */,
@@ -553,6 +556,7 @@
 				405FB7143AFA70ACA00B3F7F /* DownloadManager.swift in Sources */,
 				CBCE947F9F049237E90DE1BB /* DownloadedBooksView.swift in Sources */,
 				DDEE93E3E9DAFB7C2D0A1364 /* EventLogStore.swift in Sources */,
+				D6F62CC98870A4F58B1207D0 /* GwenTTSSpeaker.swift in Sources */,
 				A5C0C56FA9DBCFB7E20E056E /* HistoryView.swift in Sources */,
 				62C269BBB96D7C16A2EB3462 /* Keychain.swift in Sources */,
 				E737A4B4DB04177DA20C8D61 /* LibraryView.swift in Sources */,

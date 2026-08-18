@@ -75,6 +75,12 @@ final class ReaderPlaybackController: ObservableObject {
     @Published var vieNeuOfflineVoice: VieNeuOfflineVoice {
         didSet { UserDefaults.standard.set(vieNeuOfflineVoice.rawValue, forKey: Keys.vieNeuOfflineVoice) }
     }
+    /// Which of the 9 built-in reference speakers `.gwenTTS` clones (see
+    /// GwenTTSSpeaker) — irrelevant for every other `voice` case, kept as a
+    /// single persisted setting like `vieNeuOfflineVoice` above.
+    @Published var gwenTTSSpeaker: GwenTTSSpeaker {
+        didSet { UserDefaults.standard.set(gwenTTSSpeaker.rawValue, forKey: Keys.gwenTTSSpeaker) }
+    }
     @Published var speed: Double {
         didSet {
             UserDefaults.standard.set(speed, forKey: Keys.speed)
@@ -169,6 +175,7 @@ final class ReaderPlaybackController: ObservableObject {
     private enum Keys {
         static let voice = "reader.model"
         static let vieNeuOfflineVoice = "reader.vieNeuOfflineVoice"
+        static let gwenTTSSpeaker = "reader.gwenTTSSpeaker"
         static let speed = "reader.speed"
         static let autoNext = "reader.autoNext"
         static let autoStopMinutes = "reader.autoStopMinutes"
@@ -180,6 +187,9 @@ final class ReaderPlaybackController: ObservableObject {
         vieNeuOfflineVoice = VieNeuOfflineVoice(
             rawValue: UserDefaults.standard.string(forKey: Keys.vieNeuOfflineVoice) ?? ""
         ) ?? .thucDoan
+        gwenTTSSpeaker = GwenTTSSpeaker(
+            rawValue: UserDefaults.standard.string(forKey: Keys.gwenTTSSpeaker) ?? ""
+        ) ?? .yenNhi
         let savedSpeed = UserDefaults.standard.double(forKey: Keys.speed)
         speed = savedSpeed > 0 ? savedSpeed : 1.0
         autoNextChapter = UserDefaults.standard.bool(forKey: Keys.autoNext)
@@ -674,6 +684,7 @@ final class ReaderPlaybackController: ObservableObject {
         let text = sentences[index]
         let voice = self.voice
         let vieNeuOfflineVoice = self.vieNeuOfflineVoice
+        let gwenTTSSpeaker = self.gwenTTSSpeaker
         let speed = self.speed
         let generation = self.generation
         let baseURL = SessionStore.baseURL
@@ -702,7 +713,9 @@ final class ReaderPlaybackController: ObservableObject {
                 // right here on-device (see PiperOfflineTTSService).
                 data = try await PiperOfflineTTSService.shared.synthesize(text: text, speed: speed)
             } else {
-                data = try await APIClient.shared.synthesize(baseURL: baseURL, text: text, voice: voice, speed: speed)
+                data = try await APIClient.shared.synthesize(
+                    baseURL: baseURL, text: text, voice: voice, speed: speed, gwenSpeaker: gwenTTSSpeaker
+                )
             }
             self.markPreloaded(index: index, data: data, generation: generation)
             return data

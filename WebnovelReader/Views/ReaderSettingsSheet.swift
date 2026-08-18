@@ -48,6 +48,21 @@ struct ReaderSettingsSheet: View {
                     }
                 }
 
+                // gwen_tts's 9 built-in reference speakers (see
+                // GwenTTSSpeaker) — same pattern as vieNeuOffline above.
+                if playback.voice == .gwenTTS {
+                    Section("Giọng đọc") {
+                        Picker("Giọng đọc", selection: $playback.gwenTTSSpeaker) {
+                            ForEach(GwenTTSSpeaker.allCases) { speaker in
+                                Text(speaker.displayName).tag(speaker)
+                            }
+                        }
+                        .pickerStyle(.menu)
+                        .tint(.secondary)
+                        .accessibilityIdentifier("gwenTTSSpeakerPicker")
+                    }
+                }
+
                 Section("Tốc độ đọc") {
                     Picker("Tốc độ", selection: $playback.speed) {
                         ForEach([0.85, 1.0, 1.15, 1.3, 1.5], id: \.self) { speed in

@@ -85,11 +85,24 @@ final class APIClient: @unchecked Sendable {
     /// server proxies this to the real TTS backend server-side (app/
     /// server.py's tts_proxy) so the shared secret never has to live in
     /// this client. Returns raw audio bytes (WAV) ready for AVAudioPlayer.
-    func synthesize(baseURL: URL, text: String, voice: TTSVoice, speed: Double) async throws -> Data {
+    func synthesize(baseURL: URL, text: String, voice: TTSVoice, speed: Double, gwenSpeaker: GwenTTSSpeaker? = nil) async throws -> Data {
         var request = URLRequest(url: baseURL.appendingPathComponent("api/tts"))
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = try JSONEncoder().encode(TTSRequestBody(text: text, speed: speed, model: voice.rawValue))
+        request.httpBody = try JSONEncoder().encode(TTSRequestBody(
+            text: text, speed: speed, model: voice.rawValue,
+            speaker: voice == .gwenTTS ? gwenSpeaker?.rawValue : nil
+        ))
+        // gwen_tts's autoregressive decode measured 10-90s per sentence on
+        // its Cloud Run GPU service (no fast path yet) — the session's
+        // default 60s (URLSessionConfiguration.default) would abort a
+        // request the server is still legitimately working on. Every other
+        // voice here is near-instant, so this is a per-request override,
+        // not a session-wide change (matches reader.js's equivalent
+        // per-model timeout bump).
+        if voice == .gwenTTS {
+            request.timeoutInterval = 200
+        }
 
         let (data, response) = try await session.data(for: request)
         try Self.checkOK(response)
@@ -151,6 +164,7 @@ private struct TTSRequestBody: Encodable {
     let text: String
     let speed: Double
     let model: String
+    let speaker: String?
 }
 
 private struct BugReportBody: Encodable {
