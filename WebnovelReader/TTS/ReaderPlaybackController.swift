@@ -281,12 +281,6 @@ final class ReaderPlaybackController: ObservableObject {
     private var nextChapterSentences: [String] = []
     private var nextChapterAudioTasks: [Int: Task<Data, Error>] = [:]
     private var nextChapterPreloadedData: [Int: Data] = [:]
-    /// How many of the next chapter's leading sentences to speculatively
-    /// synthesize ahead of time. Small and fixed — NOT `preloadAhead` — this
-    /// is speculative work for a chapter the user hasn't reached yet (and
-    /// might never continue into, e.g. backing out mid-chapter), kept cheap
-    /// regardless of how large the user's own preload-ahead setting is.
-    private let nextChapterWarmupCount = 5
     /// Separate, smaller concurrency budget than `maxConcurrentFetches` —
     /// this work is purely speculative and must not meaningfully compete
     /// with the current chapter's own (playback-critical) preload fetches.
@@ -466,6 +460,8 @@ final class ReaderPlaybackController: ObservableObject {
             player.updateNowPlaying(bookTitle: book.title, chapterTitle: local.title)
             prepareSentencesForDisplay(local)
             resumeAutoPlayIfNeeded()
+            prefetchNeighborChapters()
+            trimChapterCache()
             return
         }
 
@@ -1033,13 +1029,13 @@ final class ReaderPlaybackController: ObservableObject {
         }
     }
 
-    /// Speculatively pre-synthesizes the first few sentences of the *next*
-    /// chapter's audio once the current chapter's own preload window is
-    /// fully fetched (see the call site above) — so continuing playback
-    /// across a chapter boundary (auto-next, remote/swipe skip) has a head
-    /// start instead of restarting preloading from zero. Forward direction
-    /// only, by design — there's no equivalent warm-up for the previous
-    /// chapter.
+    /// Speculatively pre-synthesizes the next chapter's audio, up to the same
+    /// `preloadAhead` depth as the current chapter's own window, once that
+    /// window is fully fetched (see the call site above) — so continuing
+    /// playback across a chapter boundary (auto-next, remote/swipe skip) is
+    /// just as buffered as the current chapter was, instead of restarting
+    /// preloading from zero. Forward direction only, by design — there's no
+    /// equivalent warm-up for the previous chapter.
     private func beginNextChapterAudioWarmup() {
         guard let book, chapterIndex < book.n - 1 else { return }
         let targetIndex = chapterIndex + 1
@@ -1066,7 +1062,11 @@ final class ReaderPlaybackController: ObservableObject {
 
     private func refillNextChapterWarmup() {
         guard !nextChapterSentences.isEmpty else { return }
-        let budget = min(nextChapterWarmupCount, nextChapterSentences.count)
+        // Mirrors `preloadAhead` rather than a small fixed count — once the
+        // current chapter's own window is fully buffered (the trigger for
+        // this warm-up in the first place), the next chapter should end up
+        // buffered just as deep, not just a token few sentences.
+        let budget = min(preloadAhead, nextChapterSentences.count)
         var index = 0
         while index < budget, nextChapterAudioTasks.count < nextChapterWarmupBudget {
             if nextChapterPreloadedData[index] == nil, nextChapterAudioTasks[index] == nil {

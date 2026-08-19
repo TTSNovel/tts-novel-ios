@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		01734EB50A00E0841EC71B45 /* VieNeuOfflineV2UITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F456FE71D617BD6DEC0F52A6 /* VieNeuOfflineV2UITests.swift */; };
+		3F3C766DF7E1C2DA1DFE22A0 /* NextChapterAudioWarmupDepthUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 956D384993022E3B23A0002D /* NextChapterAudioWarmupDepthUITests.swift */; };
 		0226209420B9D5D4D012FCDD /* VieNeuOfflineV3Voice.swift in Sources */ = {isa = PBXBuildFile; fileRef = F62B80CD7509A43E2A4F664E /* VieNeuOfflineV3Voice.swift */; };
 		057BB42A7DC6DA1662FFC305 /* BookDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F60BA012E937FDC3266CEAAC /* BookDetailView.swift */; };
 		0BDDA8058FCDA7E8B0FA23D2 /* SessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02A238C8FEF0622E96FC931A /* SessionStore.swift */; };
@@ -138,6 +139,7 @@
 		2E16D74A6AA8A1A5ED6CF291 /* NetworkMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkMonitor.swift; sourceTree = "<group>"; };
 		2F7B764ACADBCDD832A98421 /* OfflineWavEncoding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineWavEncoding.swift; sourceTree = "<group>"; };
 		341E4EB55DA2D708E3E6ACAD /* SwipeChapterNavigationUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwipeChapterNavigationUITests.swift; sourceTree = "<group>"; };
+		956D384993022E3B23A0002D /* NextChapterAudioWarmupDepthUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NextChapterAudioWarmupDepthUITests.swift; sourceTree = "<group>"; };
 		38B2768DB2EF882C9504B517 /* PlaybackBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackBar.swift; sourceTree = "<group>"; };
 		393BBC110CC5F516C47AD621 /* ReadingProgress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadingProgress.swift; sourceTree = "<group>"; };
 		39AFB5C424CB4F3411EF2E1C /* AudioPlaybackService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioPlaybackService.swift; sourceTree = "<group>"; };
@@ -307,6 +309,7 @@
 				E77B7759E1190A621260BC2D /* SettingsAndPlaybarLayoutUITests.swift */,
 				6F219E254BB907B7DA1E1118 /* SleepTimerUITests.swift */,
 				341E4EB55DA2D708E3E6ACAD /* SwipeChapterNavigationUITests.swift */,
+				956D384993022E3B23A0002D /* NextChapterAudioWarmupDepthUITests.swift */,
 				EC0ED3C4F36F5C39C88477E6 /* TapSeekAfterAutoAdvanceUITests.swift */,
 				66BAAE1683F2331178ACEE75 /* TextSegmentationMergeUITests.swift */,
 				91A32907F3C51AD7EB26D010 /* TTSPlaybackUITests.swift */,
@@ -672,6 +675,7 @@
 				4C2FD0CE1A38BE36C260D241 /* SettingsAndPlaybarLayoutUITests.swift in Sources */,
 				C07E4012188E3816DA5474D9 /* SleepTimerUITests.swift in Sources */,
 				8D4B263D90CC3BDF178CE22A /* SwipeChapterNavigationUITests.swift in Sources */,
+				3F3C766DF7E1C2DA1DFE22A0 /* NextChapterAudioWarmupDepthUITests.swift in Sources */,
 				CA7ECBB0F96F47DE90BDDA58 /* TTSPlaybackUITests.swift in Sources */,
 				179AED399EF62CC333779EF3 /* TapSeekAfterAutoAdvanceUITests.swift in Sources */,
 				CBDC4645A2FA724D73D289AC /* TextSegmentationMergeUITests.swift in Sources */,
