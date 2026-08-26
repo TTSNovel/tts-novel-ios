@@ -1,4 +1,22 @@
 import Foundation
+import NaturalLanguage
+// Translation's own types aren't fully Sendable-audited (e.g. `Request` isn't
+// `Sendable` even though `Response` is) — @preconcurrency treats crossing
+// into/out of this MainActor class leniently instead of erroring under
+// Swift 6 strict concurrency, same as Apple's own guidance for consuming a
+// not-yet-audited system framework.
+@preconcurrency import Translation
+
+/// `Request`'s stored properties are just `String`/`String?` — genuinely
+/// thread-safe — but Apple didn't mark the struct `Sendable` itself (unlike
+/// `Response`, which is). Without this, building `[Request]` on the
+/// MainActor and handing it to `TranslationSession.translations(from:)`
+/// (a nonisolated async method) fails to compile under Swift 6 strict
+/// concurrency even with `@preconcurrency import` above, since that only
+/// relaxes checking at API boundaries, not for a value whose type is
+/// missing the conformance outright.
+@available(iOS 18.0, *)
+extension TranslationSession.Request: @retroactive @unchecked Sendable {}
 
 /// Owns the entire reading/listening session — which book, which chapter,
 /// its content, and sentence-by-sentence read-aloud — as an app-wide
@@ -32,6 +50,37 @@ final class ReaderPlaybackController: ObservableObject {
     @Published private(set) var currentSentenceIndex = 0
     @Published private(set) var sentences: [String] = []
     @Published private(set) var highlightedSentenceIndex: Int?
+    /// Non-nil once `evaluateTranslation()` has detected the current
+    /// chapter's dominant language and it isn't Vietnamese — the language
+    /// Apple's on-device Translation framework should translate *from*.
+    /// nil means either detection hasn't run yet, the chapter is already
+    /// Vietnamese, or the OS is older than iOS 18 (Translation is
+    /// unavailable there — see `evaluateTranslation()`'s `#available`
+    /// guard). Views key the translate button's visibility off this.
+    @Published private(set) var translationSourceLanguage: Locale.Language?
+    /// Parallel array to `sentences` (same count/order, title included as
+    /// index 0) once translation for the current chapter has completed —
+    /// nil while untranslated or still in flight. Always populated in the
+    /// background as soon as `translationSourceLanguage` is set, regardless
+    /// of `showingTranslation`/`autoTranslate` — the setting only controls
+    /// whether the *display* defaults to it, not whether the translation
+    /// itself happens.
+    @Published private(set) var translatedSentences: [String]?
+    @Published private(set) var isTranslating = false
+    /// Whether the reader is currently showing `translatedSentences`
+    /// (falling back to `sentences` if not yet ready) instead of the
+    /// original text — what the toolbar translate button toggles. Reset to
+    /// `autoTranslate`'s value every time a new chapter's translation is
+    /// evaluated, so the global setting is the per-chapter default while
+    /// still letting a single tap override it for that chapter.
+    @Published var showingTranslation = false
+    @Published private(set) var translationErrorMessage: String?
+    /// Bumped once per `evaluateTranslation()` call (i.e. once per chapter
+    /// load) — lets `performPendingTranslation` and the view-side
+    /// `.translationTask` driver both discard a stale in-flight result from
+    /// a chapter the user has since navigated away from, same pattern as
+    /// `generation` guards audio fetches below.
+    @Published private(set) var translationGeneration = 0
     /// Furthest sentence index reached by *contiguous* preloading (-1 if
     /// none yet) — "audio is ready straight through sentence N". Not a raw
     /// count of however many fetches succeeded: on a resume mid-chapter,
@@ -144,6 +193,17 @@ final class ReaderPlaybackController: ObservableObject {
     }
     @Published var autoNextChapter: Bool {
         didSet { UserDefaults.standard.set(autoNextChapter, forKey: Keys.autoNext) }
+    }
+    /// "Tự động dịch" in Cài đặt đọc — when on, a chapter whose detected
+    /// language isn't Vietnamese displays translated without the user
+    /// tapping the translate button. Applied immediately to whatever
+    /// chapter is currently open (not just future chapter loads) so
+    /// flipping this mid-read takes effect right away.
+    @Published var autoTranslate: Bool {
+        didSet {
+            UserDefaults.standard.set(autoTranslate, forKey: Keys.autoTranslate)
+            if translationSourceLanguage != nil { showingTranslation = autoTranslate }
+        }
     }
     /// 0 disables the sleep timer entirely (reader.js: "if (!minutes ||
     /// minutes <= 0) return").
@@ -313,6 +373,7 @@ final class ReaderPlaybackController: ObservableObject {
         static let gwenTTSSpeaker = "reader.gwenTTSSpeaker"
         static let speed = "reader.speed"
         static let autoNext = "reader.autoNext"
+        static let autoTranslate = "reader.autoTranslate"
         static let autoStopMinutes = "reader.autoStopMinutes"
         static let preloadAhead = "reader.preloadAhead"
     }
@@ -331,6 +392,7 @@ final class ReaderPlaybackController: ObservableObject {
         let savedSpeed = UserDefaults.standard.double(forKey: Keys.speed)
         speed = savedSpeed > 0 ? savedSpeed : 1.0
         autoNextChapter = UserDefaults.standard.bool(forKey: Keys.autoNext)
+        autoTranslate = UserDefaults.standard.bool(forKey: Keys.autoTranslate)
         autoStopMinutes = UserDefaults.standard.object(forKey: Keys.autoStopMinutes) as? Double ?? 30
         let savedPreloadAhead = UserDefaults.standard.object(forKey: Keys.preloadAhead) as? Int
         preloadAhead = savedPreloadAhead ?? 10
@@ -459,6 +521,7 @@ final class ReaderPlaybackController: ObservableObject {
             chapter = local
             player.updateNowPlaying(bookTitle: book.title, chapterTitle: local.title)
             prepareSentencesForDisplay(local)
+            evaluateTranslation()
             resumeAutoPlayIfNeeded()
             prefetchNeighborChapters()
             trimChapterCache()
@@ -469,6 +532,7 @@ final class ReaderPlaybackController: ObservableObject {
             chapter = cached
             player.updateNowPlaying(bookTitle: book.title, chapterTitle: cached.title)
             prepareSentencesForDisplay(cached)
+            evaluateTranslation()
             resumeAutoPlayIfNeeded()
             prefetchNeighborChapters()
             trimChapterCache()
@@ -483,6 +547,7 @@ final class ReaderPlaybackController: ObservableObject {
             chapter = fetched
             player.updateNowPlaying(bookTitle: book.title, chapterTitle: fetched.title)
             prepareSentencesForDisplay(fetched)
+            evaluateTranslation()
             resumeAutoPlayIfNeeded()
             prefetchNeighborChapters()
             trimChapterCache()
@@ -713,6 +778,98 @@ final class ReaderPlaybackController: ObservableObject {
         sentences = []
         currentSentenceIndex = 0
         updateNowPlayingProgress()
+        // Same "abandoning this chapter for a different one" rationale as
+        // above — without this, a slow in-flight translation for the old
+        // chapter could still land and get shown against the new one.
+        translationSourceLanguage = nil
+        translatedSentences = nil
+        isTranslating = false
+        showingTranslation = false
+        translationErrorMessage = nil
+        translationGeneration += 1
+    }
+
+    /// Detects the just-loaded chapter's dominant language from `sentences`
+    /// (must already be populated — called right after
+    /// `prepareSentencesForDisplay`) and, if it isn't Vietnamese, sets
+    /// `translationSourceLanguage` so the view-side `.translationTask`
+    /// driver (see ChapterTranslationDriver) picks it up and calls
+    /// `performPendingTranslation`. Translation itself only works on iOS 18+
+    /// (Apple's Translation framework's `TranslationSession` is gated
+    /// there), so on older OS versions this leaves `translationSourceLanguage`
+    /// nil forever — the translate button hides itself accordingly.
+    private func evaluateTranslation() {
+        translationGeneration += 1
+        translatedSentences = nil
+        isTranslating = false
+        translationErrorMessage = nil
+        guard #available(iOS 18.0, *), !sentences.isEmpty else {
+            translationSourceLanguage = nil
+            showingTranslation = false
+            return
+        }
+        let recognizer = NLLanguageRecognizer()
+        recognizer.processString(sentences.joined(separator: "\n"))
+        guard let dominant = recognizer.dominantLanguage, dominant != .vietnamese else {
+            translationSourceLanguage = nil
+            showingTranslation = false
+            return
+        }
+        translationSourceLanguage = Locale.Language(identifier: dominant.rawValue)
+        showingTranslation = autoTranslate
+    }
+
+    /// The toolbar translate button's action — switches the reader between
+    /// original and translated text for the current chapter. A no-op if the
+    /// chapter doesn't need translation (button is hidden in that case
+    /// anyway); doesn't block on `translatedSentences` being ready — the
+    /// reader falls back to showing the original text until it lands.
+    func toggleTranslationDisplay() {
+        guard translationSourceLanguage != nil else { return }
+        showingTranslation.toggle()
+    }
+
+    /// Runs the actual on-device translation for the current chapter's
+    /// `sentences`, using a `TranslationSession` handed to us by the
+    /// view-side `.translationTask` driver (a `TranslationSession` can only
+    /// be created/refreshed from inside that SwiftUI modifier — see
+    /// ChapterTranslationDriver — so this controller can't create one on its
+    /// own). Requests are tagged with their array index as
+    /// `clientIdentifier` and matched back up positionally rather than
+    /// trusting the response array's order to match the request array's,
+    /// since that isn't documented as guaranteed; any sentence whose
+    /// response never gets matched just keeps showing its original text
+    /// instead of going blank.
+    @available(iOS 18.0, *)
+    func performPendingTranslation(using session: TranslationSession) async {
+        guard translationSourceLanguage != nil, !sentences.isEmpty else { return }
+        let generation = translationGeneration
+        let textsToTranslate = sentences
+        isTranslating = true
+        translationErrorMessage = nil
+        do {
+            let requests = textsToTranslate.enumerated().map { index, text in
+                TranslationSession.Request(sourceText: text, clientIdentifier: String(index))
+            }
+            let responses = try await session.translations(from: requests)
+            guard generation == translationGeneration else { return }
+            var ordered = textsToTranslate
+            for response in responses {
+                if let idString = response.clientIdentifier, let idx = Int(idString), ordered.indices.contains(idx) {
+                    ordered[idx] = response.targetText
+                }
+            }
+            translatedSentences = ordered
+            isTranslating = false
+        } catch {
+            guard generation == translationGeneration else { return }
+            translationErrorMessage = "Không dịch được nội dung chương"
+            isTranslating = false
+            EventLogStore.shared.record(
+                .error, "Không dịch được nội dung chương",
+                detail: "\(book.map { "\($0.title) — Chương \(chapterIndex + 1)" } ?? "") — \(error.localizedDescription)"
+            )
+        }
     }
 
     /// Pushes an estimated elapsed/duration/rate to

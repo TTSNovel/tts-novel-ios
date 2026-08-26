@@ -246,8 +246,14 @@ private struct ChapterPageContent: View {
             Text(chapter.title).font(.title2.bold())
             Text(chapter.text).font(.body)
         } else {
+            // Falls back to the original `sentences` whenever translation
+            // isn't showing, isn't needed, or hasn't finished yet — same
+            // array length/order as `sentences` either way, so indices
+            // below (seek/highlight) stay valid regardless of which is
+            // displayed.
+            let displaySentences = playback.showingTranslation ? (playback.translatedSentences ?? playback.sentences) : playback.sentences
             VStack(alignment: .leading, spacing: 6) {
-                ForEach(Array(playback.sentences.enumerated()), id: \.offset) { sentenceIndex, sentence in
+                ForEach(Array(displaySentences.enumerated()), id: \.offset) { sentenceIndex, sentence in
                     let isHighlighted = sentenceIndex == playback.highlightedSentenceIndex
                     // A real Button, not Text+.onTapGesture: this row sits
                     // inside 3 nested pan/scroll surfaces (UIPageViewController's

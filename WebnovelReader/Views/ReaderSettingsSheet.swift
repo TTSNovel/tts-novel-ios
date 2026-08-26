@@ -85,6 +85,15 @@ struct ReaderSettingsSheet: View {
                     .pickerStyle(.segmented)
                 }
 
+                if #available(iOS 18.0, *) {
+                    Section {
+                        Toggle("Tự động dịch sang Tiếng Việt", isOn: $playback.autoTranslate)
+                            .accessibilityIdentifier("autoTranslateToggle")
+                    } footer: {
+                        Text("Chương không phải Tiếng Việt sẽ luôn được dịch sẵn — bật mục này để hiển thị bản dịch ngay, hoặc để tắt và bấm nút dịch khi cần.")
+                    }
+                }
+
                 Section("Tự động") {
                     Toggle("Tự động sang chương tiếp", isOn: $playback.autoNextChapter)
                     Picker("Hẹn giờ tắt", selection: $playback.autoStopMinutes) {

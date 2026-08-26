@@ -36,6 +36,11 @@ struct ReaderView: View {
         .navigationTitle(book.title)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
+            if playback.translationSourceLanguage != nil {
+                ToolbarItem(placement: .topBarTrailing) {
+                    translateButton
+                }
+            }
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     showingChapterList = true
@@ -46,6 +51,7 @@ struct ReaderView: View {
                 .accessibilityIdentifier("chapterListButton")
             }
         }
+        .chapterTranslationSupport()
         .sheet(isPresented: $showingChapterList) {
             ChapterListSheet(book: book, currentChapterIndex: currentChapterIndex) { index in
                 Task { await playback.goTo(index) }
@@ -65,6 +71,26 @@ struct ReaderView: View {
 
     private func syncProgress() {
         Task { await ProgressStore.shared.syncToServer(bookID: book.id) }
+    }
+
+    /// Only ever added to the toolbar while `playback.translationSourceLanguage`
+    /// is non-nil (chapter detected as non-Vietnamese, and Apple Translate is
+    /// available — see its doc comment), so this button itself doesn't need
+    /// its own visibility check beyond that.
+    private var translateButton: some View {
+        Button {
+            playback.toggleTranslationDisplay()
+        } label: {
+            if playback.isTranslating && playback.showingTranslation && playback.translatedSentences == nil {
+                ProgressView()
+            } else {
+                Image(systemName: "globe")
+                    .symbolVariant(playback.showingTranslation ? .fill : .none)
+            }
+        }
+        .tint(playback.showingTranslation ? Color.accentColor : Color.primary)
+        .accessibilityLabel(playback.showingTranslation ? "Xem bản gốc" : "Dịch sang Tiếng Việt")
+        .accessibilityIdentifier("translateChapterButton")
     }
 }
 
