@@ -4,5 +4,6 @@
 #import <sea_g2p_ios.h>
 #import "VieNeuOfflineV2/VieNeuV2CodecONNX.h"
 #import "VieNeuOfflineV3/VieNeuV3OnnxSession.h"
+#import "../Translation/BundledTranslation/TranslationOnnxSession.h"
 
 #endif

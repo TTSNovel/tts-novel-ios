@@ -196,6 +196,13 @@ private struct ChapterPageContent: View {
                     } else {
                         ProgressView().frame(maxWidth: .infinity)
                     }
+                    // Visible right where the reader is actually looking
+                    // while waiting — a chapter with 100+ sentences can take
+                    // tens of seconds to translate, and a bare toolbar
+                    // spinner alone (no count) read as "stuck"/a bug.
+                    if playback.isTranslating {
+                        translationProgressBanner
+                    }
                     // /api/tts requires login even though reading itself is
                     // public — ReaderPlaybackController.makeFetchTask falls
                     // back to the on-device voice for the exact same two
@@ -229,6 +236,22 @@ private struct ChapterPageContent: View {
                 }
             }
         }
+    }
+
+    @ViewBuilder
+    private var translationProgressBanner: some View {
+        HStack(spacing: 8) {
+            if let progress = playback.translationProgress, progress.total > 0 {
+                ProgressView(value: Double(progress.completed), total: Double(progress.total))
+                    .frame(width: 80)
+                Text("Đang dịch \(progress.completed)/\(progress.total) câu")
+            } else {
+                ProgressView()
+                Text("Đang dịch chương...")
+            }
+        }
+        .font(.footnote)
+        .foregroundStyle(.secondary)
     }
 
     /// Plain title+text until playback has actually segmented the chapter

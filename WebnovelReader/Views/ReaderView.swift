@@ -74,23 +74,64 @@ struct ReaderView: View {
     }
 
     /// Only ever added to the toolbar while `playback.translationSourceLanguage`
-    /// is non-nil (chapter detected as non-Vietnamese, and Apple Translate is
-    /// available — see its doc comment), so this button itself doesn't need
-    /// its own visibility check beyond that.
+    /// is non-nil — i.e. the chapter's detected language differs from
+    /// `primaryLanguage`, so there's actually something to translate.
+    /// Deliberately stays hidden (rather than shown-but-disabled) when a
+    /// chapter is already in the primary language: there's no source
+    /// language to translate *from* in that case, and Apple's/OPUS-MT's
+    /// `translate(...)` both require one — a "translate" tap here would
+    /// have nothing meaningful to do.
+    ///
+    /// Shows a 2-letter language-code pill instead of a generic icon (an
+    /// unfilled pill with the *source* language's code while showing the
+    /// original, a filled pill with the *primary* language's code once
+    /// showing the translation) so the button's current state is legible
+    /// at a glance, rather than a globe icon whose fill/tint was easy to
+    /// miss. While a translation is in flight, swaps to a determinate
+    /// `ProgressView` (filled by `playback.translationProgress`, which the
+    /// controller polls from whichever engine is running) instead of a
+    /// bare spinner — a chapter with 100+ sentences can take tens of
+    /// seconds, and an indeterminate spinner alone reads as "stuck."
     private var translateButton: some View {
         Button {
             playback.toggleTranslationDisplay()
         } label: {
-            if playback.isTranslating && playback.showingTranslation && playback.translatedSentences == nil {
-                ProgressView()
-            } else {
-                Image(systemName: "globe")
-                    .symbolVariant(playback.showingTranslation ? .fill : .none)
+            Group {
+                if playback.isTranslating {
+                    if let progress = playback.translationProgress, progress.total > 0 {
+                        ProgressView(value: Double(progress.completed), total: Double(progress.total))
+                            .progressViewStyle(.circular)
+                    } else {
+                        ProgressView()
+                    }
+                } else {
+                    Text(languageCodeLabel)
+                        .font(.system(size: 11, weight: .bold))
+                }
             }
+            .frame(width: 26, height: 26)
+            .background(Circle().fill(playback.showingTranslation ? Color.accentColor : Color.secondary.opacity(0.15)))
+            .foregroundStyle(playback.showingTranslation ? Color.white : Color.primary)
         }
-        .tint(playback.showingTranslation ? Color.accentColor : Color.primary)
-        .accessibilityLabel(playback.showingTranslation ? "Xem bản gốc" : "Dịch sang Tiếng Việt")
+        .accessibilityLabel(translateButtonAccessibilityLabel)
         .accessibilityIdentifier("translateChapterButton")
+    }
+
+    /// Source language's code while showing the original, primary
+    /// language's code once showing the translation — see `translateButton`.
+    private var languageCodeLabel: String {
+        let language = playback.showingTranslation ? playback.primaryLanguage : (playback.translationSourceLanguage ?? playback.primaryLanguage)
+        return (language.languageCode?.identifier ?? "?").uppercased()
+    }
+
+    private var translateButtonAccessibilityLabel: String {
+        if playback.isTranslating {
+            if let progress = playback.translationProgress {
+                return "Đang dịch, \(progress.completed) trên \(progress.total) câu"
+            }
+            return "Đang dịch"
+        }
+        return playback.showingTranslation ? "Xem bản gốc" : "Dịch sang \(languageCodeLabel)"
     }
 }
 

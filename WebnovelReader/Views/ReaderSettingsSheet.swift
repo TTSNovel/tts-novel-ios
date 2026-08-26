@@ -85,13 +85,27 @@ struct ReaderSettingsSheet: View {
                     .pickerStyle(.segmented)
                 }
 
-                if #available(iOS 18.0, *) {
-                    Section {
-                        Toggle("Tự động dịch sang Tiếng Việt", isOn: $playback.autoTranslate)
-                            .accessibilityIdentifier("autoTranslateToggle")
-                    } footer: {
-                        Text("Chương không phải Tiếng Việt sẽ luôn được dịch sẵn — bật mục này để hiển thị bản dịch ngay, hoặc để tắt và bấm nút dịch khi cần.")
+                Section("Translation") {
+                    Picker("Primary language", selection: $playback.primaryLanguageCode) {
+                        ForEach(PrimaryLanguageOption.allCases) { option in
+                            Text(option.displayName).tag(option.rawValue)
+                        }
                     }
+                    .pickerStyle(.menu)
+                    .tint(.secondary)
+                    .accessibilityIdentifier("primaryLanguagePicker")
+
+                    Picker("Engine", selection: $playback.translationEngineKind) {
+                        ForEach(TranslationEngineKind.allCases) { kind in
+                            Text(kind.displayName).tag(kind)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    .tint(.secondary)
+                    .accessibilityIdentifier("translationEnginePicker")
+
+                    Toggle("Auto-translate", isOn: $playback.autoTranslate)
+                        .accessibilityIdentifier("autoTranslateToggle")
                 }
 
                 Section("Tự động") {

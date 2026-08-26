@@ -10,6 +10,7 @@ enum AppEventCategory: String, Codable, CaseIterable, Identifiable {
     case playback
     case download
     case auth
+    case translation
     case error
 
     var id: String { rawValue }
@@ -20,6 +21,7 @@ enum AppEventCategory: String, Codable, CaseIterable, Identifiable {
         case .playback: return "Phát audio"
         case .download: return "Tải xuống"
         case .auth: return "Đăng nhập"
+        case .translation: return "Dịch chương"
         case .error: return "Lỗi"
         }
     }
@@ -30,6 +32,7 @@ enum AppEventCategory: String, Codable, CaseIterable, Identifiable {
         case .playback: return "waveform"
         case .download: return "arrow.down.circle"
         case .auth: return "person.circle"
+        case .translation: return "globe"
         case .error: return "exclamationmark.triangle"
         }
     }

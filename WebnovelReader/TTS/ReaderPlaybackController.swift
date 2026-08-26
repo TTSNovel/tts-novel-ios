@@ -1,22 +1,5 @@
 import Foundation
 import NaturalLanguage
-// Translation's own types aren't fully Sendable-audited (e.g. `Request` isn't
-// `Sendable` even though `Response` is) — @preconcurrency treats crossing
-// into/out of this MainActor class leniently instead of erroring under
-// Swift 6 strict concurrency, same as Apple's own guidance for consuming a
-// not-yet-audited system framework.
-@preconcurrency import Translation
-
-/// `Request`'s stored properties are just `String`/`String?` — genuinely
-/// thread-safe — but Apple didn't mark the struct `Sendable` itself (unlike
-/// `Response`, which is). Without this, building `[Request]` on the
-/// MainActor and handing it to `TranslationSession.translations(from:)`
-/// (a nonisolated async method) fails to compile under Swift 6 strict
-/// concurrency even with `@preconcurrency import` above, since that only
-/// relaxes checking at API boundaries, not for a value whose type is
-/// missing the conformance outright.
-@available(iOS 18.0, *)
-extension TranslationSession.Request: @retroactive @unchecked Sendable {}
 
 /// Owns the entire reading/listening session — which book, which chapter,
 /// its content, and sentence-by-sentence read-aloud — as an app-wide
@@ -67,6 +50,12 @@ final class ReaderPlaybackController: ObservableObject {
     /// itself happens.
     @Published private(set) var translatedSentences: [String]?
     @Published private(set) var isTranslating = false
+    /// Polled from the active engine's own `translationProgress` while
+    /// `isTranslating` — see `TranslationEngine.translationProgress`'s doc
+    /// comment for why this is polled rather than pushed. nil whenever
+    /// nothing is in flight (including right after it finishes — cleared
+    /// alongside `isTranslating`).
+    @Published private(set) var translationProgress: TranslationProgress?
     /// Whether the reader is currently showing `translatedSentences`
     /// (falling back to `sentences` if not yet ready) instead of the
     /// original text — what the toolbar translate button toggles. Reset to
@@ -204,6 +193,47 @@ final class ReaderPlaybackController: ObservableObject {
             UserDefaults.standard.set(autoTranslate, forKey: Keys.autoTranslate)
             if translationSourceLanguage != nil { showingTranslation = autoTranslate }
         }
+    }
+    /// Which `TranslationEngine` actually performs the translation — see
+    /// that protocol's doc comment. Switching mid-chapter re-attempts
+    /// translation with the new engine for whatever chapter is currently
+    /// open, same immediacy as `autoTranslate` above.
+    @Published var translationEngineKind: TranslationEngineKind {
+        didSet {
+            UserDefaults.standard.set(translationEngineKind.rawValue, forKey: Keys.translationEngineKind)
+            if translationSourceLanguage != nil {
+                // Bumped so a still-in-flight fetch from the *previous*
+                // engine can't race this one and overwrite its result —
+                // see the `generation == translationGeneration` guards in
+                // `performPendingTranslation`.
+                translationGeneration += 1
+                translatedSentences = nil
+                Task { await performPendingTranslation() }
+            }
+        }
+    }
+    /// The language chapters get translated *into* — "Ngôn ngữ chính" in
+    /// Cài đặt đọc. Defaults to the device's own iOS language (see
+    /// `Self.systemDefaultPrimaryLanguageCode`) rather than a hardcoded
+    /// "vi", so a reader whose iOS is set to e.g. English gets translations
+    /// in English by default; still overridable in Settings. Plain
+    /// `String` (a BCP-47 language code) rather than `Locale.Language`
+    /// directly so it round-trips through `UserDefaults` — `primaryLanguage`
+    /// below is the `Locale.Language` every call site actually wants.
+    @Published var primaryLanguageCode: String {
+        didSet {
+            UserDefaults.standard.set(primaryLanguageCode, forKey: Keys.primaryLanguageCode)
+            // Whether the *current* chapter needs translating, and what
+            // source language it needs translating from, both depend on
+            // this — fully re-derive rather than just re-fetching with the
+            // stale target.
+            if !sentences.isEmpty { evaluateTranslation(for: sentences) }
+        }
+    }
+    var primaryLanguage: Locale.Language { Locale.Language(identifier: primaryLanguageCode) }
+
+    private static func systemDefaultPrimaryLanguageCode() -> String {
+        Locale.current.language.languageCode?.identifier ?? "vi"
     }
     /// 0 disables the sleep timer entirely (reader.js: "if (!minutes ||
     /// minutes <= 0) return").
@@ -374,6 +404,8 @@ final class ReaderPlaybackController: ObservableObject {
         static let speed = "reader.speed"
         static let autoNext = "reader.autoNext"
         static let autoTranslate = "reader.autoTranslate"
+        static let translationEngineKind = "reader.translationEngineKind"
+        static let primaryLanguageCode = "reader.primaryLanguageCode"
         static let autoStopMinutes = "reader.autoStopMinutes"
         static let preloadAhead = "reader.preloadAhead"
     }
@@ -393,6 +425,11 @@ final class ReaderPlaybackController: ObservableObject {
         speed = savedSpeed > 0 ? savedSpeed : 1.0
         autoNextChapter = UserDefaults.standard.bool(forKey: Keys.autoNext)
         autoTranslate = UserDefaults.standard.bool(forKey: Keys.autoTranslate)
+        translationEngineKind = TranslationEngineKind(
+            rawValue: UserDefaults.standard.string(forKey: Keys.translationEngineKind) ?? ""
+        ) ?? .apple
+        primaryLanguageCode = UserDefaults.standard.string(forKey: Keys.primaryLanguageCode)
+            ?? Self.systemDefaultPrimaryLanguageCode()
         autoStopMinutes = UserDefaults.standard.object(forKey: Keys.autoStopMinutes) as? Double ?? 30
         let savedPreloadAhead = UserDefaults.standard.object(forKey: Keys.preloadAhead) as? Int
         preloadAhead = savedPreloadAhead ?? 10
@@ -520,8 +557,8 @@ final class ReaderPlaybackController: ObservableObject {
         if let local = DownloadManager.shared.localChapter(bookID: book.id, index: chapterIndex) {
             chapter = local
             player.updateNowPlaying(bookTitle: book.title, chapterTitle: local.title)
+            evaluateTranslation(for: Self.sentenceSequence(for: local))
             prepareSentencesForDisplay(local)
-            evaluateTranslation()
             resumeAutoPlayIfNeeded()
             prefetchNeighborChapters()
             trimChapterCache()
@@ -531,8 +568,8 @@ final class ReaderPlaybackController: ObservableObject {
         if let cached = chapterCache[chapterIndex] {
             chapter = cached
             player.updateNowPlaying(bookTitle: book.title, chapterTitle: cached.title)
+            evaluateTranslation(for: Self.sentenceSequence(for: cached))
             prepareSentencesForDisplay(cached)
-            evaluateTranslation()
             resumeAutoPlayIfNeeded()
             prefetchNeighborChapters()
             trimChapterCache()
@@ -546,8 +583,8 @@ final class ReaderPlaybackController: ObservableObject {
             guard generation == self.generation else { return }
             chapter = fetched
             player.updateNowPlaying(bookTitle: book.title, chapterTitle: fetched.title)
+            evaluateTranslation(for: Self.sentenceSequence(for: fetched))
             prepareSentencesForDisplay(fetched)
-            evaluateTranslation()
             resumeAutoPlayIfNeeded()
             prefetchNeighborChapters()
             trimChapterCache()
@@ -789,34 +826,94 @@ final class ReaderPlaybackController: ObservableObject {
         translationGeneration += 1
     }
 
-    /// Detects the just-loaded chapter's dominant language from `sentences`
-    /// (must already be populated — called right after
-    /// `prepareSentencesForDisplay`) and, if it isn't Vietnamese, sets
-    /// `translationSourceLanguage` so the view-side `.translationTask`
-    /// driver (see ChapterTranslationDriver) picks it up and calls
-    /// `performPendingTranslation`. Translation itself only works on iOS 18+
-    /// (Apple's Translation framework's `TranslationSession` is gated
-    /// there), so on older OS versions this leaves `translationSourceLanguage`
-    /// nil forever — the translate button hides itself accordingly.
-    private func evaluateTranslation() {
+    /// The text actually driving TTS synthesis right now — translated
+    /// sentences once translation is showing AND has actually landed, the
+    /// original `sentences` otherwise. Kept separate from what
+    /// `ChapterPagerView` renders (which falls back to `sentences` the same
+    /// way while translation is still pending) only in spirit — the real
+    /// reason this exists is `activeSentencesReady` below: synthesis must
+    /// never read from here until that's true, or it fetches audio for text
+    /// that's about to be replaced.
+    private var activeSentenceSource: [String] {
+        showingTranslation ? (translatedSentences ?? sentences) : sentences
+    }
+
+    /// False exactly while playback *should* be reading translated text but
+    /// that translation hasn't landed yet — gates `refillPreloadQueue()`/
+    /// `playCurrentSentence` so audio is never synthesized against text
+    /// that's about to be swapped out once translation lands (which would
+    /// mean re-fetching everything anyway, and briefly reading the wrong
+    /// language through a Vietnamese voice in the meantime).
+    private var activeSentencesReady: Bool {
+        !showingTranslation || translatedSentences != nil
+    }
+
+    /// Picks the `TranslationEngine` `translationEngineKind` currently
+    /// selects — `nil` only for `.apple` on iOS < 18, where
+    /// `AppleTranslationEngine` itself doesn't exist (the type is gated
+    /// `@available(iOS 18.0, *)`). `.opusMT` (`OpusMTTranslationEngine`)
+    /// has no such restriction, so it's always available.
+    private var currentTranslationEngine: TranslationEngine? {
+        switch translationEngineKind {
+        case .apple:
+            if #available(iOS 18.0, *) { return AppleTranslationEngine.shared } else { return nil }
+        case .opusMT:
+            return OpusMTTranslationEngine.shared
+        }
+    }
+
+    /// Detects `sentences`' dominant language and, if it isn't already
+    /// `primaryLanguage`, sets `translationSourceLanguage` (which is what
+    /// the toolbar button's visibility keys off) and kicks off a
+    /// background translation attempt — always, regardless of
+    /// `showingTranslation`/`autoTranslate` (the setting only controls
+    /// whether the result is *shown* by default, not whether it's fetched
+    /// — see `showingTranslation`'s doc comment). Takes the sentence array
+    /// as a parameter rather than reading `self.sentences` so callers in
+    /// `loadChapter()` can resolve `showingTranslation` *before* calling
+    /// `prepareSentencesForDisplay()` — that matters because
+    /// `prepareSentencesForDisplay` → `prepareResume` kicks off preload
+    /// immediately, and `refillPreloadQueue()` gates on `showingTranslation`
+    /// (via `activeSentencesReady`) being already resolved; getting this
+    /// backwards let a chapter needing translation briefly preload
+    /// original-language audio before this had a chance to run.
+    private func evaluateTranslation(for sentences: [String]) {
         translationGeneration += 1
         translatedSentences = nil
         isTranslating = false
         translationErrorMessage = nil
-        guard #available(iOS 18.0, *), !sentences.isEmpty else {
+        guard !sentences.isEmpty else {
             translationSourceLanguage = nil
             showingTranslation = false
             return
         }
         let recognizer = NLLanguageRecognizer()
         recognizer.processString(sentences.joined(separator: "\n"))
-        guard let dominant = recognizer.dominantLanguage, dominant != .vietnamese else {
+        let dominant = recognizer.dominantLanguage
+        guard let dominant, dominant.rawValue != primaryLanguageCode else {
             translationSourceLanguage = nil
             showingTranslation = false
+            // Logged even in the "no translation needed" branch — a chapter
+            // that unexpectedly *did* need translation but landed here
+            // instead (NLLanguageRecognizer misdetecting, or returning nil
+            // outright on ambiguous/short text) is exactly the kind of
+            // report ("auto-translate sometimes doesn't work") this is
+            // meant to make diagnosable after the fact instead of only
+            // reproducible live.
+            let detail = book.map { "\($0.title) — Chương \(chapterIndex + 1)" } ?? ""
+            EventLogStore.shared.record(
+                .translation, "Không cần dịch (đã là ngôn ngữ chính)",
+                detail: "\(detail) — phát hiện: \(dominant?.rawValue ?? "không xác định"), ngôn ngữ chính: \(primaryLanguageCode)"
+            )
             return
         }
         translationSourceLanguage = Locale.Language(identifier: dominant.rawValue)
         showingTranslation = autoTranslate
+        EventLogStore.shared.record(
+            .translation, "Phát hiện chương cần dịch",
+            detail: "\(book.map { "\($0.title) — Chương \(chapterIndex + 1)" } ?? "") — phát hiện: \(dominant.rawValue)"
+        )
+        Task { await performPendingTranslation() }
     }
 
     /// The toolbar translate button's action — switches the reader between
@@ -827,47 +924,101 @@ final class ReaderPlaybackController: ObservableObject {
     func toggleTranslationDisplay() {
         guard translationSourceLanguage != nil else { return }
         showingTranslation.toggle()
+        if showingTranslation, translatedSentences == nil, !isTranslating {
+            // Defensive retry — the background fetch already kicked off
+            // from `evaluateTranslation()` should normally have this
+            // covered, but if it somehow never ran (or failed and reverted
+            // `showingTranslation` before the user re-enabled it), a manual
+            // tap should still be able to start one rather than silently
+            // showing nothing.
+            Task { await performPendingTranslation() }
+        }
+        invalidateAudioForActiveSentenceSourceChange()
     }
 
-    /// Runs the actual on-device translation for the current chapter's
-    /// `sentences`, using a `TranslationSession` handed to us by the
-    /// view-side `.translationTask` driver (a `TranslationSession` can only
-    /// be created/refreshed from inside that SwiftUI modifier — see
-    /// ChapterTranslationDriver — so this controller can't create one on its
-    /// own). Requests are tagged with their array index as
-    /// `clientIdentifier` and matched back up positionally rather than
-    /// trusting the response array's order to match the request array's,
-    /// since that isn't documented as guaranteed; any sentence whose
-    /// response never gets matched just keeps showing its original text
-    /// instead of going blank.
-    @available(iOS 18.0, *)
-    func performPendingTranslation(using session: TranslationSession) async {
-        guard translationSourceLanguage != nil, !sentences.isEmpty else { return }
+    /// Whatever's already fetched/buffered/playing was synthesized against
+    /// whichever text source (original vs. translated) was active *before*
+    /// this toggle — must be discarded and resynthesized against the new
+    /// one starting at the current position, since (unlike a voice/speed
+    /// change — see `voice`'s didSet, which deliberately keeps old buffered
+    /// audio) the actual words being read just changed, not just how
+    /// they're voiced. Playing old-language audio through a Vietnamese
+    /// voice would come out as mispronounced gibberish. No-ops if nothing
+    /// has actually started playing yet (`active`/`isPlaying` both false) —
+    /// `refillPreloadQueue()`'s own `activeSentencesReady` gate already
+    /// covers that case cleanly without needing a stop/restart.
+    private func invalidateAudioForActiveSentenceSourceChange() {
+        guard active || isPlaying else { return }
+        let wasPlaying = isPlaying
+        let resumeIndex = currentSentenceIndex
+        stop()
+        prepareResume(sentenceIndex: resumeIndex)
+        if wasPlaying { start() }
+    }
+
+    /// Runs the actual translation for the current chapter's `sentences`
+    /// through whichever engine `translationEngineKind` currently selects
+    /// (see `currentTranslationEngine`) — this controller never talks to
+    /// `TranslationSession`/ONNX Runtime/etc. directly, only the
+    /// `TranslationEngine` protocol, so swapping engines never touches this
+    /// method.
+    func performPendingTranslation() async {
+        guard let source = translationSourceLanguage, !sentences.isEmpty else { return }
+        let target = primaryLanguage
+        let logDetail = book.map { "\($0.title) — Chương \(chapterIndex + 1) (\(source.minimalIdentifier)→\(target.minimalIdentifier))" } ?? ""
+        guard let engine = currentTranslationEngine, engine.canTranslate(from: source, to: target) else {
+            translationErrorMessage = "Dịch không khả dụng trên thiết bị này"
+            showingTranslation = false
+            EventLogStore.shared.record(.translation, "Không có công cụ dịch khả dụng", detail: logDetail)
+            return
+        }
         let generation = translationGeneration
         let textsToTranslate = sentences
         isTranslating = true
+        translationProgress = nil
         translationErrorMessage = nil
+        EventLogStore.shared.record(.translation, "Bắt đầu dịch chương", detail: "\(logDetail) — \(engine.displayName), \(textsToTranslate.count) câu")
+        let startedAt = Date()
+        // Polls the engine's own progress while the translate call below is
+        // in flight — see `TranslationEngine.translationProgress`'s doc
+        // comment for why this is polling rather than a pushed callback.
+        let progressPoller = Task {
+            while !Task.isCancelled {
+                let progress = await engine.translationProgress
+                guard generation == translationGeneration else { return }
+                translationProgress = progress
+                try? await Task.sleep(nanoseconds: 150_000_000)
+            }
+        }
+        defer { progressPoller.cancel() }
         do {
-            let requests = textsToTranslate.enumerated().map { index, text in
-                TranslationSession.Request(sourceText: text, clientIdentifier: String(index))
-            }
-            let responses = try await session.translations(from: requests)
+            let translated = try await engine.translate(texts: textsToTranslate, source: source, target: target)
             guard generation == translationGeneration else { return }
-            var ordered = textsToTranslate
-            for response in responses {
-                if let idString = response.clientIdentifier, let idx = Int(idString), ordered.indices.contains(idx) {
-                    ordered[idx] = response.targetText
-                }
-            }
-            translatedSentences = ordered
+            translatedSentences = translated
             isTranslating = false
+            translationProgress = nil
+            // Preload may have been sitting idle this whole time, gated by
+            // `activeSentencesReady` in `refillPreloadQueue()` — now that
+            // translation has actually landed, give it a nudge to resume.
+            refillPreloadQueue()
+            EventLogStore.shared.record(
+                .translation, "Dịch chương xong",
+                detail: "\(logDetail) — \(String(format: "%.1f", Date().timeIntervalSince(startedAt)))s"
+            )
         } catch {
             guard generation == translationGeneration else { return }
             translationErrorMessage = "Không dịch được nội dung chương"
             isTranslating = false
+            translationProgress = nil
+            // Translation isn't coming — fall back to showing/reading the
+            // original rather than leaving `showingTranslation` stuck true
+            // with no translated text ever arriving, which would otherwise
+            // leave `activeSentencesReady` false forever and stall playback
+            // until `waitForActiveSentencesReady`'s deadline.
+            showingTranslation = false
             EventLogStore.shared.record(
                 .error, "Không dịch được nội dung chương",
-                detail: "\(book.map { "\($0.title) — Chương \(chapterIndex + 1)" } ?? "") — \(error.localizedDescription)"
+                detail: "\(logDetail) — \(error.localizedDescription)"
             )
         }
     }
@@ -974,7 +1125,15 @@ final class ReaderPlaybackController: ObservableObject {
             // whole point of the warm-up. The content-equality check (not
             // just an index match) guards against `chapterCache` having
             // been evicted/replaced with different content in the meantime.
-            if chapterIndex == nextChapterPreloadIndex, nextChapterSentences == sentences, !nextChapterPreloadedData.isEmpty {
+            // `nextChapterPreloadedData` is always synthesized from the
+            // *original* text (see `makeNextChapterWarmupTask`/
+            // `nextChapterSentences`, both computed straight off the raw
+            // chapter, with no translation awareness) — `!showingTranslation`
+            // guards against seeding wrong-language audio into a chapter
+            // that's actually supposed to read translated text; falling
+            // through to the plain-reset branch below re-fetches correctly
+            // via `activeSentenceSource` instead.
+            if !showingTranslation, chapterIndex == nextChapterPreloadIndex, nextChapterSentences == sentences, !nextChapterPreloadedData.isEmpty {
                 preloadedData = nextChapterPreloadedData
                 preloadedIndices = Set(nextChapterPreloadedData.keys)
                 preloadedPrefixCount = startIndex
@@ -1035,6 +1194,23 @@ final class ReaderPlaybackController: ObservableObject {
         let boundary = min(startIndex + preloadAhead - 1, sentences.count - 1)
         let deadline = Date().addingTimeInterval(60)
         while preloadedThroughIndex < boundary {
+            guard active, generation == self.generation, Date() < deadline else { return }
+            try? await Task.sleep(nanoseconds: 150_000_000)
+        }
+    }
+
+    /// Polls until `activeSentencesReady` (translation either isn't wanted,
+    /// or has landed) or a generous deadline passes — translation is a
+    /// single on-device call over already-loaded text, normally resolving
+    /// in well under a second, so this is a backstop against a genuinely
+    /// stuck case, not the common-case wait. `performPendingTranslation`'s
+    /// catch reverts `showingTranslation` to false on an outright failure
+    /// (making `activeSentencesReady` true immediately), so this deadline
+    /// only ever matters if translation neither succeeds nor fails —
+    /// same shape/rationale as `waitForInitialBuffer` above.
+    private func waitForActiveSentencesReady(generation: Int) async {
+        let deadline = Date().addingTimeInterval(30)
+        while !activeSentencesReady {
             guard active, generation == self.generation, Date() < deadline else { return }
             try? await Task.sleep(nanoseconds: 150_000_000)
         }
@@ -1108,6 +1284,18 @@ final class ReaderPlaybackController: ObservableObject {
         // anything."
         isLoadingAudio = true
         preloadCursor = max(preloadCursor, currentSentenceIndex + 1)
+        // Never fetch/play against text that's about to be swapped out once
+        // a pending translation lands — see `activeSentencesReady`. Usually
+        // resolves in well under a second (translation kicks off as soon as
+        // the chapter loads, long before playback catches up to it); falls
+        // through regardless once the deadline passes, or immediately once
+        // `performPendingTranslation`'s catch reverts `showingTranslation`
+        // on an outright failure.
+        await waitForActiveSentencesReady(generation: generation)
+        guard generation == self.generation else {
+            isLoadingAudio = false
+            return
+        }
         do {
             let data = try await fetchTask(index: currentSentenceIndex).value
             guard generation == self.generation, !sleepTimerExpired else {
@@ -1171,7 +1359,11 @@ final class ReaderPlaybackController: ObservableObject {
     /// forward on its own as `currentSentenceIndex` advances, since every
     /// call recomputes the boundary from its current value.
     private func refillPreloadQueue() {
-        guard !sentences.isEmpty else { return }
+        // While a translation this chapter should be reading is still
+        // pending, don't fetch anything at all — see `activeSentencesReady`.
+        // `performPendingTranslation`'s success path calls this again once
+        // it lands to resume.
+        guard activeSentencesReady, !sentences.isEmpty else { return }
         let boundary = min(currentSentenceIndex + preloadAhead, sentences.count - 1)
         while preloadCursor <= boundary, audioTasks.count < maxConcurrentFetches {
             preload(index: preloadCursor)
@@ -1279,7 +1471,12 @@ final class ReaderPlaybackController: ObservableObject {
     }
 
     private func makeFetchTask(index: Int) -> Task<Data, Error> {
-        let text = sentences[index]
+        // Reads whichever text is actually meant to be spoken right now —
+        // see `activeSentenceSource`. Callers (`preload`/`fetchTask`) only
+        // ever reach here once `refillPreloadQueue`/`playCurrentSentence`
+        // have confirmed `activeSentencesReady`, so this is never mid-flight
+        // against text that's about to change out from under it.
+        let text = activeSentenceSource[index]
         let voice = self.voice
         let vieNeuOfflineV2Voice = self.vieNeuOfflineV2Voice
         let vieNeuOfflineV3Voice = self.vieNeuOfflineV3Voice

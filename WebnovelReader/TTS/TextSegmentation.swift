@@ -17,6 +17,17 @@ enum TextSegmentation {
     /// element boundaries `sentences(from:)` below needs to see).
     static func cleaned(_ text: String) -> String {
         var s = text
+        // Inline formatting tags (`<i>`, `<b>`, etc.) some source chapters
+        // carry straight through from their original HTML/epub markup —
+        // ChapterFragmentParser only translates block-level `<p>`/`<br>`
+        // into "\n\n"/"\n" (see this type's header comment), it doesn't
+        // strip inline tags. Harmless-ish for TTS (spoken as stray
+        // "less than i greater than" at worst) but glaring once shown as
+        // visible translated text — a small MT model fed literal `<i>`
+        // tokens is out-of-distribution input and tends to produce
+        // degenerate output around it, not just mistranslate the tag
+        // itself.
+        s = s.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
         s = s.replacingOccurrences(of: "[·‧・•]", with: "", options: .regularExpression)
         s = s.replacingOccurrences(of: "~", with: "")
         s = s.replacingOccurrences(of: "\\.{2,}", with: ".", options: .regularExpression)
