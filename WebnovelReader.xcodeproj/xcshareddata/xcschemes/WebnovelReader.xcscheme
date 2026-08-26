@@ -64,6 +64,16 @@
                ReferencedContainer = "container:WebnovelReader.xcodeproj">
             </BuildableReference>
          </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "D6C60F25B341D7B807311709"
+               BuildableName = "WebnovelReaderTests.xctest"
+               BlueprintName = "WebnovelReaderTests"
+               ReferencedContainer = "container:WebnovelReader.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
       <CommandLineArguments>
       </CommandLineArguments>

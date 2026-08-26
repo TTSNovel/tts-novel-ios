@@ -16,10 +16,10 @@ enum VieNeuOfflineV2Voice: String, CaseIterable, Identifiable, Codable {
 
     var displayName: String {
         switch self {
-        case .bichNgoc: return "Bích Ngọc (Nữ - Miền Bắc)"
-        case .phamTuyen: return "Phạm Tuyên (Nam - Miền Bắc)"
-        case .thucDoan: return "Thục Đoan (Nữ - Miền Nam)"
-        case .xuanVinh: return "Xuân Vĩnh (Nam - Miền Nam)"
+        case .bichNgoc: return "Bích Ngọc (Female - Northern)"
+        case .phamTuyen: return "Phạm Tuyên (Male - Northern)"
+        case .thucDoan: return "Thục Đoan (Female - Southern)"
+        case .xuanVinh: return "Xuân Vĩnh (Male - Southern)"
         }
     }
 }

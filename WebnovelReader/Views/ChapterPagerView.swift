@@ -189,19 +189,33 @@ private struct ChapterPageContent: View {
         ScrollViewReader { proxy in
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
+                    // Placed *before* the chapter body, not after — a real
+                    // chapter's text easily runs several screens long, and a
+                    // banner appended after it sits below the fold until the
+                    // reader scrolls all the way down, invisible for the
+                    // entire translation (confirmed: real device screenshot
+                    // showed only the toolbar's bare spinner, this banner
+                    // nowhere on screen, chapter open at the top). Up here
+                    // it's the first thing visible the moment the chapter
+                    // opens — a chapter with 100+ sentences can take tens of
+                    // seconds to translate, and a bare toolbar spinner alone
+                    // (no count) reads as "stuck"/a bug.
+                    if playback.isTranslating {
+                        translationProgressBanner
+                    } else if let error = playback.translationErrorMessage {
+                        // Previously tracked but never shown — a tap that
+                        // hits `canTranslate == false` (e.g. detected source
+                        // language this engine doesn't support) reverted
+                        // `showingTranslation` with zero visible feedback,
+                        // reading as "the button just doesn't work."
+                        Text(error).font(.footnote).foregroundStyle(.red)
+                    }
                     if let chapter = playback.chapter {
                         chapterBody(chapter)
                     } else if let error = playback.loadError {
                         Text(error).foregroundStyle(.secondary)
                     } else {
                         ProgressView().frame(maxWidth: .infinity)
-                    }
-                    // Visible right where the reader is actually looking
-                    // while waiting — a chapter with 100+ sentences can take
-                    // tens of seconds to translate, and a bare toolbar
-                    // spinner alone (no count) read as "stuck"/a bug.
-                    if playback.isTranslating {
-                        translationProgressBanner
                     }
                     // /api/tts requires login even though reading itself is
                     // public — ReaderPlaybackController.makeFetchTask falls
@@ -269,12 +283,13 @@ private struct ChapterPageContent: View {
             Text(chapter.title).font(.title2.bold())
             Text(chapter.text).font(.body)
         } else {
-            // Falls back to the original `sentences` whenever translation
-            // isn't showing, isn't needed, or hasn't finished yet — same
-            // array length/order as `sentences` either way, so indices
-            // below (seek/highlight) stay valid regardless of which is
-            // displayed.
-            let displaySentences = playback.showingTranslation ? (playback.translatedSentences ?? playback.sentences) : playback.sentences
+            // Falls back to the original `sentences` per-sentence for
+            // whichever ones translation isn't showing, isn't needed, or
+            // hasn't landed yet — same array length/order as `sentences`
+            // either way, so indices below (seek/highlight) stay valid
+            // regardless of how far translation has gotten. See
+            // `ReaderPlaybackController.displaySentences`'s doc comment.
+            let displaySentences = playback.displaySentences
             VStack(alignment: .leading, spacing: 6) {
                 ForEach(Array(displaySentences.enumerated()), id: \.offset) { sentenceIndex, sentence in
                     let isHighlighted = sentenceIndex == playback.highlightedSentenceIndex

@@ -35,9 +35,6 @@ final class AppleTranslationEngine: TranslationEngine, @unchecked Sendable {
     private var currentSourceLanguage: Locale.Language?
     private var currentTargetLanguage: Locale.Language?
     private var pendingContinuation: CheckedContinuation<TranslationSession, Never>?
-    private(set) var currentProgress: TranslationProgress?
-
-    var translationProgress: TranslationProgress? { currentProgress }
 
     /// Apple's framework covers broad language coverage and the only real
     /// way to know if a specific pair truly works is to attempt it — so
@@ -47,25 +44,31 @@ final class AppleTranslationEngine: TranslationEngine, @unchecked Sendable {
 
     /// One `session.translate(_:)` call per sentence rather than the
     /// batch `translations(from:)` API — sacrifices whatever internal
-    /// pipelining the batch call might do, in exchange for
-    /// `translationProgress` actually being able to advance sentence by
-    /// sentence instead of jumping straight from 0 to done (the original
-    /// point of a large-chapter translation "feels stuck" complaint this
-    /// was built to fix). The session itself stays warm across calls
-    /// (`requestSession` only reconfigures on an actual language-pair
-    /// change), so this isn't paying per-sentence model-load cost.
-    func translate(texts: [String], source: Locale.Language, target: Locale.Language) async throws -> [String] {
-        let session = await requestSession(for: source, target: target)
-        currentProgress = TranslationProgress(completed: 0, total: texts.count)
-        var results: [String] = []
-        results.reserveCapacity(texts.count)
-        for text in texts {
-            let response = try await session.translate(text)
-            results.append(response.targetText)
-            currentProgress = TranslationProgress(completed: results.count, total: texts.count)
+    /// pipelining the batch call might do, in exchange for the caller
+    /// actually seeing each sentence land as it finishes instead of the
+    /// whole chapter jumping from nothing to done at once. `nonisolated`,
+    /// building the stream synchronously and hopping onto MainActor inside
+    /// the detached `Task` — same shape as `OpusMTTranslationEngine`'s
+    /// version, so `ReaderPlaybackController` can treat both identically.
+    /// The session itself stays warm across calls (`requestSession` only
+    /// reconfigures on an actual language-pair change), so this isn't
+    /// paying per-sentence model-load cost.
+    nonisolated func translate(texts: [String], source: Locale.Language, target: Locale.Language) -> AsyncThrowingStream<(index: Int, text: String), Error> {
+        AsyncThrowingStream { continuation in
+            let task = Task { @MainActor in
+                do {
+                    let session = await self.requestSession(for: source, target: target)
+                    for (index, text) in texts.enumerated() {
+                        let response = try await session.translate(text)
+                        continuation.yield((index, response.targetText))
+                    }
+                    continuation.finish()
+                } catch {
+                    continuation.finish(throwing: error)
+                }
+            }
+            continuation.onTermination = { _ in task.cancel() }
         }
-        currentProgress = nil
-        return results
     }
 
     /// Reuses the existing session when both its source AND target

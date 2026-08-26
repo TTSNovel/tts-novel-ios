@@ -52,9 +52,62 @@ typedef NS_ENUM(NSInteger, TranslationOnnxDType) {
                     disableGraphOptimization:(BOOL)disableGraphOptimization
                                      error:(NSError **)error;
 
+/// Spike/experimental: same as the initializer above, but also registers
+/// onnxruntime's CoreML execution provider (offloads eligible ops to the
+/// Apple Neural Engine/GPU instead of running everything on CPU) before
+/// building the session. Unproven for this specific model — the decoder
+/// graph's `past_key_values.*` inputs change shape every decode step, and
+/// CoreML has historically limited support for dynamic shapes, so this may
+/// build/run no differently than CPU-only (silent fallback), or may fail to
+/// build the session at all. Exists so that can actually be measured rather
+/// than guessed at; not wired into `OpusMTTranslationEngine`'s normal
+/// session creation.
+- (nullable instancetype)initWithModelPath:(NSString *)modelPath
+                            intraOpThreads:(int)threads
+                    disableGraphOptimization:(BOOL)disableGraphOptimization
+                                useCoreML:(BOOL)useCoreML
+                                     error:(NSError **)error;
+
 - (nullable NSArray<TranslationOnnxTensor *> *)runWithInputs:(NSArray<TranslationOnnxTensor *> *)inputs
                                                     outputNames:(NSArray<NSString *> *)outputNames
                                                           error:(NSError **)error;
+
+@end
+
+/// One sentence's autoregressive decode KV-cache, held as native ORT
+/// buffers — see `TranslationOnnxSession`'s `-stepDecoderState:...` doc
+/// comment for why this exists (avoiding a Swift round-trip for the cache
+/// every decode step). Create one per sentence via `-makeDecoderState...`;
+/// not safe to share across sentences decoded concurrently, but each
+/// instance is only ever touched sequentially (one step at a time) by
+/// whichever single sentence owns it, same as the old per-sentence Swift
+/// arrays it replaces.
+@interface TranslationOnnxDecoderState : NSObject
+@end
+
+@interface TranslationOnnxSession (AutoregressiveDecoding)
+
+- (nullable TranslationOnnxDecoderState *)makeDecoderStateWithNumLayers:(NSInteger)numLayers
+                                                                 numHeads:(NSInteger)numHeads
+                                                                  headDim:(NSInteger)headDim
+                                                                    error:(NSError **)error;
+
+/// One greedy decode step against `self` (a decoder session), called once
+/// per generated token for the same `state`. Replaces the old pattern
+/// (Swift re-supplying the *entire* growing key/value cache as fresh
+/// `TranslationOnnxTensor`s, each a Swift `[Float]` <-> `NSData` copy, on
+/// every single call — see `OpusMTTranslationEngine.translateOne`'s prior
+/// implementation): `state` instead holds the previous step's `Ort::Value`
+/// outputs natively and feeds them straight back in as this step's inputs,
+/// so the cache never crosses into Swift/Obj-C after the first step. Only
+/// the one new input token crosses in, and only the argmax'd next token id
+/// crosses out — the full `vocabSize`-length logits vector is reduced to
+/// that single id inside this call, since nothing outside needs the rest.
+- (nullable NSNumber *)stepDecoderState:(TranslationOnnxDecoderState *)state
+                     encoderHiddenStates:(TranslationOnnxTensor *)encoderHiddenStates
+                    encoderAttentionMask:(TranslationOnnxTensor *)encoderAttentionMask
+                                  tokenId:(int64_t)tokenId
+                                    error:(NSError **)error;
 
 @end
 

@@ -32,23 +32,19 @@ protocol TranslationEngine: Sendable {
     /// a generic failure after the fact.
     func canTranslate(from source: Locale.Language, to target: Locale.Language) -> Bool
 
-    /// Translates `texts` from `source` to `target`, preserving order and
-    /// count. Both current implementations translate one sentence at a
-    /// time internally (`AppleTranslationEngine` no longer uses Apple's
-    /// batch `translations(from:)` — see its doc comment on why) so that
-    /// `translationProgress` below can advance per-sentence rather than
-    /// jumping straight from 0 to done.
-    func translate(texts: [String], source: Locale.Language, target: Locale.Language) async throws -> [String]
-
-    /// Sentences translated so far for whatever `translate(...)` call is
-    /// currently in flight on this engine, if any — nil when idle. Polled
-    /// by `ReaderPlaybackController` (not pushed via a progress-callback
-    /// closure) specifically so both a `@MainActor` engine
-    /// (`AppleTranslationEngine`) and an `actor` one
-    /// (`OpusMTTranslationEngine`) can implement it identically without a
-    /// `Sendable` closure needing to cross into whichever actor the engine
-    /// runs on.
-    var translationProgress: TranslationProgress? { get async }
+    /// Streams each translated sentence back tagged with its index in
+    /// `texts`, as soon as that one sentence is ready — not the whole
+    /// array at once. Index order, not necessarily arrival order:
+    /// `OpusMTTranslationEngine` translates several sentences concurrently
+    /// (see its doc comment), so a later sentence can land before an
+    /// earlier one. Callers (`ReaderPlaybackController.performPendingTranslation`)
+    /// display/synthesize audio per sentence as results arrive, so a long
+    /// chapter fills in progressively instead of the reader staring at
+    /// original text (or a spinner) until every sentence is done. Also
+    /// doubles as the progress signal — "how many items have arrived so
+    /// far out of `texts.count`" — so there's no separate polled property
+    /// to keep in sync with it.
+    func translate(texts: [String], source: Locale.Language, target: Locale.Language) -> AsyncThrowingStream<(index: Int, text: String), Error>
 }
 
 struct TranslationProgress: Sendable, Equatable {

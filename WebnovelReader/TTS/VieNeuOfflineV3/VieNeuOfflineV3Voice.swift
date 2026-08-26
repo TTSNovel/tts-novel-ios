@@ -31,20 +31,20 @@ enum VieNeuOfflineV3Voice: String, CaseIterable, Identifiable, Codable {
     /// voices_v3_turbo.json's `description` field for each preset.
     var displayName: String {
         switch self {
-        case .minhDuc: return "Minh Đức (Nam - Miền Bắc - Tin tức)"
-        case .phamTuyen: return "Phạm Tuyên (Nam - Miền Bắc - Tự nhiên)"
-        case .thaiSon: return "Thái Sơn (Nam - Miền Nam - Kể chuyện)"
-        case .xuanVinh: return "Xuân Vĩnh (Nam - Miền Nam - Tự nhiên)"
-        case .thanhBinh: return "Thanh Bình (Nam - Miền Bắc - Kể chuyện)"
-        case .trucLy: return "Trúc Ly (Nữ - Miền Bắc - Tự nhiên)"
-        case .ngocLinh: return "Ngọc Linh (Nữ - Miền Bắc - Kể chuyện)"
-        case .doanTrang: return "Đoan Trang (Nữ - Miền Bắc - Tự nhiên)"
-        case .maiAnh: return "Mai Anh (Nữ - Miền Bắc - Tin tức)"
-        case .thucDoan: return "Thục Đoan (Nữ - Miền Nam - Kể chuyện)"
-        case .minhTriet: return "Minh Triết (Nam - Miền Nam - Tin tức)"
-        case .thuyDung: return "Thùy Dung (Nữ - Miền Nam - Tin tức)"
-        case .quangSon: return "Quang Sơn (Nam - Miền Trung - Tự nhiên)"
-        case .ngocTran: return "Ngọc Trân (Nữ - Miền Trung - Tự nhiên)"
+        case .minhDuc: return "Minh Đức (Male - Northern - News)"
+        case .phamTuyen: return "Phạm Tuyên (Male - Northern - Natural)"
+        case .thaiSon: return "Thái Sơn (Male - Southern - Storytelling)"
+        case .xuanVinh: return "Xuân Vĩnh (Male - Southern - Natural)"
+        case .thanhBinh: return "Thanh Bình (Male - Northern - Storytelling)"
+        case .trucLy: return "Trúc Ly (Female - Northern - Natural)"
+        case .ngocLinh: return "Ngọc Linh (Female - Northern - Storytelling)"
+        case .doanTrang: return "Đoan Trang (Female - Northern - Natural)"
+        case .maiAnh: return "Mai Anh (Female - Northern - News)"
+        case .thucDoan: return "Thục Đoan (Female - Southern - Storytelling)"
+        case .minhTriet: return "Minh Triết (Male - Southern - News)"
+        case .thuyDung: return "Thùy Dung (Female - Southern - News)"
+        case .quangSon: return "Quang Sơn (Male - Central - Natural)"
+        case .ngocTran: return "Ngọc Trân (Female - Central - Natural)"
         }
     }
 }

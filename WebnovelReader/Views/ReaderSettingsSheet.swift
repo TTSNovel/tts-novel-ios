@@ -26,7 +26,7 @@ struct ReaderSettingsSheet: View {
                     // the app's accent color (blue) by default — .tint
                     // here overrides that so it reads as a plain secondary-
                     // gray value, matching every other row in this Form
-                    // (e.g. "Hẹn giờ tắt").
+                    // (e.g. "Sleep timer").
                     .tint(.secondary)
                     .accessibilityIdentifier("modelPicker")
                 }
@@ -36,8 +36,8 @@ struct ReaderSettingsSheet: View {
                 // model has a single fixed voice, so this section only
                 // shows up once there's an actual choice to make.
                 if playback.voice == .vieNeuOfflineV2 {
-                    Section("Giọng đọc") {
-                        Picker("Giọng đọc", selection: $playback.vieNeuOfflineV2Voice) {
+                    Section("Voice") {
+                        Picker("Voice", selection: $playback.vieNeuOfflineV2Voice) {
                             ForEach(VieNeuOfflineV2Voice.allCases) { preset in
                                 Text(preset.displayName).tag(preset)
                             }
@@ -49,8 +49,8 @@ struct ReaderSettingsSheet: View {
                 }
 
                 if playback.voice == .vieNeuOfflineV3 {
-                    Section("Giọng đọc") {
-                        Picker("Giọng đọc", selection: $playback.vieNeuOfflineV3Voice) {
+                    Section("Voice") {
+                        Picker("Voice", selection: $playback.vieNeuOfflineV3Voice) {
                             ForEach(VieNeuOfflineV3Voice.allCases) { preset in
                                 Text(preset.displayName).tag(preset)
                             }
@@ -64,8 +64,8 @@ struct ReaderSettingsSheet: View {
                 // gwen_tts's 9 built-in reference speakers (see
                 // GwenTTSSpeaker) — same pattern as vieNeuOfflineV2 above.
                 if playback.voice == .gwenTTS {
-                    Section("Giọng đọc") {
-                        Picker("Giọng đọc", selection: $playback.gwenTTSSpeaker) {
+                    Section("Voice") {
+                        Picker("Voice", selection: $playback.gwenTTSSpeaker) {
                             ForEach(GwenTTSSpeaker.allCases) { speaker in
                                 Text(speaker.displayName).tag(speaker)
                             }
@@ -76,8 +76,8 @@ struct ReaderSettingsSheet: View {
                     }
                 }
 
-                Section("Tốc độ đọc") {
-                    Picker("Tốc độ", selection: $playback.speed) {
+                Section("Reading Speed") {
+                    Picker("Speed", selection: $playback.speed) {
                         ForEach([0.85, 1.0, 1.15, 1.3, 1.5], id: \.self) { speed in
                             Text("\(speed, specifier: "%.2g")x").tag(speed)
                         }
@@ -108,19 +108,19 @@ struct ReaderSettingsSheet: View {
                         .accessibilityIdentifier("autoTranslateToggle")
                 }
 
-                Section("Tự động") {
-                    Toggle("Tự động sang chương tiếp", isOn: $playback.autoNextChapter)
-                    Picker("Hẹn giờ tắt", selection: $playback.autoStopMinutes) {
-                        Text("Tắt").tag(0.0)
+                Section("Automatic") {
+                    Toggle("Auto-advance to next chapter", isOn: $playback.autoNextChapter)
+                    Picker("Sleep timer", selection: $playback.autoStopMinutes) {
+                        Text("Off").tag(0.0)
                         ForEach([5.0, 15.0, 30.0, 45.0, 60.0, 90.0, 120.0], id: \.self) { minutes in
-                            Text("\(Int(minutes)) phút").tag(minutes)
+                            Text("\(Int(minutes)) min").tag(minutes)
                         }
                     }
                     // See PlaybackBar's matching countdown for why
                     // "deadline > Date()" guards Text(timerInterval:).
                     if let deadline = playback.sleepTimerDeadline, deadline > Date() {
                         HStack {
-                            Text("Sẽ tắt sau")
+                            Text("Turns off in")
                             Spacer()
                             Text(timerInterval: Date()...deadline, countsDown: true)
                                 .foregroundStyle(.secondary)
@@ -130,36 +130,36 @@ struct ReaderSettingsSheet: View {
                 }
 
                 Section {
-                    Picker("Số câu tải trước", selection: $playback.preloadAhead) {
+                    Picker("Sentences to preload", selection: $playback.preloadAhead) {
                         ForEach([3, 5, 10, 15, 20], id: \.self) { n in
-                            Text("\(n) câu").tag(n)
+                            Text("\(n) sentences").tag(n)
                         }
                     }
                 } header: {
-                    Text("Tải trước")
+                    Text("Preload")
                 } footer: {
-                    Text("Số câu audio được tải sẵn trước khi đọc tới, giúp đọc liền mạch hơn nhưng tốn băng thông hơn.")
+                    Text("How many sentences' audio to buffer ahead of the playhead — smoother playback, but uses more bandwidth.")
                 }
 
                 Section {
                     NavigationLink {
                         ActionHistoryView()
                     } label: {
-                        Label("Nhật ký & lịch sử", systemImage: "clock.arrow.circlepath")
+                        Label("History & Log", systemImage: "clock.arrow.circlepath")
                     }
                     .accessibilityIdentifier("actionHistoryLink")
 
                     Button {
                         showingBugReport = true
                     } label: {
-                        Label("Báo lỗi", systemImage: "ladybug")
+                        Label("Report a Bug", systemImage: "ladybug")
                     }
                     .accessibilityIdentifier("bugReportLink")
                 }
 
                 Section {
                     if session.isLoggedIn {
-                        Button("Đăng xuất", role: .destructive) {
+                        Button("Log Out", role: .destructive) {
                             isPresented = false
                             session.logout()
                         }
@@ -167,21 +167,21 @@ struct ReaderSettingsSheet: View {
                         Button {
                             showingLogin = true
                         } label: {
-                            Label("Đăng nhập", systemImage: "person.crop.circle.badge.checkmark")
+                            Label("Log In", systemImage: "person.crop.circle.badge.checkmark")
                         }
                         .accessibilityIdentifier("settingsLoginButton")
                     }
                 } footer: {
                     if !session.isLoggedIn {
-                        Text("Đang dùng ở chế độ khách — đăng nhập để nghe giọng đọc online và đồng bộ tiến độ đọc giữa các thiết bị.")
+                        Text("You're browsing as a guest — log in to use online voices and sync reading progress across devices.")
                     }
                 }
             }
-            .navigationTitle("Cài đặt đọc")
+            .navigationTitle("Reader Settings")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Xong") { isPresented = false }
+                    Button("Done") { isPresented = false }
                 }
             }
             .sheet(isPresented: $showingBugReport) {

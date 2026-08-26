@@ -28,6 +28,18 @@ enum TextSegmentation {
         // degenerate output around it, not just mistranslate the tag
         // itself.
         s = s.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
+        // Catches what the paired-tag regex above can't: unbalanced/
+        // malformed markup and Gutenberg-style ASCII decoration
+        // (">>>>><<<<<<<", errata-list markers like "> ><<<") that some
+        // public-domain front-matter uses — confirmed via a real chapter
+        // ("The Odyssey" preface/errata) whose stray "<"/">" runs survived
+        // the tag-only regex and fed straight into translation, which is
+        // exactly the kind of out-of-distribution input this small MT
+        // model degenerates on (see OpusMTTranslationEngine.sanitizeOutput).
+        // Plain "<"/">" characters otherwise never occur in ordinary prose,
+        // so blanket-stripping any leftover run is safe for both TTS and
+        // translation input.
+        s = s.replacingOccurrences(of: "[<>]+", with: "", options: .regularExpression)
         s = s.replacingOccurrences(of: "[·‧・•]", with: "", options: .regularExpression)
         s = s.replacingOccurrences(of: "~", with: "")
         s = s.replacingOccurrences(of: "\\.{2,}", with: ".", options: .regularExpression)

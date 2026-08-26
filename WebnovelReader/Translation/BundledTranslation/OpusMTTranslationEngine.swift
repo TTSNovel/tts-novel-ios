@@ -39,7 +39,7 @@ actor OpusMTTranslationEngine: TranslationEngine {
     /// config.json/vocab.json from the source model, not re-parsed
     /// on-device to avoid a config-file dependency for values that never
     /// change once a model is bundled).
-    private struct LanguagePair {
+    struct LanguagePair {
         let sourceLanguageCode: String
         /// The one target language this bundled model was actually trained
         /// for — unlike `AppleTranslationEngine`, which can serve whatever
@@ -67,7 +67,17 @@ actor OpusMTTranslationEngine: TranslationEngine {
         )
     ]
 
-    private struct LoadedModel {
+    /// `@unchecked Sendable`: every stored property is only ever read after
+    /// `loadModelIfNeeded` builds it (never mutated), and it's shared as-is
+    /// across the concurrent `translateOne` calls `translate(texts:)`
+    /// fans out — safe for `TranslationOnnxSession`/`TranslationOnnxTensor`
+    /// specifically because `-runWithInputs:outputNames:error:` (see
+    /// TranslationOnnxSession.mm) allocates all its working state
+    /// (`Ort::MemoryInfo`, input/output vectors, `Ort::RunOptions`) locally
+    /// per call and never touches shared mutable session state beyond the
+    /// `Ort::Session::Run` call itself, which onnxruntime documents as
+    /// safe to invoke concurrently from multiple threads on one session.
+    struct LoadedModel: @unchecked Sendable {
         let pair: LanguagePair
         let tokenizer: UnigramTokenizer
         let idToPiece: [Int: String]
@@ -76,45 +86,129 @@ actor OpusMTTranslationEngine: TranslationEngine {
     }
 
     private var loaded: [String: LoadedModel] = [:]
-    private(set) var currentProgress: TranslationProgress?
-
-    var translationProgress: TranslationProgress? { currentProgress }
 
     nonisolated func canTranslate(from source: Locale.Language, to target: Locale.Language) -> Bool {
         guard let sourceCode = source.languageCode?.identifier, let targetCode = target.languageCode?.identifier else { return false }
         return Self.supportedPairs.contains { $0.sourceLanguageCode == sourceCode && $0.targetLanguageCode == targetCode }
     }
 
-    func translate(texts: [String], source: Locale.Language, target: Locale.Language) async throws -> [String] {
-        guard let sourceCode = source.languageCode?.identifier, let targetCode = target.languageCode?.identifier,
-              let pair = Self.supportedPairs.first(where: { $0.sourceLanguageCode == sourceCode && $0.targetLanguageCode == targetCode })
-        else { throw OpusMTTranslationError.unsupportedLanguage }
-        let model = try loadModelIfNeeded(pair: pair)
-        currentProgress = TranslationProgress(completed: 0, total: texts.count)
-        var results: [String] = []
-        results.reserveCapacity(texts.count)
-        for text in texts {
-            results.append(try translateOne(text, model: model))
-            currentProgress = TranslationProgress(completed: results.count, total: texts.count)
-            // `translateOne` is entirely synchronous (ONNX Runtime calls are
-            // plain blocking Obj-C, no `await` inside) — without this, this
-            // actor method never actually suspends until the whole loop is
-            // done, so a concurrent `await engine.translationProgress` call
-            // (see ReaderPlaybackController's progress poller) just queues
-            // behind this method and never gets a turn until it's already
-            // finished, making `translationProgress` appear to jump straight
-            // from nil to done instead of advancing — confirmed via a real
-            // Simulator run before this fix (progress samples came back
-            // empty for a 37-sentence/7.7s translation).
-            await Task.yield()
+    /// Sentences run concurrently, up to `maxConcurrentTranslations` in
+    /// flight at once, instead of strictly one at a time — measured on a
+    /// full chapter (see `TranslationPerformanceTests`), a sequential loop
+    /// left the rest of the device's cores idle for the entire decode loop
+    /// of every sentence. `translateOne` and everything it calls are
+    /// `nonisolated` specifically so child tasks actually run concurrently
+    /// on Swift's cooperative thread pool rather than hopping back onto
+    /// this actor's single serial executor one at a time — see
+    /// `loadModelIfNeeded`'s `intraOpThreads: 1` doc comment for the other
+    /// half of this trade-off (parallelism moved from *within* one ONNX
+    /// Runtime call to *across* sentences).
+    ///
+    /// Bounded rather than "spawn all N at once": each in-flight sentence
+    /// holds a growing KV-cache (up to `maxNewTokens` steps' worth of
+    /// float arrays per layer — see `translateOne`), so capping concurrency
+    /// also caps peak memory, not just thread contention.
+    ///
+    /// `nonisolated`, returning the stream synchronously and doing the
+    /// actual work inside a detached `Task` — lets `translate` itself
+    /// satisfy `TranslationEngine`'s non-async requirement while still
+    /// hopping onto this actor (via `await loadModelIfNeeded`) for the one
+    /// piece of actual actor-isolated state (`loaded`). Yields each
+    /// sentence to the caller (`ReaderPlaybackController.performPendingTranslation`)
+    /// the moment it's done, in *completion* order — a later sentence can
+    /// legitimately land before an earlier one under concurrent
+    /// translation, so the caller tags results by index rather than
+    /// assuming stream order matches input order.
+    nonisolated func translate(texts: [String], source: Locale.Language, target: Locale.Language) -> AsyncThrowingStream<(index: Int, text: String), Error> {
+        AsyncThrowingStream { continuation in
+            let task = Task {
+                do {
+                    guard let sourceCode = source.languageCode?.identifier, let targetCode = target.languageCode?.identifier,
+                          let pair = Self.supportedPairs.first(where: { $0.sourceLanguageCode == sourceCode && $0.targetLanguageCode == targetCode })
+                    else { throw OpusMTTranslationError.unsupportedLanguage }
+                    let model = try await self.loadModelIfNeeded(pair: pair)
+                    try await withThrowingTaskGroup(of: (Int, String).self) { group in
+                        var nextIndex = 0
+                        func scheduleNext() {
+                            guard nextIndex < texts.count else { return }
+                            let index = nextIndex
+                            let text = texts[index]
+                            nextIndex += 1
+                            group.addTask { (index, try Self.translateOne(text, model: model)) }
+                        }
+                        let initialBatch = min(Self.maxConcurrentTranslations, texts.count)
+                        for _ in 0..<initialBatch { scheduleNext() }
+                        while let (index, translated) = try await group.next() {
+                            continuation.yield((index, translated))
+                            scheduleNext()
+                        }
+                    }
+                    continuation.finish()
+                } catch {
+                    continuation.finish(throwing: error)
+                }
+            }
+            continuation.onTermination = { _ in task.cancel() }
         }
-        currentProgress = nil
-        return results
+    }
+
+    /// Intra-op threads per ONNX Runtime session — shared by both
+    /// `maxConcurrentTranslations` below and `loadModelIfNeeded`'s session
+    /// creation so the two stay consistent: each concurrently in-flight
+    /// sentence's `Run()` call gets this many worker threads, so total
+    /// threads in flight ≈ `maxConcurrentTranslations * intraOpThreads`,
+    /// which is what's kept near the core count.
+    ///
+    /// 2, not 1 — and not simply "whichever gives more concurrent
+    /// sentences": measured (see TranslationPerformanceTests) on the native
+    /// KV-cache decode path (`TranslationOnnxSession`'s
+    /// `AutoregressiveDecoding` category), 1 thread with the resulting
+    /// higher `maxConcurrentTranslations` was slower for a *full chapter*
+    /// batch too, not just for an isolated single sentence — 36.0s vs 2
+    /// threads' 22.7s on the same test chapter, despite nearly 2x fewer
+    /// sentences running side by side. Best guess: many threads (~13 on the
+    /// test host) hammering `Run()` concurrently on one shared
+    /// `Ort::Session` hits allocator/session-internal contention that
+    /// outweighs the extra parallelism, especially now that each call is
+    /// cheap enough (see `stepDecoderState:...`) for that contention to
+    /// dominate. Not fully root-caused — if retuning this, re-measure
+    /// rather than assuming either direction.
+    private static let decoderIntraOpThreads: Int32 = 2
+
+    /// Leaves some headroom for the UI/audio/system rather than saturating
+    /// every core with translation work — this runs while the reader is
+    /// otherwise idle (waiting on a translation), not competing with
+    /// playback, but a fully pegged device still feels worse to use. Scaled
+    /// down by `decoderIntraOpThreads` so total threads in flight
+    /// (`maxConcurrentTranslations * decoderIntraOpThreads`) stays close to
+    /// the core count instead of multiplying past it.
+    private static var maxConcurrentTranslations: Int {
+        max(1, (ProcessInfo.processInfo.activeProcessorCount - 1) / Int(decoderIntraOpThreads))
     }
 
     private func loadModelIfNeeded(pair: LanguagePair) throws -> LoadedModel {
         let key = "\(pair.sourceLanguageCode)-\(pair.targetLanguageCode)"
         if let existing = loaded[key] { return existing }
+        let model = try Self.buildModel(pair: pair, useCoreML: false)
+        loaded[key] = model
+        return model
+    }
+
+    /// Test-only entry point (see `TranslationPerformanceTests`'
+    /// `testCoreMLExecutionProviderRealTranslation`) — builds a real
+    /// `LoadedModel` for the bundled en-vi pair with `useCoreML: true`
+    /// sessions instead of the CPU-only ones `loadModelIfNeeded` always
+    /// uses in production, so a real device can measure the *actual*
+    /// `translateOne` decode path (not a synthetic decode-step-only check)
+    /// running on onnxruntime's CoreML execution provider. Never called
+    /// from production code, and never touches `loaded` (no caching,
+    /// doesn't interfere with the real engine's state).
+    static func makeModelForTesting(useCoreML: Bool) throws -> LoadedModel {
+        guard let pair = supportedPairs.first else { throw OpusMTTranslationError.unsupportedLanguage }
+        return try buildModel(pair: pair, useCoreML: useCoreML)
+    }
+
+    private static func buildModel(pair: LanguagePair, useCoreML: Bool) throws -> LoadedModel {
         guard let dir = Bundle.main.resourceURL?
             .appendingPathComponent("BundledTranslation").appendingPathComponent(pair.resourceDirName),
             FileManager.default.fileExists(atPath: dir.path)
@@ -130,19 +224,37 @@ actor OpusMTTranslationEngine: TranslationEngine {
         idToPiece.reserveCapacity(vocab.count)
         for (piece, id) in vocab { idToPiece[id] = piece }
 
-        let threads = Int32(max(1, min(ProcessInfo.processInfo.activeProcessorCount / 2, 4)))
+        // `decoderIntraOpThreads` per session, not a full
+        // `activeProcessorCount`-sized pool — `translate(texts:)` runs
+        // multiple sentences concurrently (see its doc comment), each with
+        // its own encoder/decoder `Run()` call, so `maxConcurrentTranslations`
+        // is already sized to leave each of those calls only this many
+        // threads without oversubscribing the core count.
         let encoder = try TranslationOnnxSession(
             modelPath: dir.appendingPathComponent("encoder.onnx").path,
-            intraOpThreads: threads, disableGraphOptimization: false
+            intraOpThreads: Self.decoderIntraOpThreads, disableGraphOptimization: false, useCoreML: useCoreML
         )
-        // See TranslationOnnxSession's doc comment on `disableGraphOptimization`.
+        // Stays disabled — see TranslationOnnxSession's doc comment on
+        // `disableGraphOptimization`: this isn't a naive perf trade-off,
+        // it's a workaround for a *confirmed, reproduced* onnxruntime QDQ
+        // graph-optimizer bug on this decoder's tied embedding/output
+        // weight (`TransposeDQWeightsForMatMulNBits ... Missing required
+        // scale`). Tried flipping this to `false` while measuring
+        // TranslationPerformanceTests: it ran 161/161 sentences without a
+        // thrown ORT error and was measurably faster (~21% lower
+        // steady-state s/sentence) — but "didn't throw" isn't proof the
+        // documented bug is absent, only proof it didn't *crash*; a
+        // corrupted dequantized weight could just as easily produce
+        // silently-wrong-but-still-string-shaped output, which this
+        // model's already-known "can mangle output" quality ceiling would
+        // mask. Not worth that risk without a real correctness check
+        // (e.g. diffing translations against a known-good reference)
+        // backing it up first.
         let decoder = try TranslationOnnxSession(
             modelPath: dir.appendingPathComponent("decoder_merged.onnx").path,
-            intraOpThreads: threads, disableGraphOptimization: true
+            intraOpThreads: Self.decoderIntraOpThreads, disableGraphOptimization: true, useCoreML: useCoreML
         )
-        let model = LoadedModel(pair: pair, tokenizer: tokenizer, idToPiece: idToPiece, encoder: encoder, decoder: decoder)
-        loaded[key] = model
-        return model
+        return LoadedModel(pair: pair, tokenizer: tokenizer, idToPiece: idToPiece, encoder: encoder, decoder: decoder)
     }
 
     /// Greedy (not beam) decoding with the merged decoder's self-attention
@@ -155,7 +267,19 @@ actor OpusMTTranslationEngine: TranslationEngine {
     /// and enough to validate the engine-switching architecture; the
     /// output-quality caveat in this type's doc comment already covers the
     /// gap that would remain even with beam search.
-    private func translateOne(_ text: String, model: LoadedModel, maxNewTokens: Int = 128) throws -> String {
+    ///
+    /// `static`, not an actor-isolated instance method: touches no actor
+    /// state (everything it needs comes in via `model`), specifically so
+    /// `translate(texts:)` can run several of these concurrently on
+    /// separate threads instead of one at a time on the actor's serial
+    /// executor — see that method's doc comment.
+    ///
+    /// Internal, not `private`: `TranslationPerformanceTests`' CoreML EP
+    /// comparison calls this directly (against a `LoadedModel` built via
+    /// `makeModelForTesting(useCoreML: true)`) specifically so it measures
+    /// this exact production decode path rather than a hand-rolled
+    /// reimplementation in test code that could silently drift from it.
+    static func translateOne(_ text: String, model: LoadedModel, maxNewTokens: Int = 128) throws -> String {
         let pair = model.pair
         let prefixed = pair.targetLanguageTag.map { "\($0) \(text)" } ?? text
         var inputIds = model.tokenizer.encode(prefixed)
@@ -177,74 +301,33 @@ actor OpusMTTranslationEngine: TranslationEngine {
             shape: encoderLastHiddenState.shape, data: encoderLastHiddenState.data
         )
         let encoderSeqLen = inputIds.count
+        // Invariant across every step — built once here instead of inside
+        // the loop.
+        let encoderAttentionMask = int64Tensor("encoder_attention_mask", shape: [1, encoderSeqLen], [Int64](repeating: 1, count: encoderSeqLen))
 
-        var pastDecoderKey = [[Float]](repeating: [], count: pair.numLayers)
-        var pastDecoderValue = [[Float]](repeating: [], count: pair.numLayers)
-        var pastEncoderKey = [[Float]](repeating: [], count: pair.numLayers)
-        var pastEncoderValue = [[Float]](repeating: [], count: pair.numLayers)
-        var pastDecoderLen = 0
+        // Everything about the growing KV-cache — both the decoder's (which
+        // really does grow every step) and the encoder's (constant after
+        // step 0) — now lives entirely inside `state`, natively in C++, via
+        // `TranslationOnnxSession`'s `AutoregressiveDecoding` category (see
+        // TranslationOnnxSession.mm's `DecoderCacheState`). Each step now
+        // only crosses the Swift/Obj-C boundary with one new token in and
+        // one argmax'd token id out — the old per-step
+        // Swift-array-to-NSData-and-back round trip for the entire cache
+        // (`pastDecoderKey`/`pastDecoderValue`/`floats`/`floatTensor`) is
+        // gone; see this method's git history for that version, and
+        // TranslationPerformanceTests for the measured before/after.
+        let state = try model.decoder.makeDecoderState(withNumLayers: pair.numLayers, numHeads: pair.numHeads, headDim: pair.headDim)
 
         var generated = [pair.decoderStartTokenId]
-        var useCacheBranch = false
-
         for _ in 0..<maxNewTokens {
-            var inputs: [TranslationOnnxTensor] = [
-                int64Tensor(
-                    "input_ids",
-                    shape: useCacheBranch ? [1, 1] : [1, generated.count],
-                    (useCacheBranch ? [generated[generated.count - 1]] : generated).map(Int64.init)
-                ),
-                int64Tensor("encoder_attention_mask", shape: [1, encoderSeqLen], [Int64](repeating: 1, count: encoderSeqLen)),
-                encoderHiddenStates,
-                boolTensor("use_cache_branch", useCacheBranch),
-            ]
-            for i in 0..<pair.numLayers {
-                inputs.append(floatTensor(
-                    "past_key_values.\(i).decoder.key",
-                    shape: [1, pair.numHeads, pastDecoderLen, pair.headDim], pastDecoderKey[i]
-                ))
-                inputs.append(floatTensor(
-                    "past_key_values.\(i).decoder.value",
-                    shape: [1, pair.numHeads, pastDecoderLen, pair.headDim], pastDecoderValue[i]
-                ))
-                let encoderPastLen = useCacheBranch ? encoderSeqLen : 0
-                inputs.append(floatTensor(
-                    "past_key_values.\(i).encoder.key",
-                    shape: [1, pair.numHeads, encoderPastLen, pair.headDim], pastEncoderKey[i]
-                ))
-                inputs.append(floatTensor(
-                    "past_key_values.\(i).encoder.value",
-                    shape: [1, pair.numHeads, encoderPastLen, pair.headDim], pastEncoderValue[i]
-                ))
-            }
-
-            var outputNames = ["logits"]
-            for i in 0..<pair.numLayers {
-                outputNames.append("present.\(i).decoder.key")
-                outputNames.append("present.\(i).decoder.value")
-                outputNames.append("present.\(i).encoder.key")
-                outputNames.append("present.\(i).encoder.value")
-            }
-            let outputs = try run(model.decoder, inputs: inputs, outputNames: outputNames)
-            guard let logits = outputs["logits"] else { throw OpusMTTranslationError.outputMissing("logits") }
-
-            let vocabSize = logits.shape.last!.intValue
-            let logitValues = floats(logits)
-            let lastStepStart = (logitValues.count - vocabSize)
-            let nextId = argmax(logitValues, from: lastStepStart, count: vocabSize)
+            let nextId = try model.decoder.step(
+                state,
+                encoderHiddenStates: encoderHiddenStates,
+                encoderAttentionMask: encoderAttentionMask,
+                tokenId: Int64(generated[generated.count - 1])
+            ).intValue
             generated.append(nextId)
             if nextId == pair.eosTokenId { break }
-
-            for i in 0..<pair.numLayers {
-                pastDecoderKey[i] = try floatsOrThrow(outputs, "present.\(i).decoder.key")
-                pastDecoderValue[i] = try floatsOrThrow(outputs, "present.\(i).decoder.value")
-                if !useCacheBranch {
-                    pastEncoderKey[i] = try floatsOrThrow(outputs, "present.\(i).encoder.key")
-                    pastEncoderValue[i] = try floatsOrThrow(outputs, "present.\(i).encoder.value")
-                }
-            }
-            pastDecoderLen += 1
-            useCacheBranch = true
         }
 
         let outputIds = generated.dropFirst().filter { $0 != pair.eosTokenId }
@@ -269,29 +352,37 @@ actor OpusMTTranslationEngine: TranslationEngine {
         s = s.replacingOccurrences(of: "\\s*@,@\\s*", with: ",", options: .regularExpression)
         s = s.replacingOccurrences(of: "(?:^|\\s)@(?=\\s|$)", with: " ", options: .regularExpression)
         s = s.replacingOccurrences(of: "♪", with: "")
+        // The model's own vocab contains "<"/">"/"</" as real pieces (see
+        // vocab.json) — on out-of-distribution input (front matter,
+        // errata lists) it has been observed *hallucinating* these into
+        // its output even when the input side was already cleaned (see
+        // TextSegmentation.cleaned's matching stray-bracket strip), so
+        // this needs its own independent pass rather than relying on
+        // input hygiene alone.
+        s = s.replacingOccurrences(of: "[<>]+", with: "", options: .regularExpression)
         s = s.replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
         return s.trimmingCharacters(in: .whitespaces)
     }
 
     // MARK: - ONNX tensor plumbing
 
-    private func run(_ session: TranslationOnnxSession, inputs: [TranslationOnnxTensor], outputNames: [String]) throws -> [String: TranslationOnnxTensor] {
+    private static func run(_ session: TranslationOnnxSession, inputs: [TranslationOnnxTensor], outputNames: [String]) throws -> [String: TranslationOnnxTensor] {
         let outputs = try session.run(withInputs: inputs, outputNames: outputNames)
         var dict: [String: TranslationOnnxTensor] = [:]
         for t in outputs { dict[t.name] = t }
         return dict
     }
 
-    private func floats(_ tensor: TranslationOnnxTensor) -> [Float] {
+    private static func floats(_ tensor: TranslationOnnxTensor) -> [Float] {
         tensor.data.withUnsafeBytes { Array($0.bindMemory(to: Float.self)) }
     }
 
-    private func floatsOrThrow(_ dict: [String: TranslationOnnxTensor], _ name: String) throws -> [Float] {
+    private static func floatsOrThrow(_ dict: [String: TranslationOnnxTensor], _ name: String) throws -> [Float] {
         guard let t = dict[name] else { throw OpusMTTranslationError.outputMissing(name) }
         return floats(t)
     }
 
-    private func argmax(_ values: [Float], from start: Int, count: Int) -> Int {
+    private static func argmax(_ values: [Float], from start: Int, count: Int) -> Int {
         var bestIndex = 0
         var bestValue = -Float.infinity
         for i in 0..<count where values[start + i] > bestValue {
@@ -301,21 +392,21 @@ actor OpusMTTranslationEngine: TranslationEngine {
         return bestIndex
     }
 
-    private func floatTensor(_ name: String, shape: [Int], _ values: [Float]) -> TranslationOnnxTensor {
+    private static func floatTensor(_ name: String, shape: [Int], _ values: [Float]) -> TranslationOnnxTensor {
         TranslationOnnxTensor(
             name: name, dtype: .float32, shape: shape.map { NSNumber(value: $0) },
             data: values.withUnsafeBufferPointer { Data(buffer: $0) }
         )
     }
 
-    private func int64Tensor(_ name: String, shape: [Int], _ values: [Int64]) -> TranslationOnnxTensor {
+    private static func int64Tensor(_ name: String, shape: [Int], _ values: [Int64]) -> TranslationOnnxTensor {
         TranslationOnnxTensor(
             name: name, dtype: .int64, shape: shape.map { NSNumber(value: $0) },
             data: values.withUnsafeBufferPointer { Data(buffer: $0) }
         )
     }
 
-    private func boolTensor(_ name: String, _ value: Bool) -> TranslationOnnxTensor {
+    private static func boolTensor(_ name: String, _ value: Bool) -> TranslationOnnxTensor {
         TranslationOnnxTensor(
             name: name, dtype: .bool, shape: [1],
             data: Data([value ? 1 : 0])
