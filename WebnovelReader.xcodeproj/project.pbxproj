@@ -54,6 +54,7 @@
 		712CC9D873EC43419CBADFFC /* ChapterListSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 253CFE7887D5A59D89E12AD5 /* ChapterListSheet.swift */; };
 		7425ED5F5ECB20C03CB8293D /* TranslationPerformanceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC0AC8AF2A3F477A4A2DB135 /* TranslationPerformanceTests.swift */; };
 		10829D1DA0B8DF339D4A89DC /* ChapterFragmentParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 638DCDF7760BAC6F92F04A2C /* ChapterFragmentParserTests.swift */; };
+		522C27AAE1A0C687DD8A18A3 /* DownloadManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53474A755E80D1AAD39D07DB /* DownloadManagerTests.swift */; };
 		76AE30B0AD63D65505777EC5 /* BugReportAndHistoryUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0553A498B15C3928D1254ED /* BugReportAndHistoryUITests.swift */; };
 		794FD2E60ACC4ABDBAFD2F94 /* UnigramTokenizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C2C937D6FE94D628BBFCEF2 /* UnigramTokenizer.swift */; };
 		7EA4BE681E9DB6779C83EFAB /* VieNeuOfflineV2Voice.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55CB3F6DB5FF7C1BB4BBB5F6 /* VieNeuOfflineV2Voice.swift */; };
@@ -232,6 +233,7 @@
 		DBDAC71CFDFC1EC6A3F6CD4E /* BookDetailActionsUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookDetailActionsUITests.swift; sourceTree = "<group>"; };
 		DC0AC8AF2A3F477A4A2DB135 /* TranslationPerformanceTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = TranslationPerformanceTests.swift; path = TranslationPerformanceTests.swift; sourceTree = "<group>"; };
 		638DCDF7760BAC6F92F04A2C /* ChapterFragmentParserTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ChapterFragmentParserTests.swift; path = ChapterFragmentParserTests.swift; sourceTree = "<group>"; };
+		53474A755E80D1AAD39D07DB /* DownloadManagerTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = DownloadManagerTests.swift; path = DownloadManagerTests.swift; sourceTree = "<group>"; };
 		DC2DD58615428784C26E486C /* VieNeuOfflineV2TTSService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VieNeuOfflineV2TTSService.swift; sourceTree = "<group>"; };
 		E323E4940121D8CD5ED4F589 /* DownloadManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadManager.swift; sourceTree = "<group>"; };
 		E77B7759E1190A621260BC2D /* SettingsAndPlaybarLayoutUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsAndPlaybarLayoutUITests.swift; sourceTree = "<group>"; };
@@ -377,6 +379,7 @@
 			children = (
 				DC0AC8AF2A3F477A4A2DB135 /* TranslationPerformanceTests.swift */,
 				638DCDF7760BAC6F92F04A2C /* ChapterFragmentParserTests.swift */,
+				53474A755E80D1AAD39D07DB /* DownloadManagerTests.swift */,
 				8FABF290508D3B73AF5E3087 /* Resources */,
 			);
 			name = WebnovelReaderTests;
@@ -790,6 +793,7 @@
 			files = (
 				7425ED5F5ECB20C03CB8293D /* TranslationPerformanceTests.swift in Sources */,
 				10829D1DA0B8DF339D4A89DC /* ChapterFragmentParserTests.swift in Sources */,
+				522C27AAE1A0C687DD8A18A3 /* DownloadManagerTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

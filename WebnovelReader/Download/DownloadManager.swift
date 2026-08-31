@@ -1,9 +1,18 @@
 import Foundation
 
 // Native counterpart to site_assets/download.js's Cache-Storage-based
-// offline books — persists parsed chapters + the cover to
+// offline books — persists each chapter's raw HTML fragment + the cover to
 // Application Support/Books/<id>/ instead of the browser's Cache Storage,
 // and ReaderView/CoverImage check here before hitting the network.
+//
+// Deliberately stores the *raw* fragment, not a parsed `Chapter` — this
+// used to cache ChapterFragmentParser's output directly, which meant every
+// already-downloaded book was permanently stuck with whatever parsing bugs
+// existed on the day it was downloaded (e.g. the old regex/entity-
+// whitelist parser leaking literal "&#x27;" into offline chapters even
+// after the app was updated with a fixed parser). Re-parsing the raw HTML
+// on every read costs a cheap SwiftSoup pass but guarantees offline
+// chapters always reflect the current parser, same as the online path.
 @MainActor
 final class DownloadManager: ObservableObject {
     static let shared = DownloadManager()
@@ -23,19 +32,17 @@ final class DownloadManager: ObservableObject {
     }
 
     func localChapter(bookID: Int, index: Int) -> Chapter? {
-        guard let data = try? Data(contentsOf: chaptersFileURL(bookID)),
-              let chapters = try? JSONDecoder().decode([Chapter].self, from: data) else { return nil }
-        return chapters.first { $0.index == index }
+        guard let html = try? String(contentsOf: chapterFileURL(bookID, index), encoding: .utf8) else { return nil }
+        return ChapterFragmentParser.parse(html: html, index: index)
     }
 
-    /// Downloaded books already have every chapter's full content (title
-    /// included) cached in chaptersFileURL — free to read the titles back
-    /// out of that, no separate fetch needed even though the online path
-    /// (APIClient.fetchChapterTitles) hits its own dedicated endpoint.
+    /// Downloaded books have every chapter's raw HTML on disk — parse each
+    /// just far enough to pull its title back out, no separate fetch
+    /// needed even though the online path (APIClient.fetchChapterTitles)
+    /// hits its own dedicated endpoint.
     func localChapterTitles(bookID: Int) -> [String]? {
-        guard let data = try? Data(contentsOf: chaptersFileURL(bookID)),
-              let chapters = try? JSONDecoder().decode([Chapter].self, from: data) else { return nil }
-        return chapters.sorted { $0.index < $1.index }.map(\.title)
+        guard let book = localBook(bookID: bookID) else { return nil }
+        return (0..<book.n).map { localChapter(bookID: bookID, index: $0)?.title ?? "Chương \($0 + 1)" }
     }
 
     func localCoverData(bookID: Int) -> Data? {
@@ -75,16 +82,19 @@ final class DownloadManager: ObservableObject {
                 try coverData.write(to: dir.appendingPathComponent(cover))
             }
 
-            let chapters = try await fetchAllChapters(book: book, baseURL: baseURL)
-            let data = try JSONEncoder().encode(chapters.sorted { $0.index < $1.index })
-            try data.write(to: chaptersFileURL(book.id))
+            let fragments = try await fetchAllChapterHTML(book: book, baseURL: baseURL)
+            try fileManager.createDirectory(at: chaptersDirectory(book.id), withIntermediateDirectories: true)
+            for (index, html) in fragments {
+                try html.write(to: chapterFileURL(book.id, index), atomically: true, encoding: .utf8)
+            }
+            // meta.json written last, after every chapter file — the
+            // completion marker isFullyDownloaded() checks for, so a
+            // retry after a failed/interrupted download starts clean
+            // instead of serving a half-downloaded book as complete.
             try JSONEncoder().encode(book).write(to: metaFileURL(book.id))
             downloadedBookIDs.insert(book.id)
             EventLogStore.shared.record(.download, "Tải xuống hoàn tất", detail: book.title)
         } catch {
-            // Best-effort: chapters.json is only written on full success,
-            // so isDownloaded() still reports false and a retry starts
-            // clean instead of serving a half-downloaded book as complete.
             EventLogStore.shared.record(.error, "Tải xuống thất bại", detail: "\(book.title): \(error.localizedDescription)")
         }
     }
@@ -99,29 +109,30 @@ final class DownloadManager: ObservableObject {
     /// Bounded concurrency (4 in flight) — book.n can run into the
     /// thousands for a long novel; firing that many requests at once
     /// against a single small Cloud Run instance isn't reasonable.
-    private func fetchAllChapters(book: Book, baseURL: URL) async throws -> [Chapter] {
+    private func fetchAllChapterHTML(book: Book, baseURL: URL) async throws -> [(index: Int, html: String)] {
         let indices = Array(0..<book.n)
         var nextIndex = 0
-        var chapters: [Chapter] = []
-        chapters.reserveCapacity(book.n)
+        var fragments: [(index: Int, html: String)] = []
+        fragments.reserveCapacity(book.n)
 
-        try await withThrowingTaskGroup(of: Chapter.self) { group in
+        try await withThrowingTaskGroup(of: (index: Int, html: String).self) { group in
             func addNext() {
                 guard nextIndex < indices.count else { return }
                 let i = indices[nextIndex]
                 nextIndex += 1
                 group.addTask {
-                    try await APIClient.shared.fetchChapter(baseURL: baseURL, bookID: book.id, index: i)
+                    let html = try await APIClient.shared.fetchChapterHTML(baseURL: baseURL, bookID: book.id, index: i)
+                    return (i, html)
                 }
             }
             for _ in 0..<min(4, indices.count) { addNext() }
-            while let chapter = try await group.next() {
-                chapters.append(chapter)
-                progress[book.id] = Double(chapters.count) / Double(indices.count)
+            while let fragment = try await group.next() {
+                fragments.append(fragment)
+                progress[book.id] = Double(fragments.count) / Double(indices.count)
                 addNext()
             }
         }
-        return chapters
+        return fragments
     }
 
     private func booksDirectory() -> URL {
@@ -135,20 +146,28 @@ final class DownloadManager: ObservableObject {
         booksDirectory().appendingPathComponent(String(bookID), isDirectory: true)
     }
 
-    private func chaptersFileURL(_ bookID: Int) -> URL {
-        bookDirectory(bookID).appendingPathComponent("chapters.json")
+    private func chaptersDirectory(_ bookID: Int) -> URL {
+        bookDirectory(bookID).appendingPathComponent("data", isDirectory: true)
+    }
+
+    private func chapterFileURL(_ bookID: Int, _ index: Int) -> URL {
+        chaptersDirectory(bookID).appendingPathComponent(String(format: "%04d.html", index))
     }
 
     private func metaFileURL(_ bookID: Int) -> URL {
         bookDirectory(bookID).appendingPathComponent("meta.json")
     }
 
+    /// meta.json is only written after every chapter fragment lands on
+    /// disk (see download()), so its presence alone is a reliable
+    /// all-or-nothing completeness marker without needing to count files.
+    private func isFullyDownloaded(_ bookID: Int) -> Bool {
+        fileManager.fileExists(atPath: metaFileURL(bookID).path)
+            && fileManager.fileExists(atPath: chaptersDirectory(bookID).path)
+    }
+
     private func refreshDownloadedList() {
         guard let entries = try? fileManager.contentsOfDirectory(at: booksDirectory(), includingPropertiesForKeys: nil) else { return }
-        downloadedBookIDs = Set(entries.compactMap { Int($0.lastPathComponent) }
-            .filter {
-                fileManager.fileExists(atPath: chaptersFileURL($0).path)
-                    && fileManager.fileExists(atPath: metaFileURL($0).path)
-            })
+        downloadedBookIDs = Set(entries.compactMap { Int($0.lastPathComponent) }.filter { isFullyDownloaded($0) })
     }
 }

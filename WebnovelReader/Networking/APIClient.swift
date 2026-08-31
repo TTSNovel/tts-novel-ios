@@ -53,12 +53,21 @@ final class APIClient: @unchecked Sendable {
 
     /// `index` is 0-based, matching the server's own NNNN.html filenames.
     func fetchChapter(baseURL: URL, bookID: Int, index: Int) async throws -> Chapter {
+        let html = try await fetchChapterHTML(baseURL: baseURL, bookID: bookID, index: index)
+        return ChapterFragmentParser.parse(html: html, index: index)
+    }
+
+    /// Raw fragment, pre-parse — DownloadManager persists this (not the
+    /// parsed `Chapter`) so offline books stay re-parseable with whatever
+    /// `ChapterFragmentParser` does *now*, instead of freezing in whatever
+    /// bugs it had on the day a book was downloaded.
+    func fetchChapterHTML(baseURL: URL, bookID: Int, index: Int) async throws -> String {
         let filename = String(format: "%04d.html", index)
         let url = baseURL.appendingPathComponent("books/\(bookID)/data/\(filename)")
         let (data, response) = try await session.data(from: url)
         try Self.checkOK(response)
         guard let html = String(data: data, encoding: .utf8) else { throw APIError.invalidResponse }
-        return ChapterFragmentParser.parse(html: html, index: index)
+        return html
     }
 
     /// books/<id>/titles.json — every chapter's title, in reading order,
