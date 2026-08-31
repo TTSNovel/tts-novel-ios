@@ -1,34 +1,43 @@
 import Foundation
+import SwiftSoup
 
-// Not a general HTML parser — matches exactly what
-// book_renderer.render_chapter_fragment() emits: "<h1>{title}</h1>\n{body}"
-// where both title and body only ever contain the entities html.escape()
-// produces (& < > " ') plus whatever the epub source itself used (e.g.
-// &nbsp;). reader.js gets away with just setting this as innerHTML in a
-// trusted context; here it's stripped down to plain text for both display
-// and (later) feeding to TTS.
+// book_renderer.render_chapter_fragment() (tts-webnovel repo) emits
+// "<h1>{title}</h1>\n{body}" where title/body are html.escape()'d, carrying
+// through whatever entities/inline markup the epub source itself used —
+// not just the handful of entities a hand-rolled decoder happens to know
+// about. reader.js gets away with just setting this as innerHTML in a
+// trusted context, which decodes all of that correctly; SwiftSoup is a
+// real, spec-compliant HTML parser so this gets the same result — a
+// regex-based stand-in previously missed things like hex numeric entities
+// (`&#x27;`), leaking literal "&#x27;" into the displayed/TTS text.
 enum ChapterFragmentParser {
     static func parse(html: String, index: Int) -> Chapter {
-        var title = "Chương \(index + 1)"
-        var body = html
-        if let range = html.range(of: "<h1>.*?</h1>", options: [.regularExpression, .caseInsensitive]) {
-            title = String(html[range]).strippingHTMLTags()
-            body = String(html[range.upperBound...])
+        let fallbackTitle = "Chương \(index + 1)"
+        guard let doc = try? SwiftSoup.parse(html) else {
+            return Chapter(index: index, title: fallbackTitle, text: "")
         }
-        return Chapter(index: index, title: title, text: body.strippingHTMLTags())
+        let h1Text = (try? doc.select("h1").first()?.text()) ?? nil
+        let title = (h1Text?.isEmpty == false) ? h1Text! : fallbackTitle
+        let paragraphs = (try? doc.select("p").array()) ?? []
+        let body = paragraphs.map(paragraphText).joined(separator: "\n\n")
+        return Chapter(index: index, title: title, text: body)
     }
-}
 
-extension String {
-    func strippingHTMLTags() -> String {
-        var s = self
-        s = s.replacingOccurrences(of: "<br\\s*/?>", with: "\n", options: .regularExpression)
-        s = s.replacingOccurrences(of: "</p>", with: "\n\n", options: .caseInsensitive)
-        s = s.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
-        let entities = ["&amp;": "&", "&lt;": "<", "&gt;": ">", "&quot;": "\"", "&#39;": "'", "&nbsp;": " "]
-        for (entity, character) in entities {
-            s = s.replacingOccurrences(of: entity, with: character)
+    /// One `<p>`'s own text, browser-`innerText`-style: a `<br>` becomes a
+    /// line break, everything else's already-entity-decoded text is
+    /// concatenated as-is. `Element.text()` alone can't do this — it
+    /// collapses all whitespace, so a `<br>` (which has no text content of
+    /// its own) would otherwise disappear entirely instead of becoming the
+    /// intra-paragraph line break `TextSegmentation` expects.
+    private static func paragraphText(_ element: Element) -> String {
+        var result = ""
+        for node in element.getChildNodes() {
+            if let text = node as? TextNode {
+                result += text.text()
+            } else if let el = node as? Element {
+                result += el.tagName().lowercased() == "br" ? "\n" : ((try? el.text()) ?? "")
+            }
         }
-        return s.trimmingCharacters(in: .whitespacesAndNewlines)
+        return result.trimmingCharacters(in: .whitespaces)
     }
 }

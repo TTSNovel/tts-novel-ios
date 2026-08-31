@@ -1,5 +1,5 @@
 {
-  "originHash" : "7a0375d1a663d1e2dcdcdec3ee95de2d4cd608edb01d219e2f60ae6cc8b29589",
+  "originHash" : "939a3eb4546570b7814262199a05230d68986e5e3513223409bc1ab901e2fb78",
   "pins" : [
     {
       "identity" : "onnxruntime-libs",
@@ -16,6 +16,15 @@
       "location" : "https://github.com/k2-fsa/sherpa-onnx",
       "state" : {
         "revision" : "634265c9b57642fdd158120148785c89aa281c4b"
+      }
+    },
+    {
+      "identity" : "swiftsoup",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/scinfu/SwiftSoup",
+      "state" : {
+        "revision" : "18b80329749eca5ea29fc50211dca5c7eff5bfec",
+        "version" : "2.13.9"
       }
     }
   ],

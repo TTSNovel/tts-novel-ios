@@ -22,6 +22,7 @@
 		2485DFD67EE0DEF62885FE99 /* SelectPersistsAcrossChapterNavigationUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D44E9F6922443881D20F71F /* SelectPersistsAcrossChapterNavigationUITests.swift */; };
 		26CC2CE6FA4202B8330B57C9 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EAD6E5B868058D02CC31AC23 /* Foundation.framework */; };
 		288E6EF37C418E4E17F10599 /* sherpa-onnx in Frameworks */ = {isa = PBXBuildFile; productRef = 7077642E7C1882099C491E58 /* sherpa-onnx */; };
+		08FB02FA2AAD66DDE8948879 /* SwiftSoup in Frameworks */ = {isa = PBXBuildFile; productRef = D6701A1DF4224AF88545DB96 /* SwiftSoup */; };
 		2BB8C9D711E58934FA477FBC /* SeaG2P.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = B34AF307CC8604013EA477E1 /* SeaG2P.xcframework */; };
 		329DA27C71D1EAD15CB7E3EF /* BookRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5117F1E588A2F64078970C56 /* BookRow.swift */; };
 		32E0B8A2018F84A81308C1D3 /* BugReportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51AD29C75DE56255A25DB912 /* BugReportView.swift */; };
@@ -52,6 +53,7 @@
 		62E40856A93A1A0D969DCA5B /* BookDetailActionsUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBDAC71CFDFC1EC6A3F6CD4E /* BookDetailActionsUITests.swift */; };
 		712CC9D873EC43419CBADFFC /* ChapterListSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 253CFE7887D5A59D89E12AD5 /* ChapterListSheet.swift */; };
 		7425ED5F5ECB20C03CB8293D /* TranslationPerformanceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC0AC8AF2A3F477A4A2DB135 /* TranslationPerformanceTests.swift */; };
+		10829D1DA0B8DF339D4A89DC /* ChapterFragmentParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 638DCDF7760BAC6F92F04A2C /* ChapterFragmentParserTests.swift */; };
 		76AE30B0AD63D65505777EC5 /* BugReportAndHistoryUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0553A498B15C3928D1254ED /* BugReportAndHistoryUITests.swift */; };
 		794FD2E60ACC4ABDBAFD2F94 /* UnigramTokenizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C2C937D6FE94D628BBFCEF2 /* UnigramTokenizer.swift */; };
 		7EA4BE681E9DB6779C83EFAB /* VieNeuOfflineV2Voice.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55CB3F6DB5FF7C1BB4BBB5F6 /* VieNeuOfflineV2Voice.swift */; };
@@ -229,6 +231,7 @@
 		D86948B589F016B404B328BE /* ReaderPlaybackController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReaderPlaybackController.swift; sourceTree = "<group>"; };
 		DBDAC71CFDFC1EC6A3F6CD4E /* BookDetailActionsUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookDetailActionsUITests.swift; sourceTree = "<group>"; };
 		DC0AC8AF2A3F477A4A2DB135 /* TranslationPerformanceTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = TranslationPerformanceTests.swift; path = TranslationPerformanceTests.swift; sourceTree = "<group>"; };
+		638DCDF7760BAC6F92F04A2C /* ChapterFragmentParserTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ChapterFragmentParserTests.swift; path = ChapterFragmentParserTests.swift; sourceTree = "<group>"; };
 		DC2DD58615428784C26E486C /* VieNeuOfflineV2TTSService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VieNeuOfflineV2TTSService.swift; sourceTree = "<group>"; };
 		E323E4940121D8CD5ED4F589 /* DownloadManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadManager.swift; sourceTree = "<group>"; };
 		E77B7759E1190A621260BC2D /* SettingsAndPlaybarLayoutUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsAndPlaybarLayoutUITests.swift; sourceTree = "<group>"; };
@@ -264,6 +267,7 @@
 			files = (
 				288E6EF37C418E4E17F10599 /* sherpa-onnx in Frameworks */,
 				B84DBB1A50F6DE4212707CEE /* onnxruntime-ios in Frameworks */,
+				08FB02FA2AAD66DDE8948879 /* SwiftSoup in Frameworks */,
 				2BB8C9D711E58934FA477FBC /* SeaG2P.xcframework in Frameworks */,
 				1E0E32AB31ED6A61637E53D9 /* llama.xcframework in Frameworks */,
 			);
@@ -372,6 +376,7 @@
 			isa = PBXGroup;
 			children = (
 				DC0AC8AF2A3F477A4A2DB135 /* TranslationPerformanceTests.swift */,
+				638DCDF7760BAC6F92F04A2C /* ChapterFragmentParserTests.swift */,
 				8FABF290508D3B73AF5E3087 /* Resources */,
 			);
 			name = WebnovelReaderTests;
@@ -613,6 +618,7 @@
 			packageProductDependencies = (
 				7077642E7C1882099C491E58 /* sherpa-onnx */,
 				88FE71A7AB03DCCF5CC630FA /* onnxruntime-ios */,
+				D6701A1DF4224AF88545DB96 /* SwiftSoup */,
 			);
 			productName = WebnovelReader;
 			productReference = C2F97CC55E8520B59C8800BB /* WebnovelReader.app */;
@@ -668,6 +674,7 @@
 			packageReferences = (
 				E6AE861AF5232330B796CD85 /* XCRemoteSwiftPackageReference "sherpa-onnx" */,
 				B61403EAF1507C599403DC6D /* XCRemoteSwiftPackageReference "onnxruntime-libs" */,
+				3F94541F869EE0D5A0AE7C2C /* XCRemoteSwiftPackageReference "SwiftSoup" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 842308F4F81D147E7A905121 /* Products */;
@@ -782,6 +789,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				7425ED5F5ECB20C03CB8293D /* TranslationPerformanceTests.swift in Sources */,
+				10829D1DA0B8DF339D4A89DC /* ChapterFragmentParserTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1112,6 +1120,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		3F94541F869EE0D5A0AE7C2C /* XCRemoteSwiftPackageReference "SwiftSoup" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/scinfu/SwiftSoup";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.7.0;
+			};
+		};
 		B61403EAF1507C599403DC6D /* XCRemoteSwiftPackageReference "onnxruntime-libs" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/csukuangfj/onnxruntime-libs";
@@ -1131,6 +1147,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		D6701A1DF4224AF88545DB96 /* SwiftSoup */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3F94541F869EE0D5A0AE7C2C /* XCRemoteSwiftPackageReference "SwiftSoup" */;
+			productName = SwiftSoup;
+		};
 		7077642E7C1882099C491E58 /* sherpa-onnx */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = E6AE861AF5232330B796CD85 /* XCRemoteSwiftPackageReference "sherpa-onnx" */;
