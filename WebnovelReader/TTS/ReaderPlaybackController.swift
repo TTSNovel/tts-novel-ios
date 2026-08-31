@@ -426,7 +426,16 @@ final class ReaderPlaybackController: ObservableObject {
         let savedSpeed = UserDefaults.standard.double(forKey: Keys.speed)
         speed = savedSpeed > 0 ? savedSpeed : 1.0
         autoNextChapter = UserDefaults.standard.bool(forKey: Keys.autoNext)
-        autoTranslate = UserDefaults.standard.bool(forKey: Keys.autoTranslate)
+        // Defaults true (not `.bool(forKey:)`'s implicit false-when-unset) —
+        // translation now streams in per sentence as it lands (see
+        // `performPendingTranslation`), so a chapter that needs translating
+        // visibly progresses (toolbar spinner + progress banner) while
+        // staying hidden behind this flag reads as broken, not just
+        // unfinished — confirmed via a real device screenshot showing
+        // "112/143 câu" translated with the chapter still 100% English on
+        // screen. Still a real, savable setting for anyone who prefers
+        // starting on the original text and switching manually.
+        autoTranslate = UserDefaults.standard.object(forKey: Keys.autoTranslate) as? Bool ?? true
         translationEngineKind = TranslationEngineKind(
             rawValue: UserDefaults.standard.string(forKey: Keys.translationEngineKind) ?? ""
         ) ?? .opusMT
