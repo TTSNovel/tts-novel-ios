@@ -30,11 +30,12 @@ struct LibraryView: View {
     @State private var isOfflineMode = false
     @State private var navPath = NavigationPath()
     @State private var didAutoResume = false
+    @State private var searchText = ""
 
     var body: some View {
         NavigationStack(path: $navPath) {
             List {
-                if !recentBooks.isEmpty {
+                if !isSearching, !recentBooks.isEmpty {
                     Section {
                         ForEach(recentBooks) { book in
                             NavigationLink(value: book) {
@@ -56,17 +57,18 @@ struct LibraryView: View {
                 }
 
                 Section {
-                    ForEach(books) { book in
+                    ForEach(filteredBooks) { book in
                         NavigationLink(value: book) {
                             BookRow(book: book)
                         }
                         .accessibilityIdentifier("bookRow")
                     }
                 } header: {
-                    if !recentBooks.isEmpty { Text("Tất cả") }
+                    if !isSearching, !recentBooks.isEmpty { Text("Tất cả") }
                 }
             }
             .listStyle(.plain)
+            .searchable(text: $searchText, prompt: "Tìm truyện theo tên hoặc tác giả")
             .navigationTitle("Novel Reader")
             .navigationDestination(for: Book.self) { book in
                 BookDetailView(book: book)
@@ -105,6 +107,8 @@ struct LibraryView: View {
                     ContentUnavailableView(
                         "Không tải được thư viện", systemImage: "wifi.slash", description: Text(loadError)
                     )
+                } else if isSearching && filteredBooks.isEmpty {
+                    ContentUnavailableView.search(text: searchText)
                 }
             }
             .safeAreaInset(edge: .top) {
@@ -169,6 +173,21 @@ struct LibraryView: View {
     /// behind "Xem tất cả" (HistoryView), and the source recentBooks caps.
     private var historyBooks: [Book] {
         progressStore.recentEntries().compactMap { entry in books.first(where: { $0.id == entry.bookID }) }
+    }
+
+    private var isSearching: Bool {
+        !searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    /// Books matching the search text by title or author — diacritic- and
+    /// case-insensitive via localizedStandardContains, so "vo tinh" still
+    /// matches "Võ Tình" without the user typing exact Vietnamese tones.
+    private var filteredBooks: [Book] {
+        guard isSearching else { return books }
+        return books.filter { book in
+            book.title.localizedStandardContains(searchText)
+                || (book.author?.localizedStandardContains(searchText) ?? false)
+        }
     }
 
     private func loadBooks() async {
