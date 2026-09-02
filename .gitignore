@@ -8,6 +8,22 @@ xcuserdata/
 # Personal deployment config — see Config.xcconfig.example
 Config.xcconfig
 
+# Offline model binaries — fetched from GCS by Scripts/fetch-models.sh
+# (see project.yml's prebuildScripts), not committed.
+WebnovelReader/Resources/VieNeuOfflineV2/vieneu-tts-v2-turbo.gguf
+WebnovelReader/Resources/VieNeuOfflineV2/vieneu_decoder_int8.onnx
+WebnovelReader/Resources/VieNeuOfflineV3/vieneu_backbone_shared.data
+WebnovelReader/Resources/VieNeuOfflineV3/vieneu_v3_heads.npz
+WebnovelReader/Resources/VieNeuOfflineV3/moss_audio_tokenizer_decode_shared.data
+WebnovelReader/Resources/VieNeuOfflineV3/vieneu_acoustic_cached.onnx
+WebnovelReader/Resources/VieNeuOfflineV3/vieneu_prefill.onnx
+WebnovelReader/Resources/VieNeuOfflineV3/vieneu_decode_step.onnx
+WebnovelReader/Resources/VieNeuOfflineV3/moss_audio_tokenizer_decode_full.onnx
+WebnovelReader/Resources/PiperOffline/vi_VN-vais1000-medium.onnx
+WebnovelReader/Resources/sea_g2p.bin
+WebnovelReader/Resources/BundledTranslation/en-vi/decoder_merged.onnx
+WebnovelReader/Resources/BundledTranslation/en-vi/encoder.onnx
+
 # Kiwi TCMS local dev server + scripts
 Scripts/kiwi/.venv/
 Scripts/kiwi/*.env

@@ -49,6 +49,16 @@ targets:
   WebnovelReader:
     type: application
     platform: iOS
+    # Offline TTS/G2P/translation model binaries live in GCS, not git (see
+    # Scripts/fetch-models.sh) — fetched here before Sources/Resources are
+    # compiled/copied, so they exist on disk by the time later build phases
+    # need them. basedOnDependencyAnalysis: false because the script's own
+    # per-file existence check is the skip logic; Xcode's new build system
+    # otherwise sometimes skips scripts it thinks have no changed inputs.
+    prebuildScripts:
+      - path: Scripts/fetch-models.sh
+        name: "Fetch offline models (GCS)"
+        basedOnDependencyAnalysis: false
     sources:
       # espeak-ng-data must stay a real subdirectory at runtime (espeak
       # reads many files inside it by relative path) — added separately

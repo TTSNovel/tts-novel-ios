@@ -256,7 +256,7 @@
 		FB87E7F5611D53CEA837235B /* VieNeuV2CodecDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VieNeuV2CodecDecoder.swift; sourceTree = "<group>"; };
 		FE5E9FF61219C4CAD0E71621 /* DownloadManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadManagerTests.swift; sourceTree = "<group>"; };
 		FE6217F8797409C3BC9D1BFC /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
-		"TEMP_56DBA0B3-B8CB-48F6-A076-AAC883D6FD45" /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
+		"TEMP_BE2EDEDF-F427-41D6-A257-34B0FB529410" /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -590,10 +590,10 @@
 			path = VieNeuOfflineV3;
 			sourceTree = "<group>";
 		};
-		"TEMP_89F06482-DCB8-44E4-B139-D07859DE2522" /* tts-novel-ios */ = {
+		"TEMP_BF71E339-1739-43F2-8526-74FE588C24A0" /* tts-novel-ios */ = {
 			isa = PBXGroup;
 			children = (
-				"TEMP_56DBA0B3-B8CB-48F6-A076-AAC883D6FD45" /* Config.xcconfig */,
+				"TEMP_BE2EDEDF-F427-41D6-A257-34B0FB529410" /* Config.xcconfig */,
 			);
 			path = "tts-novel-ios";
 			sourceTree = "<group>";
@@ -623,6 +623,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 9658FDC098F79E43F90457DB /* Build configuration list for PBXNativeTarget "WebnovelReader" */;
 			buildPhases = (
+				77FD44C1A9CBA6E0EFFD2CF0 /* Fetch offline models (GCS) */,
 				6292A9195DA1F145FC9BDB42 /* Sources */,
 				3579980DC8B201EA4701BF26 /* Resources */,
 				984DD7D968613DAC3B667C7F /* Frameworks */,
@@ -747,6 +748,28 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		77FD44C1A9CBA6E0EFFD2CF0 /* Fetch offline models (GCS) */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Fetch offline models (GCS)";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "#!/usr/bin/env bash\n# Downloads the offline TTS/G2P/translation model binaries this app bundles\n# from GCS into WebnovelReader/Resources/ before building — keeps them out\n# of git (see tts-pipeline-infra's fetch-model.sh for the equivalent\n# server-side pattern; bucket is public-read, plain HTTPS, no gcloud auth\n# needed to build). Skips files already present, so a normal incremental\n# build does one stat per file, not 13 network round-trips.\nset -euo pipefail\ncd \"$(dirname \"$0\")/..\"\n\nBASE_URL=\"https://storage.googleapis.com/tts-pipeline-yl-ios-assets/models\"\nRESOURCES=\"WebnovelReader/Resources\"\n\nFILES=(\n  \"VieNeuOfflineV2/vieneu-tts-v2-turbo.gguf\"\n  \"VieNeuOfflineV2/vieneu_decoder_int8.onnx\"\n  \"VieNeuOfflineV3/vieneu_backbone_shared.data\"\n  \"VieNeuOfflineV3/vieneu_v3_heads.npz\"\n  \"VieNeuOfflineV3/moss_audio_tokenizer_decode_shared.data\"\n  \"VieNeuOfflineV3/vieneu_acoustic_cached.onnx\"\n  \"VieNeuOfflineV3/vieneu_prefill.onnx\"\n  \"VieNeuOfflineV3/vieneu_decode_step.onnx\"\n  \"VieNeuOfflineV3/moss_audio_tokenizer_decode_full.onnx\"\n  \"PiperOffline/vi_VN-vais1000-medium.onnx\"\n  \"sea_g2p.bin\"\n  \"BundledTranslation/en-vi/decoder_merged.onnx\"\n  \"BundledTranslation/en-vi/encoder.onnx\"\n)\n\nfor f in \"${FILES[@]}\"; do\n  dest=\"$RESOURCES/$f\"\n  if [ -f \"$dest\" ]; then\n    continue\n  fi\n  echo \"fetch-models.sh: downloading $f\"\n  mkdir -p \"$(dirname \"$dest\")\"\n  curl -fsSL \"$BASE_URL/$f\" -o \"$dest.part\"\n  mv \"$dest.part\" \"$dest\"\ndone\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		6292A9195DA1F145FC9BDB42 /* Sources */ = {
@@ -904,7 +927,7 @@
 		};
 		8AD706A598674F6FFA3EB5E9 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_56DBA0B3-B8CB-48F6-A076-AAC883D6FD45" /* Config.xcconfig */;
+			baseConfigurationReference = "TEMP_BE2EDEDF-F427-41D6-A257-34B0FB529410" /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -1022,7 +1045,7 @@
 		};
 		F886F568F9EBDF1F6FD3EE07 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_56DBA0B3-B8CB-48F6-A076-AAC883D6FD45" /* Config.xcconfig */;
+			baseConfigurationReference = "TEMP_BE2EDEDF-F427-41D6-A257-34B0FB529410" /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
