@@ -1,4 +1,5 @@
 import Foundation
+import Core
 
 enum VieNeuV2CodecError: Error {
     case modelMissing

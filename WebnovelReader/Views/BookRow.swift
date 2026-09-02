@@ -1,4 +1,5 @@
 import SwiftUI
+import Core
 
 // Shared between LibraryView's "Đọc gần đây" preview, its full book list,
 // and HistoryView's full list — one row style everywhere a book appears.

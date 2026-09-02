@@ -1,4 +1,5 @@
 import SwiftUI
+import Core
 
 // Pushed onto navPath programmatically to deep-link straight into a
 // chapter (see maybeAutoResume) — BookDetailView's own chapter-list rows
@@ -80,7 +81,7 @@ struct LibraryView: View {
                 HistoryView(books: historyBooks)
             }
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
+                ToolbarItem(placement: .readerLeading) {
                     NavigationLink {
                         DownloadedBooksView()
                     } label: {

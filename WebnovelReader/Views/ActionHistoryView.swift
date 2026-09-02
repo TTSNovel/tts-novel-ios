@@ -1,4 +1,5 @@
 import SwiftUI
+import Core
 
 /// Doubles as the "action history" screen (feature: xem lịch sử thao tác,
 /// filter theo loại) and the debug log viewer (feature: xem log) — both read
@@ -9,6 +10,9 @@ struct ActionHistoryView: View {
     @EnvironmentObject private var eventLog: EventLogStore
     @State private var selectedCategories: Set<AppEventCategory> = []
     @State private var showingClearConfirm = false
+    #if os(watchOS)
+    @State private var showingCategoryFilter = false
+    #endif
 
     private var filtered: [AppEvent] {
         eventLog.entries(matching: selectedCategories)
@@ -21,7 +25,10 @@ struct ActionHistoryView: View {
                     "Chưa có hoạt động nào", systemImage: "clock.arrow.circlepath",
                     description: Text("Thao tác trong ứng dụng sẽ được ghi lại ở đây.")
                 )
+                #if !os(watchOS)
+                // listRowSeparator doesn't exist on watchOS's List.
                 .listRowSeparator(.hidden)
+                #endif
             } else {
                 ForEach(filtered) { event in
                     row(for: event)
@@ -30,9 +37,19 @@ struct ActionHistoryView: View {
         }
         .listStyle(.plain)
         .navigationTitle("Nhật ký & lịch sử")
-        .navigationBarTitleDisplayMode(.inline)
+        .inlineNavigationTitle()
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
+            ToolbarItem(placement: .readerTrailing) {
+                #if os(watchOS)
+                // Menu doesn't exist on watchOS — a sheet with a plain
+                // checkmark list is the equivalent multi-select surface.
+                Button {
+                    showingCategoryFilter = true
+                } label: {
+                    Image(systemName: selectedCategories.isEmpty ? "line.3.horizontal.decrease.circle" : "line.3.horizontal.decrease.circle.fill")
+                }
+                .accessibilityIdentifier("historyFilterButton")
+                #else
                 Menu {
                     Button {
                         selectedCategories = []
@@ -58,15 +75,16 @@ struct ActionHistoryView: View {
                     Image(systemName: selectedCategories.isEmpty ? "line.3.horizontal.decrease.circle" : "line.3.horizontal.decrease.circle.fill")
                 }
                 .accessibilityIdentifier("historyFilterButton")
+                #endif
             }
-            ToolbarItem(placement: .topBarTrailing) {
+            ToolbarItem(placement: .readerTrailing) {
                 ShareLink(item: exportText()) {
                     Image(systemName: "square.and.arrow.up")
                 }
                 .disabled(filtered.isEmpty)
                 .accessibilityIdentifier("historyShareButton")
             }
-            ToolbarItem(placement: .topBarTrailing) {
+            ToolbarItem(placement: .readerTrailing) {
                 Button(role: .destructive) {
                     showingClearConfirm = true
                 } label: {
@@ -76,6 +94,40 @@ struct ActionHistoryView: View {
                 .accessibilityIdentifier("historyClearButton")
             }
         }
+        #if os(watchOS)
+        .sheet(isPresented: $showingCategoryFilter) {
+            NavigationStack {
+                List {
+                    Button {
+                        selectedCategories = []
+                    } label: {
+                        HStack {
+                            Text("Tất cả")
+                            Spacer()
+                            if selectedCategories.isEmpty { Image(systemName: "checkmark") }
+                        }
+                    }
+                    ForEach(AppEventCategory.allCases) { category in
+                        Button {
+                            toggle(category)
+                        } label: {
+                            HStack {
+                                Text(category.displayName)
+                                Spacer()
+                                if selectedCategories.contains(category) { Image(systemName: "checkmark") }
+                            }
+                        }
+                    }
+                }
+                .navigationTitle("Lọc theo loại")
+                .toolbar {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Xong") { showingCategoryFilter = false }
+                    }
+                }
+            }
+        }
+        #endif
         .confirmationDialog("Xoá toàn bộ nhật ký?", isPresented: $showingClearConfirm, titleVisibility: .visible) {
             Button("Xoá", role: .destructive) { eventLog.clear() }
             Button("Huỷ", role: .cancel) {}

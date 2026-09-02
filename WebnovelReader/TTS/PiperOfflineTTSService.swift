@@ -1,4 +1,5 @@
 import Foundation
+import Core
 #if canImport(SherpaOnnx)
 import SherpaOnnx
 #elseif canImport(SherpaOnnxShared)

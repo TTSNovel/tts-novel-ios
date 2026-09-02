@@ -1,4 +1,5 @@
 import XCTest
+import Core
 @testable import WebnovelReader
 
 /// Exercises the actual bug scenario end-to-end: download a real book's

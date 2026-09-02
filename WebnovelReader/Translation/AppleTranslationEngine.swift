@@ -1,4 +1,5 @@
 import Foundation
+import Core
 // Translation's own types aren't fully Sendable-audited — @preconcurrency
 // treats crossing into/out of this class leniently instead of erroring
 // under Swift 6 strict concurrency, same as Apple's own guidance for
@@ -17,7 +18,7 @@ import Foundation
 /// `translate(...)` calls `sessionRequest` (set by the driver) to make it
 /// (re)configure `.translationTask`, then awaits whatever session SwiftUI
 /// eventually hands back via `provideSession`.
-@available(iOS 18.0, *)
+@available(iOS 18.0, macOS 15.0, *)
 @MainActor
 final class AppleTranslationEngine: TranslationEngine, @unchecked Sendable {
     static let shared = AppleTranslationEngine()

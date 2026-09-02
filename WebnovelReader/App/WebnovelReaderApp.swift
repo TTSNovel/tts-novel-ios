@@ -1,5 +1,6 @@
 import SwiftUI
 import AVFoundation
+import Core
 
 @main
 struct WebnovelReaderApp: App {
@@ -18,11 +19,14 @@ struct WebnovelReaderApp: App {
     @State private var alertMessage: String?
 
     init() {
+        #if os(iOS)
         // .playback (not .ambient/.soloAmbient) is what keeps audio going
         // when the screen locks or the app backgrounds — paired with the
         // UIBackgroundModes "audio" entry in Info.plist. Without both,
         // iOS suspends the process a few seconds after backgrounding,
-        // same as an ordinary (non-PWA) Safari tab.
+        // same as an ordinary (non-PWA) Safari tab. macOS has no
+        // AVAudioSession category to configure — the system audio session
+        // there is implicit, nothing to opt into.
         do {
             try AVAudioSession.sharedInstance().setCategory(.playback, mode: .spokenAudio)
             try AVAudioSession.sharedInstance().setActive(true)
@@ -37,6 +41,7 @@ struct WebnovelReaderApp: App {
                 EventLogStore.shared.record(.error, "Không thiết lập được AVAudioSession", detail: description)
             }
         }
+        #endif
     }
 
     var body: some Scene {
@@ -64,11 +69,26 @@ struct WebnovelReaderApp: App {
             .environmentObject(playback)
             .environmentObject(eventLog)
             .task {
+                #if os(iOS)
+                WatchSessionRelay.shared.activate()
+                #endif
                 await session.restoreSession()
                 if session.isLoggedIn && !session.isOfflineSession {
                     await progressStore.refreshFromServer(baseURL: SessionStore.baseURL)
                 }
+                #if os(iOS)
+                if session.isLoggedIn {
+                    WatchSessionRelay.shared.relayCurrentSessionIfNeeded()
+                }
+                #endif
             }
+            #if os(iOS)
+            .onChange(of: session.isLoggedIn) { _, isLoggedIn in
+                if isLoggedIn {
+                    WatchSessionRelay.shared.relayCurrentSessionIfNeeded()
+                }
+            }
+            #endif
             // The one real PlaybackBar instance lives here, as a plain
             // overlay at the window root — not woven into any
             // NavigationStack/List's own safeAreaInset chain (see

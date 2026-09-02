@@ -1,5 +1,6 @@
 import Foundation
 import NaturalLanguage
+import Core
 
 /// Owns the entire reading/listening session — which book, which chapter,
 /// its content, and sentence-by-sentence read-aloud — as an app-wide
@@ -21,6 +22,18 @@ import NaturalLanguage
 @MainActor
 final class ReaderPlaybackController: ObservableObject {
     static let shared = ReaderPlaybackController()
+
+    // WebnovelReaderFullSynthesizer (offline Piper/VieNeu engines + their
+    // vendored xcframeworks) is iOS-only for now — the macOS target scaffold
+    // ships online-only first, full offline TTS is a follow-up phase once
+    // those xcframeworks have a macOS slice (see project's macOS-offline-TTS
+    // plan). watchOS never reaches this file at all (its own, much smaller
+    // playback controller uses WebnovelReaderOnlineSynthesizer directly).
+    #if os(iOS)
+    private let synthesizer: TTSSynthesizing = WebnovelReaderFullSynthesizer()
+    #else
+    private let synthesizer: TTSSynthesizing = WebnovelReaderOnlineSynthesizer()
+    #endif
 
     // Now-playing identity — nil book means nothing has ever been opened
     // this app launch.
@@ -304,20 +317,6 @@ final class ReaderPlaybackController: ObservableObject {
     /// count every time a fetch completes, so the window still fills in
     /// full, just a few sentences at a time instead of all at once.
     private let maxConcurrentFetches = 3
-    /// Extra attempts (beyond the first) for a single sentence's *online*
-    /// TTS fetch, on top of the first try — offline synthesis (VieNeu/
-    /// Piper) never goes through this, since a local failure isn't
-    /// transient the way a dropped connection is. Added after GCP Cloud Run
-    /// logs for tts-gpu showed `429 "no available instance"` responses and
-    /// a client-visible "The network connection was lost" right when the
-    /// server's own log had a multi-minute gap — the *same* sentence text
-    /// then succeeded moments later on the app's next manual retry. A
-    /// short, capped number of automatic retries here catches exactly that
-    /// case without a user having to notice playback stopped and press Play
-    /// again themselves. Capped (not unbounded) so a hard failure — wrong
-    /// voice config, revoked auth — still surfaces promptly instead of
-    /// silently stalling playback for a long chain of doomed retries.
-    private let maxTTSFetchRetries = 2
     /// One fetch per sentence index, started either by the main play
     /// loop or by look-ahead prefetch — awaiting the same Task twice
     /// (once from prefetch, once from playback reaching that index) just
@@ -880,16 +879,25 @@ final class ReaderPlaybackController: ObservableObject {
     }
 
     /// Picks the `TranslationEngine` `translationEngineKind` currently
-    /// selects — `nil` only for `.apple` on iOS < 18, where
+    /// selects — `nil` for `.apple` on iOS < 18/macOS < 15, where
     /// `AppleTranslationEngine` itself doesn't exist (the type is gated
-    /// `@available(iOS 18.0, *)`). `.opusMT` (`OpusMTTranslationEngine`)
-    /// has no such restriction, so it's always available.
+    /// `@available(iOS 18.0, macOS 15.0, *)`). `.opusMT`
+    /// (`OpusMTTranslationEngine`) is iOS-only for now — it needs
+    /// onnxruntime-macos, which hit a Hardened-Runtime codesigning snag on
+    /// first macOS bring-up (the embedded onnxruntime.framework came
+    /// through unsigned) — deferred to the same macOS-offline follow-up
+    /// phase as the offline TTS engines rather than blocking the rest of
+    /// the Mac scaffold on it.
     private var currentTranslationEngine: TranslationEngine? {
         switch translationEngineKind {
         case .apple:
-            if #available(iOS 18.0, *) { return AppleTranslationEngine.shared } else { return nil }
+            if #available(iOS 18.0, macOS 15.0, *) { return AppleTranslationEngine.shared } else { return nil }
         case .opusMT:
+            #if os(iOS)
             return OpusMTTranslationEngine.shared
+            #else
+            return nil
+            #endif
         }
     }
 
@@ -1584,74 +1592,11 @@ final class ReaderPlaybackController: ObservableObject {
         isConnected: Bool,
         isLoggedIn: Bool
     ) async throws -> Data {
-        if voice == .vieNeuOfflineV2 {
-            // No network round trip — runs the bundled GGUF backbone +
-            // VieNeu-Codec ONNX decoder right here on-device (see
-            // VieNeuOfflineV2TTSService).
-            return try await VieNeuOfflineV2TTSService.shared.synthesize(
-                text: text, speed: speed, voice: vieNeuOfflineV2Voice
-            )
-        } else if voice == .vieNeuOfflineV3 {
-            // No network round trip — runs the actual v3-Turbo backbone +
-            // MOSS codec through ONNX Runtime right here on-device (see
-            // VieNeuOfflineV3TTSService).
-            return try await VieNeuOfflineV3TTSService.shared.synthesize(
-                text: text, speed: speed, voice: vieNeuOfflineV3Voice
-            )
-        } else if voice.isOffline || !isConnected || !isLoggedIn {
-            // No network round trip — runs the bundled ONNX model right
-            // here on-device (see PiperOfflineTTSService).
-            return try await PiperOfflineTTSService.shared.synthesize(text: text, speed: speed)
-        } else {
-            return try await fetchOnlineAudioWithRetry(
-                baseURL: baseURL, text: text, voice: voice, speed: speed, gwenSpeaker: gwenTTSSpeaker
-            )
-        }
-    }
-
-    /// Retries a failed *online* TTS fetch up to `maxTTSFetchRetries` more
-    /// times (see its doc comment), but only for errors that look transient
-    /// — a dropped/timed-out connection, or the server queue rejecting the
-    /// request (429) / a backend hiccup (5xx). Retrying `.notAuthenticated`
-    /// or a malformed response would just burn through the retry budget on
-    /// a failure that can't self-resolve, delaying the moment the real
-    /// error reaches the user. Linear backoff (1s, then 2s) rather than
-    /// immediate retry, giving the Cloud Run GPU fleet a moment to free up
-    /// an instance instead of hammering it again right away.
-    private func fetchOnlineAudioWithRetry(
-        baseURL: URL, text: String, voice: TTSVoice, speed: Double, gwenSpeaker: GwenTTSSpeaker?
-    ) async throws -> Data {
-        var attempt = 0
-        while true {
-            do {
-                return try await APIClient.shared.synthesize(
-                    baseURL: baseURL, text: text, voice: voice, speed: speed, gwenSpeaker: gwenSpeaker
-                )
-            } catch {
-                guard attempt < maxTTSFetchRetries, Self.isRetryableTTSError(error) else { throw error }
-                attempt += 1
-                try await Task.sleep(nanoseconds: UInt64(attempt) * 1_000_000_000)
-            }
-        }
-    }
-
-    private static func isRetryableTTSError(_ error: Error) -> Bool {
-        if let apiError = error as? APIError {
-            switch apiError {
-            case .httpStatus(let code): return code == 429 || (500...599).contains(code)
-            case .invalidResponse: return true
-            case .notAuthenticated: return false
-            }
-        }
-        if let urlError = error as? URLError {
-            switch urlError.code {
-            case .networkConnectionLost, .timedOut, .notConnectedToInternet, .dnsLookupFailed, .cannotConnectToHost, .cannotFindHost:
-                return true
-            default:
-                return false
-            }
-        }
-        return false
+        try await synthesizer.synthesize(
+            text: text, voice: voice, vieNeuOfflineV2Voice: vieNeuOfflineV2Voice,
+            vieNeuOfflineV3Voice: vieNeuOfflineV3Voice, gwenTTSSpeaker: gwenTTSSpeaker,
+            speed: speed, baseURL: baseURL, isConnected: isConnected, isLoggedIn: isLoggedIn
+        )
     }
 
     /// Stores the fetched audio, removes it from `audioTasks` (it's done —

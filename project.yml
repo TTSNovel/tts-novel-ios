@@ -3,6 +3,8 @@ options:
   bundleIdPrefix: dev.yanglong
   deploymentTarget:
     iOS: "17.0"
+    macOS: "14.0"
+    watchOS: "10.0"
   createIntermediateGroups: true
 
 # SERVER_BASE_URL comes from Config.xcconfig (gitignored, personal deployment
@@ -40,10 +42,11 @@ packages:
   onnxruntime-libs:
     url: https://github.com/csukuangfj/onnxruntime-libs
     exactVersion: 1.27.1
-  # HTML parsing for ChapterFragmentParser (chapter content extraction).
-  SwiftSoup:
-    url: https://github.com/scinfu/SwiftSoup
-    from: 2.7.0
+  # Local package holding the platform-portable core (Models, Networking,
+  # Progress, Security, TTSVoice/GwenTTSSpeaker, TranslationEngine) shared
+  # by the iOS, macOS, and watchOS app targets — see Packages/Core/Package.swift.
+  Core:
+    path: Packages/Core
 
 targets:
   WebnovelReader:
@@ -86,8 +89,7 @@ targets:
         product: sherpa-onnx
       - package: onnxruntime-libs
         product: onnxruntime-ios
-      - package: SwiftSoup
-        product: SwiftSoup
+      - package: Core
       # Vendored (see WebnovelReader/Vendor/*/README-ish doc comments in
       # the TTS/VieNeuOfflineV2 sources for how each was built): SeaG2P is a
       # static lib (sea-g2p Rust core, PyO3 stripped, shared by both V2 and
@@ -134,6 +136,7 @@ targets:
         TEST_TARGET_NAME: WebnovelReader
     dependencies:
       - target: WebnovelReader
+      - package: Core
 
   WebnovelReaderUITests:
     type: bundle.ui-testing
@@ -148,6 +151,118 @@ targets:
     dependencies:
       - target: WebnovelReader
 
+  # Scaffold phase: online TTS only (WebnovelReaderOnlineSynthesizer, see
+  # ReaderPlaybackController) — the offline Piper/VieNeu engines need a
+  # macOS slice of their vendored xcframeworks (llama.xcframework,
+  # SeaG2P.xcframework) before they can be wired in here, tracked as a
+  # follow-up phase once those exist. Offline chapter translation
+  # (OpusMTTranslationEngine) IS included, via onnxruntime-macos — that
+  # package already ships a macOS product, unlike the two TTS xcframeworks.
+  WebnovelReaderMac:
+    type: application
+    platform: macOS
+    sources:
+      - path: WebnovelReaderMac
+      - path: WebnovelReader/App
+        excludes:
+          # WatchConnectivity is iOS/watchOS only, not plain (non-Catalyst)
+          # macOS — the iPhone-side half of the watch login handoff.
+          - "WatchSessionRelay.swift"
+      - path: WebnovelReader/Resources/Assets.xcassets
+      - path: WebnovelReader/Views
+        excludes:
+          - "ChapterPagerView.swift"
+      - path: WebnovelReader/Audio
+      - path: WebnovelReader/Download
+      - path: WebnovelReader/Translation
+        excludes:
+          - "BundledTranslation/**"
+      - path: WebnovelReader/TTS
+        excludes:
+          - "PiperOfflineTTSService.swift"
+          - "SeaG2PBridge.swift"
+          - "OfflineWavEncoding.swift"
+          - "WebnovelReaderFullSynthesizer.swift"
+          - "VieNeu-Bridging-Header.h"
+          - "VieNeuOfflineV2/**"
+          - "VieNeuOfflineV3/**"
+    dependencies:
+      - package: Core
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.yanglong.webnovelreader.mac
+        PRODUCT_NAME: "Novel Reader"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        ENABLE_HARDENED_RUNTIME: YES
+        CODE_SIGN_ENTITLEMENTS: WebnovelReaderMac/WebnovelReaderMac.entitlements
+    info:
+      path: Generated-Info-Mac.plist
+      properties:
+        CFBundleDisplayName: "Novel Reader"
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+        SERVER_BASE_URL: "$(SERVER_BASE_URL)"
+
+  # Online TTS only, no offline voices/translation — see
+  # WatchPlaybackController's doc comment (no watchOS slice for the
+  # offline-TTS xcframeworks, no watchOS onnxruntime product or
+  # Translation-framework support). Everything else (voice picker,
+  # downloads, chapter list/search, history, login) is real feature
+  # parity with iOS, reusing whichever iOS views/utilities were already
+  # platform-decoupled (LoginView, ActionHistoryView, BugReportView,
+  # ChapterListSheet, ChapterTitles, BookRow, CoverImage — see each file's
+  # own doc comment) rather than forking them; only the Watch-specific
+  # screens live under WebnovelReaderWatch/.
+  WebnovelReaderWatch:
+    type: application
+    platform: watchOS
+    sources:
+      - path: WebnovelReaderWatch
+      - path: WebnovelReader/Audio
+      - path: WebnovelReader/Download
+      - path: WebnovelReader/Views/LoginView.swift
+      - path: WebnovelReader/Views/ActionHistoryView.swift
+      - path: WebnovelReader/Views/BugReportView.swift
+      - path: WebnovelReader/Views/ChapterListSheet.swift
+      - path: WebnovelReader/Views/ChapterTitles.swift
+      - path: WebnovelReader/Views/BookRow.swift
+      - path: WebnovelReader/Views/CoverImage.swift
+      - path: WebnovelReader/Views/CrossPlatformToolbar.swift
+    dependencies:
+      - package: Core
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.yanglong.webnovelreader.watch
+        PRODUCT_NAME: "Novel Reader"
+        TARGETED_DEVICE_FAMILY: "4"
+    info:
+      path: Generated-Info-Watch.plist
+      properties:
+        CFBundleDisplayName: "Novel Reader"
+        WKApplication: true
+        WKBackgroundModes:
+          - audio
+        WKCompanionAppBundleIdentifier: dev.yanglong.webnovelreader
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+        SERVER_BASE_URL: "$(SERVER_BASE_URL)"
+
+  WebnovelReaderWatchUITests:
+    type: bundle.ui-testing
+    platform: watchOS
+    sources:
+      - path: WebnovelReaderWatchUITests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.yanglong.webnovelreader.watch.uitests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: WebnovelReaderWatch
+    dependencies:
+      - target: WebnovelReaderWatch
+
 schemes:
   WebnovelReader:
     build:
@@ -159,6 +274,26 @@ schemes:
       targets:
         - WebnovelReaderUITests
         - WebnovelReaderTests
+    run:
+      config: Debug
+    shared: true
+
+  WebnovelReaderMac:
+    build:
+      targets:
+        WebnovelReaderMac: all
+    run:
+      config: Debug
+    shared: true
+
+  WebnovelReaderWatch:
+    build:
+      targets:
+        WebnovelReaderWatch: all
+        WebnovelReaderWatchUITests: [test]
+    test:
+      targets:
+        - WebnovelReaderWatchUITests
     run:
       config: Debug
     shared: true

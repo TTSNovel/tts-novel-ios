@@ -1,4 +1,5 @@
 import XCTest
+import Core
 @testable import WebnovelReader
 
 final class ChapterFragmentParserTests: XCTestCase {

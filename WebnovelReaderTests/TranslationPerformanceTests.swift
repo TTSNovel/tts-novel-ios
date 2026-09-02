@@ -1,4 +1,5 @@
 import XCTest
+import Core
 @testable import WebnovelReader
 
 /// Measures real wall-clock translate time for `OpusMTTranslationEngine`

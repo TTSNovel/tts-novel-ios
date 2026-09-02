@@ -38,14 +38,20 @@ final class AudioPlaybackService: NSObject, ObservableObject {
     override init() {
         super.init()
         configureRemoteCommands()
+        #if os(iOS)
+        // macOS has no AVAudioSession/interruption-notification concept —
+        // there's no single shared audio session another app can "steal"
+        // the way a phone call or another iOS app's audio can.
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(handleInterruptionNotification(_:)),
             name: AVAudioSession.interruptionNotification,
             object: nil
         )
+        #endif
     }
 
+    #if os(iOS)
     // `Notification`/its userInfo dictionary aren't Sendable, so the raw
     // UInt values are pulled out here — still nonisolated, off the main
     // actor — before hopping over, rather than sending the notification
@@ -79,6 +85,7 @@ final class AudioPlaybackService: NSObject, ObservableObject {
             break
         }
     }
+    #endif
 
     func play(data: Data) throws {
         let newPlayer = try AVAudioPlayer(data: data)

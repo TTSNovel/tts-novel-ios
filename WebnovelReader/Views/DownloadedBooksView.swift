@@ -1,4 +1,5 @@
 import SwiftUI
+import Core
 
 // Web parity: site_assets' /download.html ("Đã tải xuống") lists every
 // downloaded book regardless of online/offline state. LibraryView already
@@ -20,7 +21,7 @@ struct DownloadedBooksView: View {
         }
         .listStyle(.plain)
         .navigationTitle("Đã tải xuống")
-        .navigationBarTitleDisplayMode(.inline)
+        .inlineNavigationTitle()
         .overlay {
             if books.isEmpty {
                 ContentUnavailableView(

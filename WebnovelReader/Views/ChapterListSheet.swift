@@ -1,4 +1,5 @@
 import SwiftUI
+import Core
 
 /// Standalone chapter picker reachable from inside ReaderView itself — a
 /// separate popup from BookDetailView's own inline "Danh sách chương"
@@ -91,7 +92,7 @@ struct ChapterListSheet: View {
                 }
             }
             .navigationTitle("Danh sách chương")
-            .navigationBarTitleDisplayMode(.inline)
+            .inlineNavigationTitle()
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Đóng") { dismiss() }

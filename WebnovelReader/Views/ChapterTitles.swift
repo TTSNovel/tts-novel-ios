@@ -1,4 +1,5 @@
 import Foundation
+import Core
 
 /// Shared by BookDetailView and ChapterListSheet — both show a full
 /// chapter list and need real titles rather than a bare "Chương N", so

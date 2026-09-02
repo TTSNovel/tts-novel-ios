@@ -1,4 +1,5 @@
 import Foundation
+import Core
 
 // Native counterpart to site_assets/download.js's Cache-Storage-based
 // offline books — persists each chapter's raw HTML fragment + the cover to

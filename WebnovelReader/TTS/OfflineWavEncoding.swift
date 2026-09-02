@@ -1,4 +1,5 @@
 import Foundation
+import Core
 
 /// Shared by every on-device TTS pipeline (Piper, VieNeu V2, VieNeu V3):
 /// none of the underlying engines has a native rate-control param, and all

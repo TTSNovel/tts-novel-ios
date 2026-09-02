@@ -1,4 +1,5 @@
 import Foundation
+import Core
 
 enum VieNeuOfflineV2Error: Error {
     case noAudioGenerated

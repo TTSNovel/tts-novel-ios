@@ -14,7 +14,7 @@ import SwiftUI
 /// Attached once, in `ReaderView`, rather than per-page in
 /// `ChapterPagerView` — one live session for the whole reading screen, not
 /// one per pager slot.
-@available(iOS 18.0, *)
+@available(iOS 18.0, macOS 15.0, *)
 private struct ChapterTranslationDriver: ViewModifier {
     @State private var configuration: TranslationSession.Configuration?
     @State private var pendingSource: Locale.Language?
@@ -50,7 +50,7 @@ extension View {
     /// engine picker), so there's nothing for a driver to do on older OS.
     @ViewBuilder
     func chapterTranslationSupport() -> some View {
-        if #available(iOS 18.0, *) {
+        if #available(iOS 18.0, macOS 15.0, *) {
             modifier(ChapterTranslationDriver())
         } else {
             self

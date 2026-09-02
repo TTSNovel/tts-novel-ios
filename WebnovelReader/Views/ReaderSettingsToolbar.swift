@@ -13,7 +13,7 @@ private struct ReaderSettingsToolbarModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItem(placement: .readerTrailing) {
                     Button {
                         showingSettings = true
                     } label: {

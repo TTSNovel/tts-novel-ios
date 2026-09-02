@@ -1,4 +1,5 @@
 import SwiftUI
+import Core
 
 // Extracted out of ReaderView so PlaybackBar (now the only place the
 // settings gear lives — see its doc comment) can present the exact same
@@ -178,7 +179,7 @@ struct ReaderSettingsSheet: View {
                 }
             }
             .navigationTitle("Reader Settings")
-            .navigationBarTitleDisplayMode(.inline)
+            .inlineNavigationTitle()
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { isPresented = false }

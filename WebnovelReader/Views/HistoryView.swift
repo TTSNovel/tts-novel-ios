@@ -1,4 +1,5 @@
 import SwiftUI
+import Core
 
 // Full reading history — every book with saved progress, most-recent
 // first. Reached from LibraryView's "Đọc gần đây" section header ("Xem tất
@@ -19,7 +20,7 @@ struct HistoryView: View {
         }
         .listStyle(.plain)
         .navigationTitle("Lịch sử đọc")
-        .navigationBarTitleDisplayMode(.inline)
+        .inlineNavigationTitle()
         .overlay {
             if books.isEmpty {
                 ContentUnavailableView(

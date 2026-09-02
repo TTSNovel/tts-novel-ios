@@ -1,5 +1,8 @@
 import SwiftUI
+#if os(iOS)
 import UIKit
+#endif
+import Core
 
 /// Sends a description + (optionally) the recent EventLogStore timeline to
 /// app/server.py's /api/bug-report (tts-webnovel repo) — the same server
@@ -35,9 +38,18 @@ struct BugReportView: View {
         NavigationStack {
             Form {
                 Section("Mô tả lỗi (không bắt buộc)") {
+                    // TextEditor doesn't exist on watchOS — a multi-line
+                    // TextField (axis: .vertical) is the closest cross-
+                    // platform equivalent there.
+                    #if os(watchOS)
+                    TextField("Mô tả lỗi", text: $description, axis: .vertical)
+                        .lineLimit(3...6)
+                        .accessibilityIdentifier("bugReportDescriptionField")
+                    #else
                     TextEditor(text: $description)
                         .frame(minHeight: 120)
                         .accessibilityIdentifier("bugReportDescriptionField")
+                    #endif
                 }
 
                 Section {
@@ -72,7 +84,7 @@ struct BugReportView: View {
                 }
             }
             .navigationTitle("Báo lỗi")
-            .navigationBarTitleDisplayMode(.inline)
+            .inlineNavigationTitle()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Đóng") { isPresented = false }
@@ -94,13 +106,20 @@ struct BugReportView: View {
         let events = attachRecentLog
             ? Array(eventLog.entries(since: Date().addingTimeInterval(-Self.attachedLogWindow)).prefix(Self.attachedEventSafetyCap))
             : []
+        #if os(iOS)
         let device = UIDevice.current
+        let deviceLabel = "\(device.model) (\(device.systemName) \(device.systemVersion))"
+        let osVersion = device.systemVersion
+        #else
+        let osVersion = ProcessInfo.processInfo.operatingSystemVersionString
+        let deviceLabel = "\(ProcessInfo.processInfo.hostName) (macOS \(osVersion))"
+        #endif
         do {
             try await APIClient.shared.submitBugReport(
                 baseURL: SessionStore.baseURL,
                 description: description.trimmingCharacters(in: .whitespacesAndNewlines),
-                device: "\(device.model) (\(device.systemName) \(device.systemVersion))",
-                osVersion: device.systemVersion,
+                device: deviceLabel,
+                osVersion: osVersion,
                 appVersion: Self.appVersionString(),
                 events: events
             )

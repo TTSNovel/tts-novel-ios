@@ -1,4 +1,5 @@
 import SwiftUI
+import Core
 
 struct BookDetailView: View {
     let book: Book
@@ -106,7 +107,7 @@ struct BookDetailView: View {
             ReaderView(book: book, chapterIndex: index)
         }
         .navigationTitle(book.title)
-        .navigationBarTitleDisplayMode(.inline)
+        .inlineNavigationTitle()
         .readerSettingsToolbar()
         .onAppear {
             EventLogStore.shared.record(.navigation, "Mở sách", detail: book.title)
@@ -215,7 +216,7 @@ private struct DownloadRingIcon: View {
         }
         .frame(width: 20, height: 20)
         .padding(12)
-        .background(Color(.secondarySystemBackground), in: Circle())
+        .background(Color.secondary.opacity(0.15), in: Circle())
     }
 }
 

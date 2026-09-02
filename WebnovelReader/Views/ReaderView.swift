@@ -1,4 +1,5 @@
 import SwiftUI
+import Core
 
 // Presentation-only now — all playback/chapter state lives on the shared
 // ReaderPlaybackController (see its doc comment) so that backing out to
@@ -34,14 +35,14 @@ struct ReaderView: View {
     var body: some View {
         ChapterPagerView(book: book, initialChapterIndex: initialChapterIndex)
         .navigationTitle(book.title)
-        .navigationBarTitleDisplayMode(.inline)
+        .inlineNavigationTitle()
         .toolbar {
             if playback.translationSourceLanguage != nil {
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItem(placement: .readerTrailing) {
                     translateButton
                 }
             }
-            ToolbarItem(placement: .topBarTrailing) {
+            ToolbarItem(placement: .readerTrailing) {
                 Button {
                     showingChapterList = true
                 } label: {

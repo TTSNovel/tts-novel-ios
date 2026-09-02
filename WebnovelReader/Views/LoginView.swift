@@ -1,4 +1,5 @@
 import SwiftUI
+import Core
 
 /// Presented as a sheet from ReaderSettingsSheet, not the app's root screen
 /// — login is optional (see WebnovelReaderApp: guest mode reads the public
@@ -20,7 +21,7 @@ struct LoginView: View {
             Form {
                 Section("Tài khoản") {
                     TextField("Tài khoản", text: $username)
-                        .textInputAutocapitalization(.never)
+                        .neverAutocapitalized()
                         .autocorrectionDisabled()
                         .accessibilityIdentifier("usernameField")
                     SecureField("Mật khẩu", text: $password)
@@ -50,7 +51,7 @@ struct LoginView: View {
                 }
             }
             .navigationTitle("Đăng nhập")
-            .navigationBarTitleDisplayMode(.inline)
+            .inlineNavigationTitle()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Đóng") { isPresented = false }

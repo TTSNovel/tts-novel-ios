@@ -8,110 +8,149 @@
 
 /* Begin PBXBuildFile section */
 		01734EB50A00E0841EC71B45 /* VieNeuOfflineV2UITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F456FE71D617BD6DEC0F52A6 /* VieNeuOfflineV2UITests.swift */; };
-		0226209420B9D5D4D012FCDD /* VieNeuOfflineV3Voice.swift in Sources */ = {isa = PBXBuildFile; fileRef = F62B80CD7509A43E2A4F664E /* VieNeuOfflineV3Voice.swift */; };
+		039C27826E9137E2EF2DD916 /* CrossPlatformToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8F61816289B66E74EFC4220 /* CrossPlatformToolbar.swift */; };
 		057BB42A7DC6DA1662FFC305 /* BookDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F60BA012E937FDC3266CEAAC /* BookDetailView.swift */; };
-		0BDDA8058FCDA7E8B0FA23D2 /* SessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02A238C8FEF0622E96FC931A /* SessionStore.swift */; };
+		095EF5BA2B901B999192E06F /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4504947934A2B3AECF872F72 /* LoginView.swift */; };
+		107BD87DD353DA16E52D3025 /* BookRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5117F1E588A2F64078970C56 /* BookRow.swift */; };
 		12F8A89E5D0FD951278E87D3 /* ChapterListUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 590CE78C2F18BB27ED8D519A /* ChapterListUITests.swift */; };
+		12FCB8CA7445E9C3B2BEE3DE /* AppleTranslationEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0180275DF4F5BBAC753C3CA1 /* AppleTranslationEngine.swift */; };
 		179AED399EF62CC333779EF3 /* TapSeekAfterAutoAdvanceUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC0ED3C4F36F5C39C88477E6 /* TapSeekAfterAutoAdvanceUITests.swift */; };
 		18433922EB357E860E516CD0 /* decoder_merged.onnx in Resources */ = {isa = PBXBuildFile; fileRef = AB1FB69CFEBE0EDBEC932F35 /* decoder_merged.onnx */; };
 		1A30F8BB4FD35394AAA420C5 /* ReaderSettingsToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CB0DB5D451A84BABAD77673 /* ReaderSettingsToolbar.swift */; };
-		1BB202042E037EAF2316FE48 /* Book.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1B12EADCA0EFAF291FD9838 /* Book.swift */; };
+		1C93F735F5876EAB41B315DD /* DownloadedBooksView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F172F2EE00F7768439581E2 /* DownloadedBooksView.swift */; };
 		1E0E32AB31ED6A61637E53D9 /* llama.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 89F7E8C2E2FA78F23BC3571D /* llama.xcframework */; };
 		1E26333C809C1F0021169E8D /* ChapterPagerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0730CC98F5494A9E7990C15 /* ChapterPagerView.swift */; };
 		1EFD6360A2C903E322D7E5E2 /* WebnovelReaderApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCCFA3ECCF1BC534D815BE89 /* WebnovelReaderApp.swift */; };
 		224F919DE76B7D9487569CBD /* AppleTranslationEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0180275DF4F5BBAC753C3CA1 /* AppleTranslationEngine.swift */; };
 		2485DFD67EE0DEF62885FE99 /* SelectPersistsAcrossChapterNavigationUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D44E9F6922443881D20F71F /* SelectPersistsAcrossChapterNavigationUITests.swift */; };
+		284C65F8536F0C498E47BC8D /* ChapterPageContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41622EC9169379843E305CAD /* ChapterPageContent.swift */; };
 		288E6EF37C418E4E17F10599 /* sherpa-onnx in Frameworks */ = {isa = PBXBuildFile; productRef = 7077642E7C1882099C491E58 /* sherpa-onnx */; };
 		2BB8C9D711E58934FA477FBC /* SeaG2P.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = B34AF307CC8604013EA477E1 /* SeaG2P.xcframework */; };
+		2DB89C04AF85117A5DC98B4A /* BugReportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51AD29C75DE56255A25DB912 /* BugReportView.swift */; };
+		2F33E2779BFD0750B571CD76 /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D5515B19541614E3D26B666 /* HistoryView.swift */; };
 		329DA27C71D1EAD15CB7E3EF /* BookRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5117F1E588A2F64078970C56 /* BookRow.swift */; };
-		32A3FF7B2312626AA1438139 /* TranslationEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D67B69EAFFB4EFBD6425383 /* TranslationEngine.swift */; };
 		32E0B8A2018F84A81308C1D3 /* BugReportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51AD29C75DE56255A25DB912 /* BugReportView.swift */; };
-		33D575D0EB0BE195DE94E78F /* TTSVoice.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA4C129AEC16B23659D86A76 /* TTSVoice.swift */; };
+		3542DF6BB9F7038ABEA770E1 /* WatchBookDetailUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D35FC48FBA2E0918DA847430 /* WatchBookDetailUITests.swift */; };
 		39A1C364B1FCB30E0852323C /* VieNeuV3Npz.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA90ED1B18D38096102174B4 /* VieNeuV3Npz.swift */; };
 		3B239E1D125E36808FF2C928 /* LibraryUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47FD1E5D650E95E120358C8E /* LibraryUITests.swift */; };
 		3BAB887858683E8DC82FD6FA /* VieNeuV3OnnxSession.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2CF8611915842AC77FD8D799 /* VieNeuV3OnnxSession.mm */; };
+		3BFD98EA3A01AAB54BEB8ADC /* WatchBookDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C5C8470EB6AAEA066B9A7D3 /* WatchBookDetailView.swift */; };
 		3D6748A45EAD81D9487DF02B /* VieNeuOfflineV3TTSService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2808F07DDBCAA055B2D6ADF9 /* VieNeuOfflineV3TTSService.swift */; };
 		3E1CCA2AD7F895E1D6D59A1A /* voice_xuan_vinh.json in Resources */ = {isa = PBXBuildFile; fileRef = 94F8BCE1AAE2A8EA6A6EF8EC /* voice_xuan_vinh.json */; };
+		3F4B52103D4BAB0D7B8B4766 /* WatchLibraryUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D8288C10AB76E1993B845CF /* WatchLibraryUITests.swift */; };
 		405FB7143AFA70ACA00B3F7F /* DownloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E323E4940121D8CD5ED4F589 /* DownloadManager.swift */; };
 		406B5832FCFC8955C3CB43E0 /* OfflineWavEncoding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F7B764ACADBCDD832A98421 /* OfflineWavEncoding.swift */; };
+		41C32C3E34137FB0BA5CB1C5 /* ReaderSettingsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CFD9E76D43D8E28A05E4A8A /* ReaderSettingsSheet.swift */; };
 		425949BECC924DA2CE4F1545 /* VieNeuV2LlamaBackbone.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7FCF36B29D80F0F7DAFCC6E9 /* VieNeuV2LlamaBackbone.swift */; };
 		455FB6E16D6AA74E1D51DB9E /* ChapterFragmentParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF62CC9FACA427AC450D86AA /* ChapterFragmentParserTests.swift */; };
+		4745930E2969B279EBBF24B4 /* WatchPlaybackController.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB2447E99A089C4AE4DA61F1 /* WatchPlaybackController.swift */; };
+		4A26C19AF0AD93B58F0EFCED /* ChapterTranslationDriver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87F3222F005B11EF32FAED98 /* ChapterTranslationDriver.swift */; };
 		4BD6C852923B36C639FF988B /* PlaybackBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38B2768DB2EF882C9504B517 /* PlaybackBar.swift */; };
 		4C123009177B239F38F4E159 /* VieNeuV2CodecONNX.mm in Sources */ = {isa = PBXBuildFile; fileRef = A2B7D7C9EC50448E43C367FE /* VieNeuV2CodecONNX.mm */; };
 		4C2FD0CE1A38BE36C260D241 /* SettingsAndPlaybarLayoutUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E77B7759E1190A621260BC2D /* SettingsAndPlaybarLayoutUITests.swift */; };
+		4F16ED43EDCFED5A54D6853C /* WatchPlaybackUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A71A9D05A8E7E4209417E47C /* WatchPlaybackUITests.swift */; };
 		4FC9E970FAD5DFCC90E0D662 /* SeaG2PBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BB91FD5BDF27C6EC3C7E3F3 /* SeaG2PBridge.swift */; };
+		504829D8DE45A4ABF87D4593 /* MODELS.md in Resources */ = {isa = PBXBuildFile; fileRef = 29F49AA85393485A66E79630 /* MODELS.md */; };
 		525D00CEE7BDBD175A01D2E4 /* OfflineDownloadUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DBCCF9522AFEE7CBAD6CA7D /* OfflineDownloadUITests.swift */; };
 		529FEF5471455299CA1020B4 /* VieNeuOfflineV3 in Resources */ = {isa = PBXBuildFile; fileRef = 87DD5111A0DE3174C3194230 /* VieNeuOfflineV3 */; };
 		55C13A29FA0D2BA07DC14331 /* VieNeuOfflineV2TTSService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC2DD58615428784C26E486C /* VieNeuOfflineV2TTSService.swift */; };
 		589A1BFA8C2F69AA15C5B895 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4504947934A2B3AECF872F72 /* LoginView.swift */; };
 		5952907776FF164D7CFE6429 /* ReaderPlaybackController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D86948B589F016B404B328BE /* ReaderPlaybackController.swift */; };
+		596AD1D3B2EC8EBEC19A2EE4 /* ActionHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C80348C35F790F0DE254630B /* ActionHistoryView.swift */; };
 		5D465174D209824D4D8A994A /* OpusMTTranslationEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = F260324088EFDCC145425CBF /* OpusMTTranslationEngine.swift */; };
 		5D9892CB3ADD91F8903A819C /* ResumeFlowUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A23CE4FF9D11C814434BC096 /* ResumeFlowUITests.swift */; };
+		5DBBA27A8406ECD4DC3FCA98 /* ChapterListSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 253CFE7887D5A59D89E12AD5 /* ChapterListSheet.swift */; };
 		60D547ECFC0BF5D6FBA4D62A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CA3F21C8B4954B34AA708570 /* Assets.xcassets */; };
 		612DFC120BB91EA4786463CC /* SeaG2P.xcframework in Resources */ = {isa = PBXBuildFile; fileRef = 3B05CE054BAB3AC0CFF89744 /* SeaG2P.xcframework */; };
-		62C269BBB96D7C16A2EB3462 /* Keychain.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6587C63291898026681CC4FC /* Keychain.swift */; };
 		62E40856A93A1A0D969DCA5B /* BookDetailActionsUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBDAC71CFDFC1EC6A3F6CD4E /* BookDetailActionsUITests.swift */; };
+		64A5C3EF2BF5988CC407F5B3 /* BookRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5117F1E588A2F64078970C56 /* BookRow.swift */; };
+		64F96311486B927297F6B998 /* ChapterListSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 253CFE7887D5A59D89E12AD5 /* ChapterListSheet.swift */; };
+		6727330DD5883EE061CEE599 /* WebnovelReaderFullSynthesizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F7B40318F0225E0F3D67318 /* WebnovelReaderFullSynthesizer.swift */; };
+		67AEE731457699F06A01578B /* PlaybackBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38B2768DB2EF882C9504B517 /* PlaybackBar.swift */; };
+		6A16EEE4D842C597D4736AFA /* WatchLibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B411D0437CF4F5B021285CC /* WatchLibraryView.swift */; };
+		6DC1DD4EBEB6C54907895FC6 /* ReaderPlaybackController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D86948B589F016B404B328BE /* ReaderPlaybackController.swift */; };
+		702B609C3FD341D70AE37602 /* Core in Frameworks */ = {isa = PBXBuildFile; productRef = 8B1BEAEA2CF05A35F709DDEC /* Core */; };
 		712CC9D873EC43419CBADFFC /* ChapterListSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 253CFE7887D5A59D89E12AD5 /* ChapterListSheet.swift */; };
+		73A668D447EC9BC4AACF6D9B /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4504947934A2B3AECF872F72 /* LoginView.swift */; };
 		73F43228B16387394AD3492D /* vocab.json in Resources */ = {isa = PBXBuildFile; fileRef = 446832893C0DC40385162521 /* vocab.json */; };
 		76AE30B0AD63D65505777EC5 /* BugReportAndHistoryUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0553A498B15C3928D1254ED /* BugReportAndHistoryUITests.swift */; };
-		7EA4BE681E9DB6779C83EFAB /* VieNeuOfflineV2Voice.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55CB3F6DB5FF7C1BB4BBB5F6 /* VieNeuOfflineV2Voice.swift */; };
-		7F6655053DDE66F5844B0A78 /* ProgressStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F71F4FEECB8FC120E2D7ACA3 /* ProgressStore.swift */; };
+		7E50DDB033C605D7846317E6 /* DownloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E323E4940121D8CD5ED4F589 /* DownloadManager.swift */; };
 		814D74F701676CD7B17DB49D /* ChapterTitles.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6501E541F5688086EE375D88 /* ChapterTitles.swift */; };
 		82259FB68AFBC2AADC25AE26 /* voice_thuc_doan.json in Resources */ = {isa = PBXBuildFile; fileRef = B79807F48F57ED2F66B725D7 /* voice_thuc_doan.json */; };
+		8273DA6820C8B5DDEEBA7F68 /* WebnovelReaderApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCCFA3ECCF1BC534D815BE89 /* WebnovelReaderApp.swift */; };
 		82A582032CF59E97ABFEB21A /* DownloadManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE5E9FF61219C4CAD0E71621 /* DownloadManagerTests.swift */; };
 		82E705700471517BACD99233 /* AudioPlaybackService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39AFB5C424CB4F3411EF2E1C /* AudioPlaybackService.swift */; };
+		83AD317992F07A5C79C1198D /* CoverImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D24D2C47B51D7655DCB2A4B /* CoverImage.swift */; };
 		84588115DAE8CBD0E394B79D /* NextChapterAudioWarmupDepthUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8119AA1054901D75F23BA3D4 /* NextChapterAudioWarmupDepthUITests.swift */; };
 		84CDE63B346CFA8781341F91 /* ReaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E57E5AABFA973BEC1EC6782 /* ReaderView.swift */; };
+		84EF224F57E390AFAF845823 /* WatchLoginFlowUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E543573B3DF2E751D89F2A0 /* WatchLoginFlowUITests.swift */; };
 		86B4D945C9B3CE1C351D9D6B /* VieNeuV3TextChunker.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA0C77D3EAC48D6783E4EFA2 /* VieNeuV3TextChunker.swift */; };
+		890C073909D9DE2554EC1071 /* CrossPlatformToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8F61816289B66E74EFC4220 /* CrossPlatformToolbar.swift */; };
 		8B9DFD7D380097A7AE637604 /* PlaybackPersistenceUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39CB3F89A05B839BE6D59815 /* PlaybackPersistenceUITests.swift */; };
+		8BC72D52F965C78DFC5050D0 /* Core in Frameworks */ = {isa = PBXBuildFile; productRef = B37A759541F0486589907A98 /* Core */; };
 		8D4B263D90CC3BDF178CE22A /* SwipeChapterNavigationUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 341E4EB55DA2D708E3E6ACAD /* SwipeChapterNavigationUITests.swift */; };
-		91133D4F60ADB994746EBB32 /* ChapterFragmentParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74B2204E8D3D938583F01489 /* ChapterFragmentParser.swift */; };
-		9447EC2CEA1E4B3C0F55C341 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE6217F8797409C3BC9D1BFC /* APIClient.swift */; };
+		906ACEE68F0EB48753A70E1E /* CoverImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D24D2C47B51D7655DCB2A4B /* CoverImage.swift */; };
 		977E84921734F7DED3739530 /* odyssey_book2.txt in Resources */ = {isa = PBXBuildFile; fileRef = 38F79F26FBE344A5EBBEDE74 /* odyssey_book2.txt */; };
 		9A9AC7AA24A633617E83DE25 /* UnigramTokenizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CAC1F234261249EE0A3C719A /* UnigramTokenizer.swift */; };
 		9C2E323286400E45281A07A8 /* VieNeuOfflineV3UITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C5CD88A9E96A50D231575C0 /* VieNeuOfflineV3UITests.swift */; };
+		9D07EBBAE307AECC6F6FB9A6 /* CrossPlatformToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8F61816289B66E74EFC4220 /* CrossPlatformToolbar.swift */; };
 		9D4351A5D86E7BC9B284A09E /* VieNeuV3OnnxEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9A3F1E3E248E006CE1A775E /* VieNeuV3OnnxEngine.swift */; };
+		9F2C668CAC80225568E88B4E /* Core in Frameworks */ = {isa = PBXBuildFile; productRef = 3451C52244C57B54E6653600 /* Core */; };
+		A1E86A266416654B1C150BCF /* ReaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E57E5AABFA973BEC1EC6782 /* ReaderView.swift */; };
+		A4666DF257B2B797427E5918 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CA3F21C8B4954B34AA708570 /* Assets.xcassets */; };
 		A5C0C56FA9DBCFB7E20E056E /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D5515B19541614E3D26B666 /* HistoryView.swift */; };
-		ABCBDA0B1D0335FE4650CC24 /* ReadingProgress.swift in Sources */ = {isa = PBXBuildFile; fileRef = 393BBC110CC5F516C47AD621 /* ReadingProgress.swift */; };
+		A8AC74F29F6B97EE6AAC12D1 /* WebnovelReaderWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 218B9DA628D369E4F1DA5763 /* WebnovelReaderWatchApp.swift */; };
+		AD1C5C03BB3B5B1DBF211AB4 /* AudioPlaybackService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39AFB5C424CB4F3411EF2E1C /* AudioPlaybackService.swift */; };
+		AECC6E2B73668AAE28EFDE1D /* BookDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F60BA012E937FDC3266CEAAC /* BookDetailView.swift */; };
+		AEE90243112CF0F9A16228B0 /* ChapterPagerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F3A4F62F1CEF375F6C54ACC /* ChapterPagerView.swift */; };
 		AEFD1810A6923AFCB301959D /* tokens.txt in Resources */ = {isa = PBXBuildFile; fileRef = 2538B9C2D810DA7B997904AC /* tokens.txt */; };
 		B1158413D4404F3BA886912F /* LoginFlowUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB44137B32FE2CC7F103757F /* LoginFlowUITests.swift */; };
 		B1473715559DFF5AAA834D42 /* llama.xcframework in Resources */ = {isa = PBXBuildFile; fileRef = 7F7F486752D8DBD33832BEFF /* llama.xcframework */; };
 		B174696283E4D1D69C9A4ACA /* ReaderSettingsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CFD9E76D43D8E28A05E4A8A /* ReaderSettingsSheet.swift */; };
-		B7D6093B76C400A1944B4A5B /* AppEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FC0DBA8A2315C7C1CED0359 /* AppEvent.swift */; };
+		B4109D5F8D93E05DA65C4BF6 /* ReaderSettingsToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CB0DB5D451A84BABAD77673 /* ReaderSettingsToolbar.swift */; };
 		B84DBB1A50F6DE4212707CEE /* onnxruntime-ios in Frameworks */ = {isa = PBXBuildFile; productRef = 88FE71A7AB03DCCF5CC630FA /* onnxruntime-ios */; };
 		BB1256783F7FF215F55A6D99 /* PreloadBufferingUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A697616D2F5BEBE60837A03E /* PreloadBufferingUITests.swift */; };
 		BC356F4C1D813BBC51ABF55F /* TranslationPerformanceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0DE54214FD181D972B3F283 /* TranslationPerformanceTests.swift */; };
 		BC7774DC5AA3F54E7F5C5299 /* vi_VN-vais1000-medium.onnx in Resources */ = {isa = PBXBuildFile; fileRef = 19BB4D3E4A9827CF125F6CC5 /* vi_VN-vais1000-medium.onnx */; };
+		C045654D7FD83E72967F530C /* WatchHistoryAndBugReportUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBC0A2291F85A145E72E65F5 /* WatchHistoryAndBugReportUITests.swift */; };
 		C07E4012188E3816DA5474D9 /* SleepTimerUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F219E254BB907B7DA1E1118 /* SleepTimerUITests.swift */; };
 		C15085DA4D2B7E42B6CFFDDC /* encoder.onnx in Resources */ = {isa = PBXBuildFile; fileRef = CCF61F91D44CEADF310C7719 /* encoder.onnx */; };
 		C30C58DC9526D986385052DC /* PiperOfflineTTSService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67FCD507015BA179DEAFCA4B /* PiperOfflineTTSService.swift */; };
+		C3BDC0BCBE0C8A8EB17E4FF7 /* AudioPlaybackService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39AFB5C424CB4F3411EF2E1C /* AudioPlaybackService.swift */; };
 		C7DBA3109982D309F4BA6262 /* ChapterTranslationDriver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87F3222F005B11EF32FAED98 /* ChapterTranslationDriver.swift */; };
 		CA7ECBB0F96F47DE90BDDA58 /* TTSPlaybackUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91A32907F3C51AD7EB26D010 /* TTSPlaybackUITests.swift */; };
 		CBCE947F9F049237E90DE1BB /* DownloadedBooksView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F172F2EE00F7768439581E2 /* DownloadedBooksView.swift */; };
 		CBDC4645A2FA724D73D289AC /* TextSegmentationMergeUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66BAAE1683F2331178ACEE75 /* TextSegmentationMergeUITests.swift */; };
 		CD608C1D22254E481E45ED85 /* VieNeuV3BPETokenizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CFD8F3A4D87F09B341B7C08 /* VieNeuV3BPETokenizer.swift */; };
+		D2476D820D27FFE3B714A82B /* WatchSettingsUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05A1A9D9C437AE8DB6DFC7C0 /* WatchSettingsUITests.swift */; };
+		D291379DC639099831F5E898 /* BugReportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51AD29C75DE56255A25DB912 /* BugReportView.swift */; };
 		D30E07683D0457280765289C /* voice_pham_tuyen.json in Resources */ = {isa = PBXBuildFile; fileRef = 8885567368F5244DE28C3BF0 /* voice_pham_tuyen.json */; };
 		D39C6B967F49DC67497BB7B5 /* llama.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 89F7E8C2E2FA78F23BC3571D /* llama.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		D66070AB1B1E355AFEC029B0 /* ActionHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C80348C35F790F0DE254630B /* ActionHistoryView.swift */; };
-		D6F62CC98870A4F58B1207D0 /* GwenTTSSpeaker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BA0CF8E25015529341FCEF0 /* GwenTTSSpeaker.swift */; };
 		D7158B88F3220A553F7B322B /* voice_bich_ngoc.json in Resources */ = {isa = PBXBuildFile; fileRef = EDC84C2E8A1DD5ADBEEB01FB /* voice_bich_ngoc.json */; };
-		DDEE93E3E9DAFB7C2D0A1364 /* EventLogStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 517EE92EB602E9C3F69F581F /* EventLogStore.swift */; };
+		D7E87EDD00881D81BADFF174 /* WatchSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C73A2A3344EC0672B26307F9 /* WatchSettingsView.swift */; };
+		DC6234A6AE0B08F3DEB8F0D4 /* WatchPlaybackView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00478963429E208A80C957D7 /* WatchPlaybackView.swift */; };
 		E1D6DCC98BFD391488935A9C /* CoverImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D24D2C47B51D7655DCB2A4B /* CoverImage.swift */; };
+		E44E8771F7E10DEFCBBB19DB /* ChapterTitles.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6501E541F5688086EE375D88 /* ChapterTitles.swift */; };
+		E4D7272A93B18738238D456D /* WatchSessionRelay.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC1B8EC77F33A1CD9F8DA675 /* WatchSessionRelay.swift */; };
 		E4E21985EA9A11DE76EE9640 /* AudioInterruptionUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 004CA44AC74B9034C629CF09 /* AudioInterruptionUITests.swift */; };
 		E507BB1F75B2C0B1AEA4554F /* sea_g2p.bin in Resources */ = {isa = PBXBuildFile; fileRef = EE3BDC6E3071EF88C43B9D16 /* sea_g2p.bin */; };
-		E56DBE4914F38CB525D0FE29 /* CoverImageCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB5E3C26D94F8123E9B0B710 /* CoverImageCache.swift */; };
-		E729385900ADBD810C521459 /* NetworkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E16D74A6AA8A1A5ED6CF291 /* NetworkMonitor.swift */; };
+		E554F863D768F4CBF5CEA16E /* DownloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E323E4940121D8CD5ED4F589 /* DownloadManager.swift */; };
 		E737A4B4DB04177DA20C8D61 /* LibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B341D7BF826C02000149E75 /* LibraryView.swift */; };
-		E9104AA08B2ED76E6E3F6B77 /* SwiftSoup in Frameworks */ = {isa = PBXBuildFile; productRef = 7134351B8FA8190600206CA6 /* SwiftSoup */; };
-		EAE570E582ECF7A0E5F68BCA /* TextSegmentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65F1934BFB315721963575A7 /* TextSegmentation.swift */; };
+		E9104AA08B2ED76E6E3F6B77 /* Core in Frameworks */ = {isa = PBXBuildFile; productRef = 79C07B5AB980D6616DD7182C /* Core */; };
+		EBF9340B32CBC2B4F3EA31CD /* ChapterTitles.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6501E541F5688086EE375D88 /* ChapterTitles.swift */; };
 		EECB1B5D95B18D173977D4D3 /* HistoryUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DE0AA015D39DA0DBC6D56ED /* HistoryUITests.swift */; };
 		F3E8281AB3AE76425F8D9E36 /* DownloadedBooksUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0ACF87AD21DD365DC0A4287 /* DownloadedBooksUITests.swift */; };
 		F6DC451A5DD5BBECEA70BA61 /* source_pieces.json in Resources */ = {isa = PBXBuildFile; fileRef = 87148482FED1A1DCA03811B1 /* source_pieces.json */; };
 		F7789321C34C66899A40094C /* ChapterNavigationUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 512B6B9B75EDE35A5C0B1A79 /* ChapterNavigationUITests.swift */; };
 		F82B5F80BE2EB13C73AAB933 /* VieNeuV2CodecDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB87E7F5611D53CEA837235B /* VieNeuV2CodecDecoder.swift */; };
+		F86324954DB3C3707228B57D /* LibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B341D7BF826C02000149E75 /* LibraryView.swift */; };
 		F8B107BC493B37F33BF7574F /* TranslationOnnxSession.mm in Sources */ = {isa = PBXBuildFile; fileRef = B8E8045DE8405F2527E0E206 /* TranslationOnnxSession.mm */; };
+		FA2678E8A52DC9557EC21FD5 /* ActionHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C80348C35F790F0DE254630B /* ActionHistoryView.swift */; };
 		FB87FEED1B73B697FEB9CB0E /* vieneu_decoder_int8.onnx in Resources */ = {isa = PBXBuildFile; fileRef = 7917B06635A338F4CD154892 /* vieneu_decoder_int8.onnx */; };
 		FC675CAE16A795786661CA43 /* vieneu-tts-v2-turbo.gguf in Resources */ = {isa = PBXBuildFile; fileRef = AA48640480DCD2CDDCA59E6A /* vieneu-tts-v2-turbo.gguf */; };
+		FC87E644DFEE46D9EA662025 /* WatchSessionReceiver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D27D54AB0EBD381959FDA03 /* WatchSessionReceiver.swift */; };
+		FCBCFD90A326D66834D9F29A /* ChapterPageContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41622EC9169379843E305CAD /* ChapterPageContent.swift */; };
 		FED5D0C4F738A6E4022D7274 /* espeak-ng-data in Resources */ = {isa = PBXBuildFile; fileRef = D7D04640EB80155C062EFE5C /* espeak-ng-data */; };
 /* End PBXBuildFile section */
 
@@ -130,6 +169,13 @@
 			remoteGlobalIDString = 742B2517A9EC8DA145C99501;
 			remoteInfo = WebnovelReader;
 		};
+		A8906795839B35D3A4BCBE48 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 5D34D48E6C761EA4755EDBD3 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 3D3AFCE1EDB07A2DB6DDF2E4;
+			remoteInfo = WebnovelReaderWatch;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -147,55 +193,59 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		00478963429E208A80C957D7 /* WatchPlaybackView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchPlaybackView.swift; sourceTree = "<group>"; };
 		004CA44AC74B9034C629CF09 /* AudioInterruptionUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioInterruptionUITests.swift; sourceTree = "<group>"; };
 		0180275DF4F5BBAC753C3CA1 /* AppleTranslationEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleTranslationEngine.swift; sourceTree = "<group>"; };
-		02A238C8FEF0622E96FC931A /* SessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStore.swift; sourceTree = "<group>"; };
 		055C4D56AA40D5C9F1E7D259 /* WebnovelReaderTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = WebnovelReaderTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		05A1A9D9C437AE8DB6DFC7C0 /* WatchSettingsUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchSettingsUITests.swift; sourceTree = "<group>"; };
 		19BB4D3E4A9827CF125F6CC5 /* vi_VN-vais1000-medium.onnx */ = {isa = PBXFileReference; path = "vi_VN-vais1000-medium.onnx"; sourceTree = "<group>"; };
 		1BB91FD5BDF27C6EC3C7E3F3 /* SeaG2PBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeaG2PBridge.swift; sourceTree = "<group>"; };
+		1C5C8470EB6AAEA066B9A7D3 /* WatchBookDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchBookDetailView.swift; sourceTree = "<group>"; };
 		1C5CD88A9E96A50D231575C0 /* VieNeuOfflineV3UITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VieNeuOfflineV3UITests.swift; sourceTree = "<group>"; };
-		1D67B69EAFFB4EFBD6425383 /* TranslationEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranslationEngine.swift; sourceTree = "<group>"; };
+		1D27D54AB0EBD381959FDA03 /* WatchSessionReceiver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchSessionReceiver.swift; sourceTree = "<group>"; };
 		1F172F2EE00F7768439581E2 /* DownloadedBooksView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadedBooksView.swift; sourceTree = "<group>"; };
+		218B9DA628D369E4F1DA5763 /* WebnovelReaderWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebnovelReaderWatchApp.swift; sourceTree = "<group>"; };
+		21FCE81D49DDDB7810A3DB93 /* Core */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Core; path = Packages/Core; sourceTree = SOURCE_ROOT; };
 		2379CA2DBD393FD0726B1C07 /* TranslationOnnxSession.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TranslationOnnxSession.h; sourceTree = "<group>"; };
 		2538B9C2D810DA7B997904AC /* tokens.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = tokens.txt; sourceTree = "<group>"; };
 		253CFE7887D5A59D89E12AD5 /* ChapterListSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChapterListSheet.swift; sourceTree = "<group>"; };
 		2808F07DDBCAA055B2D6ADF9 /* VieNeuOfflineV3TTSService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VieNeuOfflineV3TTSService.swift; sourceTree = "<group>"; };
+		29F49AA85393485A66E79630 /* MODELS.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = MODELS.md; sourceTree = "<group>"; };
 		2CF8611915842AC77FD8D799 /* VieNeuV3OnnxSession.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = VieNeuV3OnnxSession.mm; sourceTree = "<group>"; };
 		2CFD9E76D43D8E28A05E4A8A /* ReaderSettingsSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReaderSettingsSheet.swift; sourceTree = "<group>"; };
-		2E16D74A6AA8A1A5ED6CF291 /* NetworkMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkMonitor.swift; sourceTree = "<group>"; };
+		2F3A4F62F1CEF375F6C54ACC /* ChapterPagerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChapterPagerView.swift; sourceTree = "<group>"; };
 		2F7B764ACADBCDD832A98421 /* OfflineWavEncoding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineWavEncoding.swift; sourceTree = "<group>"; };
 		341E4EB55DA2D708E3E6ACAD /* SwipeChapterNavigationUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwipeChapterNavigationUITests.swift; sourceTree = "<group>"; };
 		38B2768DB2EF882C9504B517 /* PlaybackBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackBar.swift; sourceTree = "<group>"; };
 		38F79F26FBE344A5EBBEDE74 /* odyssey_book2.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = odyssey_book2.txt; sourceTree = "<group>"; };
-		393BBC110CC5F516C47AD621 /* ReadingProgress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadingProgress.swift; sourceTree = "<group>"; };
 		39AFB5C424CB4F3411EF2E1C /* AudioPlaybackService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioPlaybackService.swift; sourceTree = "<group>"; };
 		39CB3F89A05B839BE6D59815 /* PlaybackPersistenceUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackPersistenceUITests.swift; sourceTree = "<group>"; };
 		3B05CE054BAB3AC0CFF89744 /* SeaG2P.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = SeaG2P.xcframework; sourceTree = "<group>"; };
+		3D584437C6E0B52C98A82197 /* WebnovelReaderWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WebnovelReaderWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		3F7B40318F0225E0F3D67318 /* WebnovelReaderFullSynthesizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebnovelReaderFullSynthesizer.swift; sourceTree = "<group>"; };
+		40C67F7F3A3EAA72A962C801 /* WebnovelReaderMac.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WebnovelReaderMac.entitlements; sourceTree = "<group>"; };
+		41622EC9169379843E305CAD /* ChapterPageContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChapterPageContent.swift; sourceTree = "<group>"; };
 		446832893C0DC40385162521 /* vocab.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = vocab.json; sourceTree = "<group>"; };
 		4504947934A2B3AECF872F72 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
 		47FD1E5D650E95E120358C8E /* LibraryUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryUITests.swift; sourceTree = "<group>"; };
 		4CFD8F3A4D87F09B341B7C08 /* VieNeuV3BPETokenizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VieNeuV3BPETokenizer.swift; sourceTree = "<group>"; };
+		4E543573B3DF2E751D89F2A0 /* WatchLoginFlowUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchLoginFlowUITests.swift; sourceTree = "<group>"; };
 		5117F1E588A2F64078970C56 /* BookRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookRow.swift; sourceTree = "<group>"; };
 		512B6B9B75EDE35A5C0B1A79 /* ChapterNavigationUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChapterNavigationUITests.swift; sourceTree = "<group>"; };
-		517EE92EB602E9C3F69F581F /* EventLogStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventLogStore.swift; sourceTree = "<group>"; };
 		51AD29C75DE56255A25DB912 /* BugReportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BugReportView.swift; sourceTree = "<group>"; };
-		55CB3F6DB5FF7C1BB4BBB5F6 /* VieNeuOfflineV2Voice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VieNeuOfflineV2Voice.swift; sourceTree = "<group>"; };
 		5820BF99535AA4318F7F6700 /* VieNeu-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "VieNeu-Bridging-Header.h"; sourceTree = "<group>"; };
 		590CE78C2F18BB27ED8D519A /* ChapterListUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChapterListUITests.swift; sourceTree = "<group>"; };
 		5D44E9F6922443881D20F71F /* SelectPersistsAcrossChapterNavigationUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectPersistsAcrossChapterNavigationUITests.swift; sourceTree = "<group>"; };
 		6501E541F5688086EE375D88 /* ChapterTitles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChapterTitles.swift; sourceTree = "<group>"; };
-		6587C63291898026681CC4FC /* Keychain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Keychain.swift; sourceTree = "<group>"; };
-		65F1934BFB315721963575A7 /* TextSegmentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextSegmentation.swift; sourceTree = "<group>"; };
 		66BAAE1683F2331178ACEE75 /* TextSegmentationMergeUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextSegmentationMergeUITests.swift; sourceTree = "<group>"; };
 		67FCD507015BA179DEAFCA4B /* PiperOfflineTTSService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PiperOfflineTTSService.swift; sourceTree = "<group>"; };
 		6CB0DB5D451A84BABAD77673 /* ReaderSettingsToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReaderSettingsToolbar.swift; sourceTree = "<group>"; };
 		6D24D2C47B51D7655DCB2A4B /* CoverImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoverImage.swift; sourceTree = "<group>"; };
 		6E57E5AABFA973BEC1EC6782 /* ReaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReaderView.swift; sourceTree = "<group>"; };
 		6F219E254BB907B7DA1E1118 /* SleepTimerUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepTimerUITests.swift; sourceTree = "<group>"; };
-		6FC0DBA8A2315C7C1CED0359 /* AppEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppEvent.swift; sourceTree = "<group>"; };
-		74B2204E8D3D938583F01489 /* ChapterFragmentParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChapterFragmentParser.swift; sourceTree = "<group>"; };
 		79067B8D8AC3562FF716853F /* VieNeuV2CodecONNX.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = VieNeuV2CodecONNX.h; sourceTree = "<group>"; };
 		7917B06635A338F4CD154892 /* vieneu_decoder_int8.onnx */ = {isa = PBXFileReference; path = vieneu_decoder_int8.onnx; sourceTree = "<group>"; };
+		7B411D0437CF4F5B021285CC /* WatchLibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchLibraryView.swift; sourceTree = "<group>"; };
 		7D5515B19541614E3D26B666 /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
 		7F7F486752D8DBD33832BEFF /* llama.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = llama.xcframework; sourceTree = "<group>"; };
 		7FCF36B29D80F0F7DAFCC6E9 /* VieNeuV2LlamaBackbone.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VieNeuV2LlamaBackbone.swift; sourceTree = "<group>"; };
@@ -206,7 +256,7 @@
 		8885567368F5244DE28C3BF0 /* voice_pham_tuyen.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = voice_pham_tuyen.json; sourceTree = "<group>"; };
 		89F7E8C2E2FA78F23BC3571D /* llama.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = llama.xcframework; path = WebnovelReader/Vendor/llama.xcframework; sourceTree = "<group>"; };
 		8B341D7BF826C02000149E75 /* LibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryView.swift; sourceTree = "<group>"; };
-		8BA0CF8E25015529341FCEF0 /* GwenTTSSpeaker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GwenTTSSpeaker.swift; sourceTree = "<group>"; };
+		8D8288C10AB76E1993B845CF /* WatchLibraryUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchLibraryUITests.swift; sourceTree = "<group>"; };
 		8DBCCF9522AFEE7CBAD6CA7D /* OfflineDownloadUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineDownloadUITests.swift; sourceTree = "<group>"; };
 		91A32907F3C51AD7EB26D010 /* TTSPlaybackUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TTSPlaybackUITests.swift; sourceTree = "<group>"; };
 		94F8BCE1AAE2A8EA6A6EF8EC /* voice_xuan_vinh.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = voice_xuan_vinh.json; sourceTree = "<group>"; };
@@ -214,6 +264,7 @@
 		A23CE4FF9D11C814434BC096 /* ResumeFlowUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResumeFlowUITests.swift; sourceTree = "<group>"; };
 		A2B7D7C9EC50448E43C367FE /* VieNeuV2CodecONNX.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = VieNeuV2CodecONNX.mm; sourceTree = "<group>"; };
 		A697616D2F5BEBE60837A03E /* PreloadBufferingUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreloadBufferingUITests.swift; sourceTree = "<group>"; };
+		A71A9D05A8E7E4209417E47C /* WatchPlaybackUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchPlaybackUITests.swift; sourceTree = "<group>"; };
 		A9A3F1E3E248E006CE1A775E /* VieNeuV3OnnxEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VieNeuV3OnnxEngine.swift; sourceTree = "<group>"; };
 		AA48640480DCD2CDDCA59E6A /* vieneu-tts-v2-turbo.gguf */ = {isa = PBXFileReference; path = "vieneu-tts-v2-turbo.gguf"; sourceTree = "<group>"; };
 		AB1FB69CFEBE0EDBEC932F35 /* decoder_merged.onnx */ = {isa = PBXFileReference; path = decoder_merged.onnx; sourceTree = "<group>"; };
@@ -225,24 +276,30 @@
 		BCCFA3ECCF1BC534D815BE89 /* WebnovelReaderApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebnovelReaderApp.swift; sourceTree = "<group>"; };
 		C0E38D3C42826F7665A2F966 /* WebnovelReaderUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = WebnovelReaderUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C2F97CC55E8520B59C8800BB /* WebnovelReader.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = WebnovelReader.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		C73A2A3344EC0672B26307F9 /* WatchSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchSettingsView.swift; sourceTree = "<group>"; };
 		C80348C35F790F0DE254630B /* ActionHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActionHistoryView.swift; sourceTree = "<group>"; };
+		C8F61816289B66E74EFC4220 /* CrossPlatformToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CrossPlatformToolbar.swift; sourceTree = "<group>"; };
 		CA0C77D3EAC48D6783E4EFA2 /* VieNeuV3TextChunker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VieNeuV3TextChunker.swift; sourceTree = "<group>"; };
 		CA3F21C8B4954B34AA708570 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		CA90ED1B18D38096102174B4 /* VieNeuV3Npz.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VieNeuV3Npz.swift; sourceTree = "<group>"; };
 		CAC1F234261249EE0A3C719A /* UnigramTokenizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnigramTokenizer.swift; sourceTree = "<group>"; };
+		CBC0A2291F85A145E72E65F5 /* WatchHistoryAndBugReportUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchHistoryAndBugReportUITests.swift; sourceTree = "<group>"; };
 		CCF61F91D44CEADF310C7719 /* encoder.onnx */ = {isa = PBXFileReference; path = encoder.onnx; sourceTree = "<group>"; };
 		D0553A498B15C3928D1254ED /* BugReportAndHistoryUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BugReportAndHistoryUITests.swift; sourceTree = "<group>"; };
 		D0730CC98F5494A9E7990C15 /* ChapterPagerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChapterPagerView.swift; sourceTree = "<group>"; };
 		D0DE54214FD181D972B3F283 /* TranslationPerformanceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranslationPerformanceTests.swift; sourceTree = "<group>"; };
-		D1B12EADCA0EFAF291FD9838 /* Book.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Book.swift; sourceTree = "<group>"; };
+		D35FC48FBA2E0918DA847430 /* WatchBookDetailUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchBookDetailUITests.swift; sourceTree = "<group>"; };
 		D7D04640EB80155C062EFE5C /* espeak-ng-data */ = {isa = PBXFileReference; lastKnownFileType = folder; name = "espeak-ng-data"; path = "WebnovelReader/Resources/PiperOffline/espeak-ng-data"; sourceTree = SOURCE_ROOT; };
 		D86948B589F016B404B328BE /* ReaderPlaybackController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReaderPlaybackController.swift; sourceTree = "<group>"; };
+		D8B0DDEE9C33AF97799C28DF /* WebnovelReaderWatchUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WebnovelReaderWatchUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		DBDAC71CFDFC1EC6A3F6CD4E /* BookDetailActionsUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookDetailActionsUITests.swift; sourceTree = "<group>"; };
+		DC1B8EC77F33A1CD9F8DA675 /* WatchSessionRelay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchSessionRelay.swift; sourceTree = "<group>"; };
 		DC2DD58615428784C26E486C /* VieNeuOfflineV2TTSService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VieNeuOfflineV2TTSService.swift; sourceTree = "<group>"; };
 		DF62CC9FACA427AC450D86AA /* ChapterFragmentParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChapterFragmentParserTests.swift; sourceTree = "<group>"; };
 		E323E4940121D8CD5ED4F589 /* DownloadManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadManager.swift; sourceTree = "<group>"; };
+		E4415AD20A9C72B1718BB545 /* WebnovelReaderMac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WebnovelReaderMac.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E77B7759E1190A621260BC2D /* SettingsAndPlaybarLayoutUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsAndPlaybarLayoutUITests.swift; sourceTree = "<group>"; };
-		EA4C129AEC16B23659D86A76 /* TTSVoice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TTSVoice.swift; sourceTree = "<group>"; };
+		EB2447E99A089C4AE4DA61F1 /* WatchPlaybackController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchPlaybackController.swift; sourceTree = "<group>"; };
 		EC0ED3C4F36F5C39C88477E6 /* TapSeekAfterAutoAdvanceUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TapSeekAfterAutoAdvanceUITests.swift; sourceTree = "<group>"; };
 		EDC84C2E8A1DD5ADBEEB01FB /* voice_bich_ngoc.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = voice_bich_ngoc.json; sourceTree = "<group>"; };
 		EE3BDC6E3071EF88C43B9D16 /* sea_g2p.bin */ = {isa = PBXFileReference; lastKnownFileType = archive.macbinary; path = sea_g2p.bin; sourceTree = "<group>"; };
@@ -250,25 +307,45 @@
 		F456FE71D617BD6DEC0F52A6 /* VieNeuOfflineV2UITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VieNeuOfflineV2UITests.swift; sourceTree = "<group>"; };
 		F55A261982C8D40BDB397A6E /* VieNeuV3OnnxSession.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = VieNeuV3OnnxSession.h; sourceTree = "<group>"; };
 		F60BA012E937FDC3266CEAAC /* BookDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookDetailView.swift; sourceTree = "<group>"; };
-		F62B80CD7509A43E2A4F664E /* VieNeuOfflineV3Voice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VieNeuOfflineV3Voice.swift; sourceTree = "<group>"; };
-		F71F4FEECB8FC120E2D7ACA3 /* ProgressStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressStore.swift; sourceTree = "<group>"; };
-		FB5E3C26D94F8123E9B0B710 /* CoverImageCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoverImageCache.swift; sourceTree = "<group>"; };
 		FB87E7F5611D53CEA837235B /* VieNeuV2CodecDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VieNeuV2CodecDecoder.swift; sourceTree = "<group>"; };
 		FE5E9FF61219C4CAD0E71621 /* DownloadManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadManagerTests.swift; sourceTree = "<group>"; };
-		FE6217F8797409C3BC9D1BFC /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
-		"TEMP_BE2EDEDF-F427-41D6-A257-34B0FB529410" /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
+		"TEMP_E7F6CDED-3649-446F-9625-89E8402D921A" /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		5945E013B1A1F7C18D38569C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8BC72D52F965C78DFC5050D0 /* Core in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		984DD7D968613DAC3B667C7F /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				288E6EF37C418E4E17F10599 /* sherpa-onnx in Frameworks */,
 				B84DBB1A50F6DE4212707CEE /* onnxruntime-ios in Frameworks */,
-				E9104AA08B2ED76E6E3F6B77 /* SwiftSoup in Frameworks */,
+				E9104AA08B2ED76E6E3F6B77 /* Core in Frameworks */,
 				2BB8C9D711E58934FA477FBC /* SeaG2P.xcframework in Frameworks */,
 				1E0E32AB31ED6A61637E53D9 /* llama.xcframework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E25436B17278AC8381CCEBB0 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				702B609C3FD341D70AE37602 /* Core in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		EB7F0B75C56EF572131153D4 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9F2C668CAC80225568E88B4E /* Core in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -294,11 +371,7 @@
 				C546B1672C3FDF16BB346526 /* App */,
 				A7A3685413D9477378D880C5 /* Audio */,
 				BFAB3415967010ED7429F994 /* Download */,
-				550B93F910E6547AE6634665 /* Models */,
-				D72CFF8FB30CFC7A6F25E2A9 /* Networking */,
-				9DD3E03A3F6B27D23E9B06BA /* Progress */,
 				A8F63E6B890DD9AC0DCE849F /* Resources */,
-				C92E2632E4461A36B7004B2E /* Security */,
 				BAEAC1EA7302943DCF9E0EC9 /* Translation */,
 				776D0AC67A146637CA1512FD /* TTS */,
 				721E63325A89D02210D7B500 /* Vendor */,
@@ -326,10 +399,12 @@
 				5117F1E588A2F64078970C56 /* BookRow.swift */,
 				51AD29C75DE56255A25DB912 /* BugReportView.swift */,
 				253CFE7887D5A59D89E12AD5 /* ChapterListSheet.swift */,
+				41622EC9169379843E305CAD /* ChapterPageContent.swift */,
 				D0730CC98F5494A9E7990C15 /* ChapterPagerView.swift */,
 				6501E541F5688086EE375D88 /* ChapterTitles.swift */,
 				87F3222F005B11EF32FAED98 /* ChapterTranslationDriver.swift */,
 				6D24D2C47B51D7655DCB2A4B /* CoverImage.swift */,
+				C8F61816289B66E74EFC4220 /* CrossPlatformToolbar.swift */,
 				1F172F2EE00F7768439581E2 /* DownloadedBooksView.swift */,
 				7D5515B19541614E3D26B666 /* HistoryView.swift */,
 				8B341D7BF826C02000149E75 /* LibraryView.swift */,
@@ -384,9 +459,13 @@
 		49E539FBF17C66ECA0FDFA44 = {
 			isa = PBXGroup;
 			children = (
+				AADF34FBC5E17078FBAC1E99 /* Packages */,
 				24C4D85E293F450B527D8A2F /* WebnovelReader */,
+				8FDE2836A64BF489C0B8B220 /* WebnovelReaderMac */,
 				7286029B0A71C9E44D1AFDFC /* WebnovelReaderTests */,
 				44CC00258ECAED55A99EDEDE /* WebnovelReaderUITests */,
+				C0D4FAFAC15144F62E0ACC5A /* WebnovelReaderWatch */,
+				E6A7315F57E14D6E5C99D1DB /* WebnovelReaderWatchUITests */,
 				45EBAC9FE28B9AD9E9B26EC2 /* Frameworks */,
 				842308F4F81D147E7A905121 /* Products */,
 			);
@@ -396,23 +475,12 @@
 			isa = PBXGroup;
 			children = (
 				DC2DD58615428784C26E486C /* VieNeuOfflineV2TTSService.swift */,
-				55CB3F6DB5FF7C1BB4BBB5F6 /* VieNeuOfflineV2Voice.swift */,
 				FB87E7F5611D53CEA837235B /* VieNeuV2CodecDecoder.swift */,
 				79067B8D8AC3562FF716853F /* VieNeuV2CodecONNX.h */,
 				A2B7D7C9EC50448E43C367FE /* VieNeuV2CodecONNX.mm */,
 				7FCF36B29D80F0F7DAFCC6E9 /* VieNeuV2LlamaBackbone.swift */,
 			);
 			path = VieNeuOfflineV2;
-			sourceTree = "<group>";
-		};
-		550B93F910E6547AE6634665 /* Models */ = {
-			isa = PBXGroup;
-			children = (
-				6FC0DBA8A2315C7C1CED0359 /* AppEvent.swift */,
-				D1B12EADCA0EFAF291FD9838 /* Book.swift */,
-				393BBC110CC5F516C47AD621 /* ReadingProgress.swift */,
-			);
-			path = Models;
 			sourceTree = "<group>";
 		};
 		64F54B9108AA38FE01C5989F /* BundledTranslation */ = {
@@ -457,14 +525,12 @@
 		776D0AC67A146637CA1512FD /* TTS */ = {
 			isa = PBXGroup;
 			children = (
-				8BA0CF8E25015529341FCEF0 /* GwenTTSSpeaker.swift */,
 				2F7B764ACADBCDD832A98421 /* OfflineWavEncoding.swift */,
 				67FCD507015BA179DEAFCA4B /* PiperOfflineTTSService.swift */,
 				D86948B589F016B404B328BE /* ReaderPlaybackController.swift */,
 				1BB91FD5BDF27C6EC3C7E3F3 /* SeaG2PBridge.swift */,
-				65F1934BFB315721963575A7 /* TextSegmentation.swift */,
-				EA4C129AEC16B23659D86A76 /* TTSVoice.swift */,
 				5820BF99535AA4318F7F6700 /* VieNeu-Bridging-Header.h */,
+				3F7B40318F0225E0F3D67318 /* WebnovelReaderFullSynthesizer.swift */,
 				4B2E13EB26AE6A36E54043EC /* VieNeuOfflineV2 */,
 				F6AFC1275785D0EEFCF07047 /* VieNeuOfflineV3 */,
 			);
@@ -475,19 +541,22 @@
 			isa = PBXGroup;
 			children = (
 				C2F97CC55E8520B59C8800BB /* WebnovelReader.app */,
+				E4415AD20A9C72B1718BB545 /* WebnovelReaderMac.app */,
 				055C4D56AA40D5C9F1E7D259 /* WebnovelReaderTests.xctest */,
 				C0E38D3C42826F7665A2F966 /* WebnovelReaderUITests.xctest */,
+				3D584437C6E0B52C98A82197 /* WebnovelReaderWatch.app */,
+				D8B0DDEE9C33AF97799C28DF /* WebnovelReaderWatchUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		9DD3E03A3F6B27D23E9B06BA /* Progress */ = {
+		8FDE2836A64BF489C0B8B220 /* WebnovelReaderMac */ = {
 			isa = PBXGroup;
 			children = (
-				517EE92EB602E9C3F69F581F /* EventLogStore.swift */,
-				F71F4FEECB8FC120E2D7ACA3 /* ProgressStore.swift */,
+				2F3A4F62F1CEF375F6C54ACC /* ChapterPagerView.swift */,
+				40C67F7F3A3EAA72A962C801 /* WebnovelReaderMac.entitlements */,
 			);
-			path = Progress;
+			path = WebnovelReaderMac;
 			sourceTree = "<group>";
 		};
 		A7A3685413D9477378D880C5 /* Audio */ = {
@@ -502,6 +571,7 @@
 			isa = PBXGroup;
 			children = (
 				CA3F21C8B4954B34AA708570 /* Assets.xcassets */,
+				29F49AA85393485A66E79630 /* MODELS.md */,
 				EE3BDC6E3071EF88C43B9D16 /* sea_g2p.bin */,
 				87DD5111A0DE3174C3194230 /* VieNeuOfflineV3 */,
 				ED62B975BEE2542D68BF9FB3 /* BundledTranslation */,
@@ -509,6 +579,14 @@
 				154247BDADE4A820E6C88687 /* VieNeuOfflineV2 */,
 			);
 			path = Resources;
+			sourceTree = "<group>";
+		};
+		AADF34FBC5E17078FBAC1E99 /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				21FCE81D49DDDB7810A3DB93 /* Core */,
+			);
+			path = Packages;
 			sourceTree = "<group>";
 		};
 		B341071D5232D01B72A1F877 /* PiperOffline */ = {
@@ -525,7 +603,6 @@
 			isa = PBXGroup;
 			children = (
 				0180275DF4F5BBAC753C3CA1 /* AppleTranslationEngine.swift */,
-				1D67B69EAFFB4EFBD6425383 /* TranslationEngine.swift */,
 				64F54B9108AA38FE01C5989F /* BundledTranslation */,
 			);
 			path = Translation;
@@ -539,32 +616,40 @@
 			path = Download;
 			sourceTree = "<group>";
 		};
+		C0D4FAFAC15144F62E0ACC5A /* WebnovelReaderWatch */ = {
+			isa = PBXGroup;
+			children = (
+				1C5C8470EB6AAEA066B9A7D3 /* WatchBookDetailView.swift */,
+				7B411D0437CF4F5B021285CC /* WatchLibraryView.swift */,
+				EB2447E99A089C4AE4DA61F1 /* WatchPlaybackController.swift */,
+				00478963429E208A80C957D7 /* WatchPlaybackView.swift */,
+				1D27D54AB0EBD381959FDA03 /* WatchSessionReceiver.swift */,
+				C73A2A3344EC0672B26307F9 /* WatchSettingsView.swift */,
+				218B9DA628D369E4F1DA5763 /* WebnovelReaderWatchApp.swift */,
+			);
+			path = WebnovelReaderWatch;
+			sourceTree = "<group>";
+		};
 		C546B1672C3FDF16BB346526 /* App */ = {
 			isa = PBXGroup;
 			children = (
+				DC1B8EC77F33A1CD9F8DA675 /* WatchSessionRelay.swift */,
 				BCCFA3ECCF1BC534D815BE89 /* WebnovelReaderApp.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
 		};
-		C92E2632E4461A36B7004B2E /* Security */ = {
+		E6A7315F57E14D6E5C99D1DB /* WebnovelReaderWatchUITests */ = {
 			isa = PBXGroup;
 			children = (
-				6587C63291898026681CC4FC /* Keychain.swift */,
+				D35FC48FBA2E0918DA847430 /* WatchBookDetailUITests.swift */,
+				CBC0A2291F85A145E72E65F5 /* WatchHistoryAndBugReportUITests.swift */,
+				8D8288C10AB76E1993B845CF /* WatchLibraryUITests.swift */,
+				4E543573B3DF2E751D89F2A0 /* WatchLoginFlowUITests.swift */,
+				A71A9D05A8E7E4209417E47C /* WatchPlaybackUITests.swift */,
+				05A1A9D9C437AE8DB6DFC7C0 /* WatchSettingsUITests.swift */,
 			);
-			path = Security;
-			sourceTree = "<group>";
-		};
-		D72CFF8FB30CFC7A6F25E2A9 /* Networking */ = {
-			isa = PBXGroup;
-			children = (
-				FE6217F8797409C3BC9D1BFC /* APIClient.swift */,
-				74B2204E8D3D938583F01489 /* ChapterFragmentParser.swift */,
-				FB5E3C26D94F8123E9B0B710 /* CoverImageCache.swift */,
-				2E16D74A6AA8A1A5ED6CF291 /* NetworkMonitor.swift */,
-				02A238C8FEF0622E96FC931A /* SessionStore.swift */,
-			);
-			path = Networking;
+			path = WebnovelReaderWatchUITests;
 			sourceTree = "<group>";
 		};
 		ED62B975BEE2542D68BF9FB3 /* BundledTranslation */ = {
@@ -579,7 +664,6 @@
 			isa = PBXGroup;
 			children = (
 				2808F07DDBCAA055B2D6ADF9 /* VieNeuOfflineV3TTSService.swift */,
-				F62B80CD7509A43E2A4F664E /* VieNeuOfflineV3Voice.swift */,
 				4CFD8F3A4D87F09B341B7C08 /* VieNeuV3BPETokenizer.swift */,
 				CA90ED1B18D38096102174B4 /* VieNeuV3Npz.swift */,
 				A9A3F1E3E248E006CE1A775E /* VieNeuV3OnnxEngine.swift */,
@@ -590,10 +674,10 @@
 			path = VieNeuOfflineV3;
 			sourceTree = "<group>";
 		};
-		"TEMP_BF71E339-1739-43F2-8526-74FE588C24A0" /* tts-novel-ios */ = {
+		"TEMP_05C97D83-4AC4-4827-89AE-3599C29BE41A" /* tts-novel-ios */ = {
 			isa = PBXGroup;
 			children = (
-				"TEMP_BE2EDEDF-F427-41D6-A257-34B0FB529410" /* Config.xcconfig */,
+				"TEMP_E7F6CDED-3649-446F-9625-89E8402D921A" /* Config.xcconfig */,
 			);
 			path = "tts-novel-ios";
 			sourceTree = "<group>";
@@ -601,6 +685,25 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		3D3AFCE1EDB07A2DB6DDF2E4 /* WebnovelReaderWatch */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 721F0F5BDD5E35F57041AC8A /* Build configuration list for PBXNativeTarget "WebnovelReaderWatch" */;
+			buildPhases = (
+				3292CEE1F77FEA42E690D11D /* Sources */,
+				EB7F0B75C56EF572131153D4 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = WebnovelReaderWatch;
+			packageProductDependencies = (
+				3451C52244C57B54E6653600 /* Core */,
+			);
+			productName = WebnovelReaderWatch;
+			productReference = 3D584437C6E0B52C98A82197 /* WebnovelReaderWatch.app */;
+			productType = "com.apple.product-type.application";
+		};
 		586798BAA0941831EFC0E8B1 /* WebnovelReaderUITests */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = FBDCBB1EA5E6FD89D4C80992 /* Build configuration list for PBXNativeTarget "WebnovelReaderUITests" */;
@@ -618,6 +721,26 @@
 			productName = WebnovelReaderUITests;
 			productReference = C0E38D3C42826F7665A2F966 /* WebnovelReaderUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		6C22112270E6095C2004ED0C /* WebnovelReaderMac */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E358AF00E8E33587A151DF37 /* Build configuration list for PBXNativeTarget "WebnovelReaderMac" */;
+			buildPhases = (
+				9835B57654052C42CFB820CF /* Sources */,
+				3811F4BCFDF819CB459FA447 /* Resources */,
+				E25436B17278AC8381CCEBB0 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = WebnovelReaderMac;
+			packageProductDependencies = (
+				8B1BEAEA2CF05A35F709DDEC /* Core */,
+			);
+			productName = WebnovelReaderMac;
+			productReference = E4415AD20A9C72B1718BB545 /* WebnovelReaderMac.app */;
+			productType = "com.apple.product-type.application";
 		};
 		742B2517A9EC8DA145C99501 /* WebnovelReader */ = {
 			isa = PBXNativeTarget;
@@ -637,11 +760,29 @@
 			packageProductDependencies = (
 				7077642E7C1882099C491E58 /* sherpa-onnx */,
 				88FE71A7AB03DCCF5CC630FA /* onnxruntime-ios */,
-				7134351B8FA8190600206CA6 /* SwiftSoup */,
+				79C07B5AB980D6616DD7182C /* Core */,
 			);
 			productName = WebnovelReader;
 			productReference = C2F97CC55E8520B59C8800BB /* WebnovelReader.app */;
 			productType = "com.apple.product-type.application";
+		};
+		8B4EB34B5585906F8CD424CE /* WebnovelReaderWatchUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A3BED77E1DAA1F5EA212F80A /* Build configuration list for PBXNativeTarget "WebnovelReaderWatchUITests" */;
+			buildPhases = (
+				7DE859266F502B3130383060 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				04053A3F81A583661443CF25 /* PBXTargetDependency */,
+			);
+			name = WebnovelReaderWatchUITests;
+			packageProductDependencies = (
+			);
+			productName = WebnovelReaderWatchUITests;
+			productReference = D8B0DDEE9C33AF97799C28DF /* WebnovelReaderWatchUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 		CC118652FA457BA89D769069 /* WebnovelReaderTests */ = {
 			isa = PBXNativeTarget;
@@ -649,6 +790,7 @@
 			buildPhases = (
 				F76CA729A7C2C900204030DE /* Sources */,
 				0D5EE81D9000A911F5239B4A /* Resources */,
+				5945E013B1A1F7C18D38569C /* Frameworks */,
 			);
 			buildRules = (
 			);
@@ -657,6 +799,7 @@
 			);
 			name = WebnovelReaderTests;
 			packageProductDependencies = (
+				B37A759541F0486589907A98 /* Core */,
 			);
 			productName = WebnovelReaderTests;
 			productReference = 055C4D56AA40D5C9F1E7D259 /* WebnovelReaderTests.xctest */;
@@ -671,14 +814,27 @@
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
+					3D3AFCE1EDB07A2DB6DDF2E4 = {
+						DevelopmentTeam = R5U3W3463A;
+						ProvisioningStyle = Automatic;
+					};
 					586798BAA0941831EFC0E8B1 = {
 						DevelopmentTeam = R5U3W3463A;
 						ProvisioningStyle = Automatic;
 						TestTargetID = 742B2517A9EC8DA145C99501;
 					};
+					6C22112270E6095C2004ED0C = {
+						DevelopmentTeam = R5U3W3463A;
+						ProvisioningStyle = Automatic;
+					};
 					742B2517A9EC8DA145C99501 = {
 						DevelopmentTeam = R5U3W3463A;
 						ProvisioningStyle = Automatic;
+					};
+					8B4EB34B5585906F8CD424CE = {
+						DevelopmentTeam = R5U3W3463A;
+						ProvisioningStyle = Automatic;
+						TestTargetID = 3D3AFCE1EDB07A2DB6DDF2E4;
 					};
 					CC118652FA457BA89D769069 = {
 						DevelopmentTeam = R5U3W3463A;
@@ -698,8 +854,8 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				E6AE861AF5232330B796CD85 /* XCRemoteSwiftPackageReference "sherpa-onnx" */,
-				67460B98F5208FB5379F167A /* XCRemoteSwiftPackageReference "SwiftSoup" */,
 				B61403EAF1507C599403DC6D /* XCRemoteSwiftPackageReference "onnxruntime-libs" */,
+				1210010C50E33E03D36FD3C4 /* XCLocalSwiftPackageReference "Packages/Core" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 842308F4F81D147E7A905121 /* Products */;
@@ -709,6 +865,9 @@
 				742B2517A9EC8DA145C99501 /* WebnovelReader */,
 				CC118652FA457BA89D769069 /* WebnovelReaderTests */,
 				586798BAA0941831EFC0E8B1 /* WebnovelReaderUITests */,
+				6C22112270E6095C2004ED0C /* WebnovelReaderMac */,
+				3D3AFCE1EDB07A2DB6DDF2E4 /* WebnovelReaderWatch */,
+				8B4EB34B5585906F8CD424CE /* WebnovelReaderWatchUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -727,6 +886,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				60D547ECFC0BF5D6FBA4D62A /* Assets.xcassets in Resources */,
+				504829D8DE45A4ABF87D4593 /* MODELS.md in Resources */,
 				612DFC120BB91EA4786463CC /* SeaG2P.xcframework in Resources */,
 				529FEF5471455299CA1020B4 /* VieNeuOfflineV3 in Resources */,
 				18433922EB357E860E516CD0 /* decoder_merged.onnx in Resources */,
@@ -744,6 +904,14 @@
 				D30E07683D0457280765289C /* voice_pham_tuyen.json in Resources */,
 				82259FB68AFBC2AADC25AE26 /* voice_thuc_doan.json in Resources */,
 				3E1CCA2AD7F895E1D6D59A1A /* voice_xuan_vinh.json in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3811F4BCFDF819CB459FA447 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A4666DF257B2B797427E5918 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -772,56 +940,65 @@
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		3292CEE1F77FEA42E690D11D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FA2678E8A52DC9557EC21FD5 /* ActionHistoryView.swift in Sources */,
+				C3BDC0BCBE0C8A8EB17E4FF7 /* AudioPlaybackService.swift in Sources */,
+				107BD87DD353DA16E52D3025 /* BookRow.swift in Sources */,
+				2DB89C04AF85117A5DC98B4A /* BugReportView.swift in Sources */,
+				64F96311486B927297F6B998 /* ChapterListSheet.swift in Sources */,
+				EBF9340B32CBC2B4F3EA31CD /* ChapterTitles.swift in Sources */,
+				906ACEE68F0EB48753A70E1E /* CoverImage.swift in Sources */,
+				039C27826E9137E2EF2DD916 /* CrossPlatformToolbar.swift in Sources */,
+				E554F863D768F4CBF5CEA16E /* DownloadManager.swift in Sources */,
+				73A668D447EC9BC4AACF6D9B /* LoginView.swift in Sources */,
+				3BFD98EA3A01AAB54BEB8ADC /* WatchBookDetailView.swift in Sources */,
+				6A16EEE4D842C597D4736AFA /* WatchLibraryView.swift in Sources */,
+				4745930E2969B279EBBF24B4 /* WatchPlaybackController.swift in Sources */,
+				DC6234A6AE0B08F3DEB8F0D4 /* WatchPlaybackView.swift in Sources */,
+				FC87E644DFEE46D9EA662025 /* WatchSessionReceiver.swift in Sources */,
+				D7E87EDD00881D81BADFF174 /* WatchSettingsView.swift in Sources */,
+				A8AC74F29F6B97EE6AAC12D1 /* WebnovelReaderWatchApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		6292A9195DA1F145FC9BDB42 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				9447EC2CEA1E4B3C0F55C341 /* APIClient.swift in Sources */,
 				D66070AB1B1E355AFEC029B0 /* ActionHistoryView.swift in Sources */,
-				B7D6093B76C400A1944B4A5B /* AppEvent.swift in Sources */,
 				224F919DE76B7D9487569CBD /* AppleTranslationEngine.swift in Sources */,
 				82E705700471517BACD99233 /* AudioPlaybackService.swift in Sources */,
-				1BB202042E037EAF2316FE48 /* Book.swift in Sources */,
 				057BB42A7DC6DA1662FFC305 /* BookDetailView.swift in Sources */,
 				329DA27C71D1EAD15CB7E3EF /* BookRow.swift in Sources */,
 				32E0B8A2018F84A81308C1D3 /* BugReportView.swift in Sources */,
-				91133D4F60ADB994746EBB32 /* ChapterFragmentParser.swift in Sources */,
 				712CC9D873EC43419CBADFFC /* ChapterListSheet.swift in Sources */,
+				284C65F8536F0C498E47BC8D /* ChapterPageContent.swift in Sources */,
 				1E26333C809C1F0021169E8D /* ChapterPagerView.swift in Sources */,
 				814D74F701676CD7B17DB49D /* ChapterTitles.swift in Sources */,
 				C7DBA3109982D309F4BA6262 /* ChapterTranslationDriver.swift in Sources */,
 				E1D6DCC98BFD391488935A9C /* CoverImage.swift in Sources */,
-				E56DBE4914F38CB525D0FE29 /* CoverImageCache.swift in Sources */,
+				9D07EBBAE307AECC6F6FB9A6 /* CrossPlatformToolbar.swift in Sources */,
 				405FB7143AFA70ACA00B3F7F /* DownloadManager.swift in Sources */,
 				CBCE947F9F049237E90DE1BB /* DownloadedBooksView.swift in Sources */,
-				DDEE93E3E9DAFB7C2D0A1364 /* EventLogStore.swift in Sources */,
-				D6F62CC98870A4F58B1207D0 /* GwenTTSSpeaker.swift in Sources */,
 				A5C0C56FA9DBCFB7E20E056E /* HistoryView.swift in Sources */,
-				62C269BBB96D7C16A2EB3462 /* Keychain.swift in Sources */,
 				E737A4B4DB04177DA20C8D61 /* LibraryView.swift in Sources */,
 				589A1BFA8C2F69AA15C5B895 /* LoginView.swift in Sources */,
-				E729385900ADBD810C521459 /* NetworkMonitor.swift in Sources */,
 				406B5832FCFC8955C3CB43E0 /* OfflineWavEncoding.swift in Sources */,
 				5D465174D209824D4D8A994A /* OpusMTTranslationEngine.swift in Sources */,
 				C30C58DC9526D986385052DC /* PiperOfflineTTSService.swift in Sources */,
 				4BD6C852923B36C639FF988B /* PlaybackBar.swift in Sources */,
-				7F6655053DDE66F5844B0A78 /* ProgressStore.swift in Sources */,
 				5952907776FF164D7CFE6429 /* ReaderPlaybackController.swift in Sources */,
 				B174696283E4D1D69C9A4ACA /* ReaderSettingsSheet.swift in Sources */,
 				1A30F8BB4FD35394AAA420C5 /* ReaderSettingsToolbar.swift in Sources */,
 				84CDE63B346CFA8781341F91 /* ReaderView.swift in Sources */,
-				ABCBDA0B1D0335FE4650CC24 /* ReadingProgress.swift in Sources */,
 				4FC9E970FAD5DFCC90E0D662 /* SeaG2PBridge.swift in Sources */,
-				0BDDA8058FCDA7E8B0FA23D2 /* SessionStore.swift in Sources */,
-				33D575D0EB0BE195DE94E78F /* TTSVoice.swift in Sources */,
-				EAE570E582ECF7A0E5F68BCA /* TextSegmentation.swift in Sources */,
-				32A3FF7B2312626AA1438139 /* TranslationEngine.swift in Sources */,
 				F8B107BC493B37F33BF7574F /* TranslationOnnxSession.mm in Sources */,
 				9A9AC7AA24A633617E83DE25 /* UnigramTokenizer.swift in Sources */,
 				55C13A29FA0D2BA07DC14331 /* VieNeuOfflineV2TTSService.swift in Sources */,
-				7EA4BE681E9DB6779C83EFAB /* VieNeuOfflineV2Voice.swift in Sources */,
 				3D6748A45EAD81D9487DF02B /* VieNeuOfflineV3TTSService.swift in Sources */,
-				0226209420B9D5D4D012FCDD /* VieNeuOfflineV3Voice.swift in Sources */,
 				F82B5F80BE2EB13C73AAB933 /* VieNeuV2CodecDecoder.swift in Sources */,
 				4C123009177B239F38F4E159 /* VieNeuV2CodecONNX.mm in Sources */,
 				425949BECC924DA2CE4F1545 /* VieNeuV2LlamaBackbone.swift in Sources */,
@@ -830,7 +1007,53 @@
 				9D4351A5D86E7BC9B284A09E /* VieNeuV3OnnxEngine.swift in Sources */,
 				3BAB887858683E8DC82FD6FA /* VieNeuV3OnnxSession.mm in Sources */,
 				86B4D945C9B3CE1C351D9D6B /* VieNeuV3TextChunker.swift in Sources */,
+				E4D7272A93B18738238D456D /* WatchSessionRelay.swift in Sources */,
 				1EFD6360A2C903E322D7E5E2 /* WebnovelReaderApp.swift in Sources */,
+				6727330DD5883EE061CEE599 /* WebnovelReaderFullSynthesizer.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7DE859266F502B3130383060 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3542DF6BB9F7038ABEA770E1 /* WatchBookDetailUITests.swift in Sources */,
+				C045654D7FD83E72967F530C /* WatchHistoryAndBugReportUITests.swift in Sources */,
+				3F4B52103D4BAB0D7B8B4766 /* WatchLibraryUITests.swift in Sources */,
+				84EF224F57E390AFAF845823 /* WatchLoginFlowUITests.swift in Sources */,
+				4F16ED43EDCFED5A54D6853C /* WatchPlaybackUITests.swift in Sources */,
+				D2476D820D27FFE3B714A82B /* WatchSettingsUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9835B57654052C42CFB820CF /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				596AD1D3B2EC8EBEC19A2EE4 /* ActionHistoryView.swift in Sources */,
+				12FCB8CA7445E9C3B2BEE3DE /* AppleTranslationEngine.swift in Sources */,
+				AD1C5C03BB3B5B1DBF211AB4 /* AudioPlaybackService.swift in Sources */,
+				AECC6E2B73668AAE28EFDE1D /* BookDetailView.swift in Sources */,
+				64A5C3EF2BF5988CC407F5B3 /* BookRow.swift in Sources */,
+				D291379DC639099831F5E898 /* BugReportView.swift in Sources */,
+				5DBBA27A8406ECD4DC3FCA98 /* ChapterListSheet.swift in Sources */,
+				FCBCFD90A326D66834D9F29A /* ChapterPageContent.swift in Sources */,
+				AEE90243112CF0F9A16228B0 /* ChapterPagerView.swift in Sources */,
+				E44E8771F7E10DEFCBBB19DB /* ChapterTitles.swift in Sources */,
+				4A26C19AF0AD93B58F0EFCED /* ChapterTranslationDriver.swift in Sources */,
+				83AD317992F07A5C79C1198D /* CoverImage.swift in Sources */,
+				890C073909D9DE2554EC1071 /* CrossPlatformToolbar.swift in Sources */,
+				7E50DDB033C605D7846317E6 /* DownloadManager.swift in Sources */,
+				1C93F735F5876EAB41B315DD /* DownloadedBooksView.swift in Sources */,
+				2F33E2779BFD0750B571CD76 /* HistoryView.swift in Sources */,
+				F86324954DB3C3707228B57D /* LibraryView.swift in Sources */,
+				095EF5BA2B901B999192E06F /* LoginView.swift in Sources */,
+				67AEE731457699F06A01578B /* PlaybackBar.swift in Sources */,
+				6DC1DD4EBEB6C54907895FC6 /* ReaderPlaybackController.swift in Sources */,
+				41C32C3E34137FB0BA5CB1C5 /* ReaderSettingsSheet.swift in Sources */,
+				B4109D5F8D93E05DA65C4BF6 /* ReaderSettingsToolbar.swift in Sources */,
+				A1E86A266416654B1C150BCF /* ReaderView.swift in Sources */,
+				8273DA6820C8B5DDEEBA7F68 /* WebnovelReaderApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -877,6 +1100,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		04053A3F81A583661443CF25 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 3D3AFCE1EDB07A2DB6DDF2E4 /* WebnovelReaderWatch */;
+			targetProxy = A8906795839B35D3A4BCBE48 /* PBXContainerItemProxy */;
+		};
 		8D5BF8068512D4C1A8C5BB38 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 742B2517A9EC8DA145C99501 /* WebnovelReader */;
@@ -890,6 +1118,25 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		14B4F8435F3402AAE048B203 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = WebnovelReaderMac/WebnovelReaderMac.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				INFOPLIST_FILE = "Generated-Info-Mac.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = dev.yanglong.webnovelreader.mac;
+				PRODUCT_NAME = "Novel Reader";
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
 		2E393E190D90DF5A6E0AF968 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -906,6 +1153,24 @@
 				TEST_TARGET_NAME = WebnovelReader;
 			};
 			name = Debug;
+		};
+		2F630E45A9D33E89BAB3642F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = dev.yanglong.webnovelreader.watch.uitests;
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_TARGET_NAME = WebnovelReaderWatch;
+			};
+			name = Release;
 		};
 		5436EB3A40B9667619DBC17A /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -925,9 +1190,41 @@
 			};
 			name = Debug;
 		};
+		69B35E2241FA0249FC14F35E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = WebnovelReaderMac/WebnovelReaderMac.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				INFOPLIST_FILE = "Generated-Info-Mac.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = dev.yanglong.webnovelreader.mac;
+				PRODUCT_NAME = "Novel Reader";
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		6FE0FB13EBC805248B39A301 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				INFOPLIST_FILE = "Generated-Info-Watch.plist";
+				PRODUCT_BUNDLE_IDENTIFIER = dev.yanglong.webnovelreader.watch;
+				PRODUCT_NAME = "Novel Reader";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 4;
+			};
+			name = Debug;
+		};
 		8AD706A598674F6FFA3EB5E9 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_BE2EDEDF-F427-41D6-A257-34B0FB529410" /* Config.xcconfig */;
+			baseConfigurationReference = "TEMP_E7F6CDED-3649-446F-9625-89E8402D921A" /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -974,13 +1271,27 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = iphoneos;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 6.0;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+			};
+			name = Release;
+		};
+		A0FD1C59198A8117E4207768 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				INFOPLIST_FILE = "Generated-Info-Watch.plist";
+				PRODUCT_BUNDLE_IDENTIFIER = dev.yanglong.webnovelreader.watch;
+				PRODUCT_NAME = "Novel Reader";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 4;
 			};
 			name = Release;
 		};
@@ -1025,6 +1336,24 @@
 			};
 			name = Release;
 		};
+		C78D850A4F9810246A77DE7D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = dev.yanglong.webnovelreader.watch.uitests;
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_TARGET_NAME = WebnovelReaderWatch;
+			};
+			name = Debug;
+		};
 		EF79D8B8D05DEF555C18BBF0 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -1045,7 +1374,7 @@
 		};
 		F886F568F9EBDF1F6FD3EE07 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_BE2EDEDF-F427-41D6-A257-34B0FB529410" /* Config.xcconfig */;
+			baseConfigurationReference = "TEMP_E7F6CDED-3649-446F-9625-89E8402D921A" /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -1098,14 +1427,15 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 6.0;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
 			};
 			name = Debug;
 		};
@@ -1145,6 +1475,15 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
+		721F0F5BDD5E35F57041AC8A /* Build configuration list for PBXNativeTarget "WebnovelReaderWatch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6FE0FB13EBC805248B39A301 /* Debug */,
+				A0FD1C59198A8117E4207768 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
 		9658FDC098F79E43F90457DB /* Build configuration list for PBXNativeTarget "WebnovelReader" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -1154,11 +1493,29 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
+		A3BED77E1DAA1F5EA212F80A /* Build configuration list for PBXNativeTarget "WebnovelReaderWatchUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C78D850A4F9810246A77DE7D /* Debug */,
+				2F630E45A9D33E89BAB3642F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
 		C87F419B87D41AAD2A61B539 /* Build configuration list for PBXNativeTarget "WebnovelReaderTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				5436EB3A40B9667619DBC17A /* Debug */,
 				EF79D8B8D05DEF555C18BBF0 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		E358AF00E8E33587A151DF37 /* Build configuration list for PBXNativeTarget "WebnovelReaderMac" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				14B4F8435F3402AAE048B203 /* Debug */,
+				69B35E2241FA0249FC14F35E /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
@@ -1174,15 +1531,14 @@
 		};
 /* End XCConfigurationList section */
 
-/* Begin XCRemoteSwiftPackageReference section */
-		67460B98F5208FB5379F167A /* XCRemoteSwiftPackageReference "SwiftSoup" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/scinfu/SwiftSoup";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 2.7.0;
-			};
+/* Begin XCLocalSwiftPackageReference section */
+		1210010C50E33E03D36FD3C4 /* XCLocalSwiftPackageReference "Packages/Core" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/Core;
 		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCRemoteSwiftPackageReference section */
 		B61403EAF1507C599403DC6D /* XCRemoteSwiftPackageReference "onnxruntime-libs" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/csukuangfj/onnxruntime-libs";
@@ -1202,20 +1558,31 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		3451C52244C57B54E6653600 /* Core */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = Core;
+		};
 		7077642E7C1882099C491E58 /* sherpa-onnx */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = E6AE861AF5232330B796CD85 /* XCRemoteSwiftPackageReference "sherpa-onnx" */;
 			productName = "sherpa-onnx";
 		};
-		7134351B8FA8190600206CA6 /* SwiftSoup */ = {
+		79C07B5AB980D6616DD7182C /* Core */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 67460B98F5208FB5379F167A /* XCRemoteSwiftPackageReference "SwiftSoup" */;
-			productName = SwiftSoup;
+			productName = Core;
 		};
 		88FE71A7AB03DCCF5CC630FA /* onnxruntime-ios */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = B61403EAF1507C599403DC6D /* XCRemoteSwiftPackageReference "onnxruntime-libs" */;
 			productName = "onnxruntime-ios";
+		};
+		8B1BEAEA2CF05A35F709DDEC /* Core */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = Core;
+		};
+		B37A759541F0486589907A98 /* Core */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = Core;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
