@@ -29,6 +29,20 @@
             buildForAnalyzing = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
+               BlueprintIdentifier = "CC118652FA457BA89D769069"
+               BuildableName = "WebnovelReaderTests.xctest"
+               BlueprintName = "WebnovelReaderTests"
+               ReferencedContainer = "container:WebnovelReader.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
                BlueprintIdentifier = "586798BAA0941831EFC0E8B1"
                BuildableName = "WebnovelReaderUITests.xctest"
                BlueprintName = "WebnovelReaderUITests"
@@ -65,10 +79,11 @@
             </BuildableReference>
          </TestableReference>
          <TestableReference
-            skipped = "NO">
+            skipped = "NO"
+            parallelizable = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "D6C60F25B341D7B807311709"
+               BlueprintIdentifier = "CC118652FA457BA89D769069"
                BuildableName = "WebnovelReaderTests.xctest"
                BlueprintName = "WebnovelReaderTests"
                ReferencedContainer = "container:WebnovelReader.xcodeproj">

@@ -4,10 +4,16 @@ import Foundation
 final class SessionStore: ObservableObject {
     static let shared = SessionStore()
 
-    // Only one deployment exists (GCP project tts-pipeline-yl, Cloud Run
-    // service "novel-web", asia-southeast1) — no reason to make the user
-    // type a server URL they'll never change.
-    static let baseURL = URL(string: "https://novel-web-328095478338.asia-southeast1.run.app")!
+    // Only one deployment exists — no reason to make the user type a server
+    // URL they'll never change. Comes from Config.xcconfig (gitignored, see
+    // Config.xcconfig.example) via Info.plist, not committed as a literal.
+    static let baseURL: URL = {
+        guard let raw = Bundle.main.object(forInfoDictionaryKey: "SERVER_BASE_URL") as? String,
+              !raw.isEmpty, let url = URL(string: raw) else {
+            fatalError("SERVER_BASE_URL missing from Info.plist — copy Config.xcconfig.example to Config.xcconfig and fill in your deployment's URL")
+        }
+        return url
+    }()
 
     @Published private(set) var isLoggedIn = false
     @Published private(set) var isRestoring = true

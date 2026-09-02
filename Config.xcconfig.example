@@ -1,0 +1,5 @@
+// Copy this file to Config.xcconfig (gitignored) and fill in your own
+// deployment's URL — see tts-pipeline-infra for how novel-web is deployed.
+// "//" inside a URL must be written as "/$()/" — xcconfig treats a bare "//"
+// as the start of a comment, cutting off everything after it.
+SERVER_BASE_URL = https:/$()/your-novel-web-service.your-region.run.app

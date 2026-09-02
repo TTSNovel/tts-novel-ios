@@ -5,6 +5,12 @@ options:
     iOS: "17.0"
   createIntermediateGroups: true
 
+# SERVER_BASE_URL comes from Config.xcconfig (gitignored, personal deployment
+# — see Config.xcconfig.example) so it's not committed as a source literal.
+configFiles:
+  Debug: Config.xcconfig
+  Release: Config.xcconfig
+
 settings:
   base:
     SWIFT_VERSION: "6.0"
@@ -34,6 +40,10 @@ packages:
   onnxruntime-libs:
     url: https://github.com/csukuangfj/onnxruntime-libs
     exactVersion: 1.27.1
+  # HTML parsing for ChapterFragmentParser (chapter content extraction).
+  SwiftSoup:
+    url: https://github.com/scinfu/SwiftSoup
+    from: 2.7.0
 
 targets:
   WebnovelReader:
@@ -66,6 +76,8 @@ targets:
         product: sherpa-onnx
       - package: onnxruntime-libs
         product: onnxruntime-ios
+      - package: SwiftSoup
+        product: SwiftSoup
       # Vendored (see WebnovelReader/Vendor/*/README-ish doc comments in
       # the TTS/VieNeuOfflineV2 sources for how each was built): SeaG2P is a
       # static lib (sea-g2p Rust core, PyO3 stripped, shared by both V2 and
@@ -98,6 +110,20 @@ targets:
           - UIInterfaceOrientationLandscapeRight
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
+        SERVER_BASE_URL: "$(SERVER_BASE_URL)"
+
+  WebnovelReaderTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: WebnovelReaderTests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.yanglong.webnovelreader.tests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: WebnovelReader
+    dependencies:
+      - target: WebnovelReader
 
   WebnovelReaderUITests:
     type: bundle.ui-testing
@@ -118,9 +144,11 @@ schemes:
       targets:
         WebnovelReader: all
         WebnovelReaderUITests: [test]
+        WebnovelReaderTests: [test]
     test:
       targets:
         - WebnovelReaderUITests
+        - WebnovelReaderTests
     run:
       config: Debug
     shared: true

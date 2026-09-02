@@ -53,7 +53,7 @@ final class ChapterFragmentParserTests: XCTestCase {
     /// "&#x27;" in place of apostrophes because the old parser only
     /// decoded decimal numeric entities, never hex.
     func testRealBook85ChaptersHaveNoResidualEntities() async throws {
-        let baseURL = URL(string: "https://novel-web-zw7d5ierwq-as.a.run.app")!
+        let baseURL = await SessionStore.baseURL
         let entityPattern = try! NSRegularExpression(pattern: "&#?[a-zA-Z0-9]+;")
         var checkedAtLeastOne = false
 

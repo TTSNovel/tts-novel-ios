@@ -5,6 +5,9 @@ xcuserdata/
 .build/
 .DS_Store
 
+# Personal deployment config — see Config.xcconfig.example
+Config.xcconfig
+
 # Kiwi TCMS local dev server + scripts
 Scripts/kiwi/.venv/
 Scripts/kiwi/*.env

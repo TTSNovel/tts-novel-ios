@@ -9,7 +9,7 @@ import XCTest
 /// at download time.
 @MainActor
 final class DownloadManagerTests: XCTestCase {
-    private let baseURL = URL(string: "https://novel-web-zw7d5ierwq-as.a.run.app")!
+    private let baseURL = SessionStore.baseURL
     private let bookID = 85
 
     override func tearDown() async throws {
