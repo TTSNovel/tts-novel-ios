@@ -101,6 +101,7 @@
 		A5C0C56FA9DBCFB7E20E056E /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D5515B19541614E3D26B666 /* HistoryView.swift */; };
 		A8AC74F29F6B97EE6AAC12D1 /* WebnovelReaderWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 218B9DA628D369E4F1DA5763 /* WebnovelReaderWatchApp.swift */; };
 		AD1C5C03BB3B5B1DBF211AB4 /* AudioPlaybackService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39AFB5C424CB4F3411EF2E1C /* AudioPlaybackService.swift */; };
+		ADE49230E36D7F9600F3D342 /* ChapterListUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F40CADA5F98A440CFA58826 /* ChapterListUITests.swift */; };
 		AECC6E2B73668AAE28EFDE1D /* BookDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F60BA012E937FDC3266CEAAC /* BookDetailView.swift */; };
 		AEE90243112CF0F9A16228B0 /* ChapterPagerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F3A4F62F1CEF375F6C54ACC /* ChapterPagerView.swift */; };
 		AEFD1810A6923AFCB301959D /* tokens.txt in Resources */ = {isa = PBXBuildFile; fileRef = 2538B9C2D810DA7B997904AC /* tokens.txt */; };
@@ -161,6 +162,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = 742B2517A9EC8DA145C99501;
 			remoteInfo = WebnovelReader;
+		};
+		6049AE043D6F6371ED7A1FAA /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 5D34D48E6C761EA4755EDBD3 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 6C22112270E6095C2004ED0C;
+			remoteInfo = WebnovelReaderMac;
 		};
 		9C99B089BAAF7A2B928AFCBD /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -233,6 +241,7 @@
 		5117F1E588A2F64078970C56 /* BookRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookRow.swift; sourceTree = "<group>"; };
 		512B6B9B75EDE35A5C0B1A79 /* ChapterNavigationUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChapterNavigationUITests.swift; sourceTree = "<group>"; };
 		51AD29C75DE56255A25DB912 /* BugReportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BugReportView.swift; sourceTree = "<group>"; };
+		575B994DC6D1BC431EE8A9FE /* WebnovelReaderMacUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WebnovelReaderMacUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		5820BF99535AA4318F7F6700 /* VieNeu-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "VieNeu-Bridging-Header.h"; sourceTree = "<group>"; };
 		590CE78C2F18BB27ED8D519A /* ChapterListUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChapterListUITests.swift; sourceTree = "<group>"; };
 		5D44E9F6922443881D20F71F /* SelectPersistsAcrossChapterNavigationUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectPersistsAcrossChapterNavigationUITests.swift; sourceTree = "<group>"; };
@@ -258,6 +267,7 @@
 		8B341D7BF826C02000149E75 /* LibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryView.swift; sourceTree = "<group>"; };
 		8D8288C10AB76E1993B845CF /* WatchLibraryUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchLibraryUITests.swift; sourceTree = "<group>"; };
 		8DBCCF9522AFEE7CBAD6CA7D /* OfflineDownloadUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineDownloadUITests.swift; sourceTree = "<group>"; };
+		8F40CADA5F98A440CFA58826 /* ChapterListUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChapterListUITests.swift; sourceTree = "<group>"; };
 		91A32907F3C51AD7EB26D010 /* TTSPlaybackUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TTSPlaybackUITests.swift; sourceTree = "<group>"; };
 		94F8BCE1AAE2A8EA6A6EF8EC /* voice_xuan_vinh.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = voice_xuan_vinh.json; sourceTree = "<group>"; };
 		9DE0AA015D39DA0DBC6D56ED /* HistoryUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryUITests.swift; sourceTree = "<group>"; };
@@ -309,7 +319,7 @@
 		F60BA012E937FDC3266CEAAC /* BookDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookDetailView.swift; sourceTree = "<group>"; };
 		FB87E7F5611D53CEA837235B /* VieNeuV2CodecDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VieNeuV2CodecDecoder.swift; sourceTree = "<group>"; };
 		FE5E9FF61219C4CAD0E71621 /* DownloadManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadManagerTests.swift; sourceTree = "<group>"; };
-		"TEMP_E7F6CDED-3649-446F-9625-89E8402D921A" /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
+		"TEMP_17F8F83D-EE4D-424F-A6FB-FC44F48E74D0" /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -462,6 +472,7 @@
 				AADF34FBC5E17078FBAC1E99 /* Packages */,
 				24C4D85E293F450B527D8A2F /* WebnovelReader */,
 				8FDE2836A64BF489C0B8B220 /* WebnovelReaderMac */,
+				B6F59F86D3A9BB4B6AD3A076 /* WebnovelReaderMacUITests */,
 				7286029B0A71C9E44D1AFDFC /* WebnovelReaderTests */,
 				44CC00258ECAED55A99EDEDE /* WebnovelReaderUITests */,
 				C0D4FAFAC15144F62E0ACC5A /* WebnovelReaderWatch */,
@@ -542,6 +553,7 @@
 			children = (
 				C2F97CC55E8520B59C8800BB /* WebnovelReader.app */,
 				E4415AD20A9C72B1718BB545 /* WebnovelReaderMac.app */,
+				575B994DC6D1BC431EE8A9FE /* WebnovelReaderMacUITests.xctest */,
 				055C4D56AA40D5C9F1E7D259 /* WebnovelReaderTests.xctest */,
 				C0E38D3C42826F7665A2F966 /* WebnovelReaderUITests.xctest */,
 				3D584437C6E0B52C98A82197 /* WebnovelReaderWatch.app */,
@@ -597,6 +609,14 @@
 				19BB4D3E4A9827CF125F6CC5 /* vi_VN-vais1000-medium.onnx */,
 			);
 			path = PiperOffline;
+			sourceTree = "<group>";
+		};
+		B6F59F86D3A9BB4B6AD3A076 /* WebnovelReaderMacUITests */ = {
+			isa = PBXGroup;
+			children = (
+				8F40CADA5F98A440CFA58826 /* ChapterListUITests.swift */,
+			);
+			path = WebnovelReaderMacUITests;
 			sourceTree = "<group>";
 		};
 		BAEAC1EA7302943DCF9E0EC9 /* Translation */ = {
@@ -674,10 +694,10 @@
 			path = VieNeuOfflineV3;
 			sourceTree = "<group>";
 		};
-		"TEMP_05C97D83-4AC4-4827-89AE-3599C29BE41A" /* tts-novel-ios */ = {
+		"TEMP_03FFD82C-FC4F-4324-9E19-9295702A7D43" /* tts-novel-ios */ = {
 			isa = PBXGroup;
 			children = (
-				"TEMP_E7F6CDED-3649-446F-9625-89E8402D921A" /* Config.xcconfig */,
+				"TEMP_17F8F83D-EE4D-424F-A6FB-FC44F48E74D0" /* Config.xcconfig */,
 			);
 			path = "tts-novel-ios";
 			sourceTree = "<group>";
@@ -805,6 +825,24 @@
 			productReference = 055C4D56AA40D5C9F1E7D259 /* WebnovelReaderTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
+		DE6283314A571B44A3F0E2B9 /* WebnovelReaderMacUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FD912EF270E67259A81A0026 /* Build configuration list for PBXNativeTarget "WebnovelReaderMacUITests" */;
+			buildPhases = (
+				8173525A3B0646529A127125 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				3EB0ED450D54F3F7A1C1CECB /* PBXTargetDependency */,
+			);
+			name = WebnovelReaderMacUITests;
+			packageProductDependencies = (
+			);
+			productName = WebnovelReaderMacUITests;
+			productReference = 575B994DC6D1BC431EE8A9FE /* WebnovelReaderMacUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -841,6 +879,11 @@
 						ProvisioningStyle = Automatic;
 						TestTargetID = 742B2517A9EC8DA145C99501;
 					};
+					DE6283314A571B44A3F0E2B9 = {
+						DevelopmentTeam = R5U3W3463A;
+						ProvisioningStyle = Automatic;
+						TestTargetID = 6C22112270E6095C2004ED0C;
+					};
 				};
 			};
 			buildConfigurationList = 347F3839985F259380D0D313 /* Build configuration list for PBXProject "WebnovelReader" */;
@@ -866,6 +909,7 @@
 				CC118652FA457BA89D769069 /* WebnovelReaderTests */,
 				586798BAA0941831EFC0E8B1 /* WebnovelReaderUITests */,
 				6C22112270E6095C2004ED0C /* WebnovelReaderMac */,
+				DE6283314A571B44A3F0E2B9 /* WebnovelReaderMacUITests */,
 				3D3AFCE1EDB07A2DB6DDF2E4 /* WebnovelReaderWatch */,
 				8B4EB34B5585906F8CD424CE /* WebnovelReaderWatchUITests */,
 			);
@@ -1026,6 +1070,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		8173525A3B0646529A127125 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				ADE49230E36D7F9600F3D342 /* ChapterListUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		9835B57654052C42CFB820CF /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -1104,6 +1156,11 @@
 			isa = PBXTargetDependency;
 			target = 3D3AFCE1EDB07A2DB6DDF2E4 /* WebnovelReaderWatch */;
 			targetProxy = A8906795839B35D3A4BCBE48 /* PBXContainerItemProxy */;
+		};
+		3EB0ED450D54F3F7A1C1CECB /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 6C22112270E6095C2004ED0C /* WebnovelReaderMac */;
+			targetProxy = 6049AE043D6F6371ED7A1FAA /* PBXContainerItemProxy */;
 		};
 		8D5BF8068512D4C1A8C5BB38 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -1222,9 +1279,26 @@
 			};
 			name = Debug;
 		};
+		7D6298B7625441C3341D8DF5 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = dev.yanglong.webnovelreader.mac.uitests;
+				SDKROOT = macosx;
+				TEST_TARGET_NAME = WebnovelReaderMac;
+			};
+			name = Release;
+		};
 		8AD706A598674F6FFA3EB5E9 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_E7F6CDED-3649-446F-9625-89E8402D921A" /* Config.xcconfig */;
+			baseConfigurationReference = "TEMP_17F8F83D-EE4D-424F-A6FB-FC44F48E74D0" /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -1354,6 +1428,23 @@
 			};
 			name = Debug;
 		};
+		EB06AECA3D1FBC1A77675284 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = dev.yanglong.webnovelreader.mac.uitests;
+				SDKROOT = macosx;
+				TEST_TARGET_NAME = WebnovelReaderMac;
+			};
+			name = Debug;
+		};
 		EF79D8B8D05DEF555C18BBF0 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -1374,7 +1465,7 @@
 		};
 		F886F568F9EBDF1F6FD3EE07 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_E7F6CDED-3649-446F-9625-89E8402D921A" /* Config.xcconfig */;
+			baseConfigurationReference = "TEMP_17F8F83D-EE4D-424F-A6FB-FC44F48E74D0" /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -1525,6 +1616,15 @@
 			buildConfigurations = (
 				2E393E190D90DF5A6E0AF968 /* Debug */,
 				B46D79EBE011787E4A0EB798 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		FD912EF270E67259A81A0026 /* Build configuration list for PBXNativeTarget "WebnovelReaderMacUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				EB06AECA3D1FBC1A77675284 /* Debug */,
+				7D6298B7625441C3341D8DF5 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

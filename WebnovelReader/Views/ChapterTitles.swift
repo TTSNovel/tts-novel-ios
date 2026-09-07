@@ -14,7 +14,17 @@ enum ChapterTitles {
     /// the chapter list on this.
     static func load(book: Book) async -> [String]? {
         if let cached = cache[book.id] { return cached }
-        if let local = DownloadManager.shared.localChapterTitles(bookID: book.id) {
+        // Task.detached: localChapterTitles reads + SwiftSoup-parses one
+        // file per chapter, which for a long downloaded book can take
+        // several real seconds. DownloadManager itself stays @MainActor
+        // (its @Published state needs that), but that one method and its
+        // path helpers are `nonisolated` precisely so this call can run
+        // off the main thread instead of freezing the UI for the whole
+        // scan — see DownloadManager.localChapterTitles's doc comment.
+        let manager = DownloadManager.shared
+        if let local = await Task.detached(priority: .userInitiated, operation: {
+            manager.localChapterTitles(bookID: book.id)
+        }).value {
             cache[book.id] = local
             return local
         }

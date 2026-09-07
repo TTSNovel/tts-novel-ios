@@ -204,6 +204,19 @@ targets:
           NSAllowsLocalNetworking: true
         SERVER_BASE_URL: "$(SERVER_BASE_URL)"
 
+  WebnovelReaderMacUITests:
+    type: bundle.ui-testing
+    platform: macOS
+    sources:
+      - path: WebnovelReaderMacUITests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.yanglong.webnovelreader.mac.uitests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: WebnovelReaderMac
+    dependencies:
+      - target: WebnovelReaderMac
+
   # Online TTS only, no offline voices/translation — see
   # WatchPlaybackController's doc comment (no watchOS slice for the
   # offline-TTS xcframeworks, no watchOS onnxruntime product or
@@ -282,6 +295,10 @@ schemes:
     build:
       targets:
         WebnovelReaderMac: all
+        WebnovelReaderMacUITests: [test]
+    test:
+      targets:
+        - WebnovelReaderMacUITests
     run:
       config: Debug
     shared: true

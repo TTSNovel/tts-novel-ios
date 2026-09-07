@@ -32,7 +32,7 @@ final class DownloadManager: ObservableObject {
         downloadedBookIDs.contains(bookID)
     }
 
-    func localChapter(bookID: Int, index: Int) -> Chapter? {
+    nonisolated func localChapter(bookID: Int, index: Int) -> Chapter? {
         guard let html = try? String(contentsOf: chapterFileURL(bookID, index), encoding: .utf8) else { return nil }
         return ChapterFragmentParser.parse(html: html, index: index)
     }
@@ -41,7 +41,13 @@ final class DownloadManager: ObservableObject {
     /// just far enough to pull its title back out, no separate fetch
     /// needed even though the online path (APIClient.fetchChapterTitles)
     /// hits its own dedicated endpoint.
-    func localChapterTitles(bookID: Int) -> [String]? {
+    ///
+    /// nonisolated (and called via Task.detached from ChapterTitles.load):
+    /// this reads and SwiftSoup-parses one file per chapter, which for a
+    /// long downloaded book (~2000 chapters) can take real seconds — no
+    /// reason to make @MainActor sit through that when nothing here
+    /// touches this instance's @Published state.
+    nonisolated func localChapterTitles(bookID: Int) -> [String]? {
         guard let book = localBook(bookID: bookID) else { return nil }
         return (0..<book.n).map { localChapter(bookID: bookID, index: $0)?.title ?? "Chương \($0 + 1)" }
     }
@@ -52,7 +58,7 @@ final class DownloadManager: ObservableObject {
         return try? Data(contentsOf: coverFile)
     }
 
-    func localBook(bookID: Int) -> Book? {
+    nonisolated func localBook(bookID: Int) -> Book? {
         guard let data = try? Data(contentsOf: metaFileURL(bookID)) else { return nil }
         return try? JSONDecoder().decode(Book.self, from: data)
     }
@@ -136,26 +142,30 @@ final class DownloadManager: ObservableObject {
         return fragments
     }
 
-    private func booksDirectory() -> URL {
-        let dir = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+    // FileManager.default (not self.fileManager) in this nonisolated
+    // chain — reads self's actor-isolated stored property from a
+    // nonisolated context, so they go straight to the same underlying
+    // singleton instead.
+    private nonisolated func booksDirectory() -> URL {
+        let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("Books", isDirectory: true)
-        try? fileManager.createDirectory(at: dir, withIntermediateDirectories: true)
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         return dir
     }
 
-    private func bookDirectory(_ bookID: Int) -> URL {
+    private nonisolated func bookDirectory(_ bookID: Int) -> URL {
         booksDirectory().appendingPathComponent(String(bookID), isDirectory: true)
     }
 
-    private func chaptersDirectory(_ bookID: Int) -> URL {
+    private nonisolated func chaptersDirectory(_ bookID: Int) -> URL {
         bookDirectory(bookID).appendingPathComponent("data", isDirectory: true)
     }
 
-    private func chapterFileURL(_ bookID: Int, _ index: Int) -> URL {
+    private nonisolated func chapterFileURL(_ bookID: Int, _ index: Int) -> URL {
         chaptersDirectory(bookID).appendingPathComponent(String(format: "%04d.html", index))
     }
 
-    private func metaFileURL(_ bookID: Int) -> URL {
+    private nonisolated func metaFileURL(_ bookID: Int) -> URL {
         bookDirectory(bookID).appendingPathComponent("meta.json")
     }
 

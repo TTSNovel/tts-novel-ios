@@ -21,6 +21,20 @@
                ReferencedContainer = "container:WebnovelReader.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "DE6283314A571B44A3F0E2B9"
+               BuildableName = "WebnovelReaderMacUITests.xctest"
+               BlueprintName = "WebnovelReaderMacUITests"
+               ReferencedContainer = "container:WebnovelReader.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction
@@ -39,7 +53,20 @@
          </BuildableReference>
       </MacroExpansion>
       <Testables>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "DE6283314A571B44A3F0E2B9"
+               BuildableName = "WebnovelReaderMacUITests.xctest"
+               BlueprintName = "WebnovelReaderMacUITests"
+               ReferencedContainer = "container:WebnovelReader.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
+      <CommandLineArguments>
+      </CommandLineArguments>
    </TestAction>
    <LaunchAction
       buildConfiguration = "Debug"
