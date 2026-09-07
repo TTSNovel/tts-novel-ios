@@ -204,6 +204,20 @@ final class ReaderPlaybackController: ObservableObject {
     @Published var autoNextChapter: Bool {
         didSet { UserDefaults.standard.set(autoNextChapter, forKey: Keys.autoNext) }
     }
+    /// "Cỡ chữ" in Cài đặt đọc — a multiplier `ChapterPageContent` applies
+    /// on top of its base title/body point sizes. One of the fixed
+    /// `Self.fontScaleSteps` values (see ReaderSettingsSheet's segmented
+    /// picker) rather than any continuous value, so it round-trips through
+    /// UserDefaults as an exact number every time.
+    @Published var fontScale: Double {
+        didSet { UserDefaults.standard.set(fontScale, forKey: Keys.fontScale) }
+    }
+    /// Backs ReaderSettingsSheet's segmented Font Size picker — 5 values,
+    /// matching "Reading Speed" right above it in that same sheet, so each
+    /// segment stays a comfortably large tap target instead of cramming in
+    /// finer-grained steps. 1.0 is every existing screenshot's actual
+    /// on-screen size, so it stays the default rather than an edge value.
+    static let fontScaleSteps: [Double] = [0.8, 1.0, 1.2, 1.4, 1.6]
     /// "Tự động dịch" in Cài đặt đọc — when on, a chapter whose detected
     /// language isn't Vietnamese displays translated without the user
     /// tapping the translate button. Applied immediately to whatever
@@ -404,6 +418,7 @@ final class ReaderPlaybackController: ObservableObject {
         static let gwenTTSSpeaker = "reader.gwenTTSSpeaker"
         static let speed = "reader.speed"
         static let autoNext = "reader.autoNext"
+        static let fontScale = "reader.fontScale"
         static let autoTranslate = "reader.autoTranslate"
         static let translationEngineKind = "reader.translationEngineKind"
         static let primaryLanguageCode = "reader.primaryLanguageCode"
@@ -425,6 +440,8 @@ final class ReaderPlaybackController: ObservableObject {
         let savedSpeed = UserDefaults.standard.double(forKey: Keys.speed)
         speed = savedSpeed > 0 ? savedSpeed : 1.0
         autoNextChapter = UserDefaults.standard.bool(forKey: Keys.autoNext)
+        let savedFontScale = UserDefaults.standard.object(forKey: Keys.fontScale) as? Double
+        fontScale = savedFontScale ?? 1.0
         // Defaults true (not `.bool(forKey:)`'s implicit false-when-unset) —
         // translation now streams in per sentence as it lands (see
         // `performPendingTranslation`), so a chapter that needs translating

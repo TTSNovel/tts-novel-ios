@@ -86,6 +86,22 @@ struct ReaderSettingsSheet: View {
                     .pickerStyle(.segmented)
                 }
 
+                Section("Font Size") {
+                    // Tried a Stepper here first (auto-disables at bounds,
+                    // Form lays it out fine) — but its arrows are a tiny
+                    // ~20pt hit target, fiddly to click. A segmented Picker
+                    // — the same control "Reading Speed" above already
+                    // uses — gives every value its own full-height tappable
+                    // segment instead.
+                    Picker("Font Size", selection: $playback.fontScale) {
+                        ForEach(ReaderPlaybackController.fontScaleSteps, id: \.self) { scale in
+                            Text("\(Int((scale * 100).rounded()))%").tag(scale)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .accessibilityIdentifier("fontSizePicker")
+                }
+
                 Section("Translation") {
                     Picker("Primary language", selection: $playback.primaryLanguageCode) {
                         ForEach(PrimaryLanguageOption.allCases) { option in

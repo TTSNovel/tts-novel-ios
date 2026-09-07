@@ -32,6 +32,14 @@ struct ChapterPageContent: View {
     private var isCurrentSession: Bool { playback.book?.id == book.id }
     private var isLive: Bool { isCurrentSession && index == playback.chapterIndex }
 
+    // Base point sizes are .title2.bold()/.body's actual system-font
+    // metrics — reproduced as explicit sizes (rather than composing on top
+    // of the semantic Font values) so `playback.fontScale` can multiply
+    // them directly; SwiftUI's semantic Font cases don't expose a size to
+    // scale.
+    private var titleFont: Font { .system(size: 22 * playback.fontScale, weight: .bold) }
+    private var bodyFont: Font { .system(size: 17 * playback.fontScale) }
+
     var body: some View {
         if isLive {
             livePage
@@ -135,8 +143,8 @@ struct ChapterPageContent: View {
     @ViewBuilder
     private func chapterBody(_ chapter: Chapter) -> some View {
         if playback.sentences.isEmpty {
-            Text(chapter.title).font(.title2.bold())
-            Text(chapter.text).font(.body)
+            Text(chapter.title).font(titleFont)
+            Text(chapter.text).font(bodyFont)
         } else {
             // Falls back to the original `sentences` per-sentence for
             // whichever ones translation isn't showing, isn't needed, or
@@ -163,7 +171,7 @@ struct ChapterPageContent: View {
                         playback.seek(to: sentenceIndex)
                     } label: {
                         Text(sentence)
-                            .font(sentenceIndex == 0 ? .title2.bold() : .body)
+                            .font(sentenceIndex == 0 ? titleFont : bodyFont)
                             // Explicit — .plain buttons shouldn't tint text,
                             // but this exact codebase has hit accidental
                             // accent-color text on a button label before
@@ -201,8 +209,8 @@ struct ChapterPageContent: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 12) {
                 if let chapter = playback.cachedChapter(index: index) {
-                    Text(chapter.title).font(.title2.bold())
-                    Text(chapter.text).font(.body)
+                    Text(chapter.title).font(titleFont)
+                    Text(chapter.text).font(bodyFont)
                 } else {
                     ProgressView()
                         .frame(maxWidth: .infinity)
