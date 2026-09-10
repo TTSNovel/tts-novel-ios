@@ -28,6 +28,9 @@ struct ChapterPageContent: View {
     @EnvironmentObject private var playback: ReaderPlaybackController
     @EnvironmentObject private var network: NetworkMonitor
     @EnvironmentObject private var session: SessionStore
+    #if os(macOS)
+    @EnvironmentObject private var scrollPageCoordinator: ScrollPageCoordinator
+    #endif
 
     private var isCurrentSession: Bool { playback.book?.id == book.id }
     private var isLive: Bool { isCurrentSession && index == playback.chapterIndex }
@@ -49,6 +52,25 @@ struct ChapterPageContent: View {
     }
 
     private var livePage: some View {
+        #if os(macOS)
+        // Wraps the whole page, not just the ScrollView, so its measured
+        // height is the Page Up/Page Down machinery's own — a
+        // `.background(GeometryReader{...})` on the ScrollView itself
+        // reported 0 here (its content, not its viewport, apparently
+        // drives that sizing pass on this SDK).
+        GeometryReader { outerGeo in
+            livePageScrollView
+                .onAppear { scrollPageCoordinator.viewportHeight = outerGeo.size.height }
+                .onChange(of: outerGeo.size.height) { _, newValue in
+                    scrollPageCoordinator.viewportHeight = newValue
+                }
+        }
+        #else
+        livePageScrollView
+        #endif
+    }
+
+    private var livePageScrollView: some View {
         ScrollViewReader { proxy in
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
@@ -106,6 +128,15 @@ struct ChapterPageContent: View {
                 // to every page's content instead.
                 .padding(.bottom, PlaybackBar.reservedHeight)
             }
+            #if os(macOS)
+            // Page Up/Page Down (see ChapterPagerView/ScrollPageCoordinator)
+            // need a coordinate space to measure sentence positions in —
+            // the viewport height itself comes from livePage's outer
+            // GeometryReader instead.
+            .coordinateSpace(name: "chapterScroll")
+            .onPreferenceChange(SentenceFramePreferenceKey.self) { scrollPageCoordinator.sentenceFrames = $0 }
+            .onAppear { scrollPageCoordinator.proxy = proxy }
+            #endif
             .onChange(of: playback.highlightedSentenceIndex) { _, newValue in
                 guard let newValue else { return }
                 withAnimation {
@@ -194,6 +225,16 @@ struct ChapterPageContent: View {
                     .buttonStyle(.plain)
                     .id(sentenceIndex)
                     .accessibilityIdentifier("sentenceText_\(sentenceIndex)")
+                    #if os(macOS)
+                    .background(
+                        GeometryReader { geo in
+                            Color.clear.preference(
+                                key: SentenceFramePreferenceKey.self,
+                                value: [sentenceIndex: geo.frame(in: .named("chapterScroll")).minY]
+                            )
+                        }
+                    )
+                    #endif
                 }
             }
         }

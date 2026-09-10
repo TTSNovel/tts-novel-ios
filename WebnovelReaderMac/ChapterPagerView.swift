@@ -4,8 +4,10 @@ import Core
 /// macOS's chapter pager — no touch-swipe surface to back a
 /// `UIPageViewController`-style paging gesture the way iOS's
 /// `ChapterPagerView` has (see its doc comment), so this is plain
-/// prev/next chrome (toolbar buttons + ⌘←/⌘→) around the same
-/// platform-agnostic `ChapterPageContent` iOS's pager also renders.
+/// prev/next chrome (toolbar buttons + ←/→, plus hidden Page Up/Page Down
+/// buttons that scroll a page at a time — see `ScrollPageCoordinator`)
+/// around the same platform-agnostic `ChapterPageContent` iOS's pager also
+/// renders.
 struct ChapterPagerView: View {
     let book: Book
     let initialChapterIndex: Int
@@ -13,6 +15,7 @@ struct ChapterPagerView: View {
     @EnvironmentObject private var playback: ReaderPlaybackController
     @EnvironmentObject private var network: NetworkMonitor
     @EnvironmentObject private var session: SessionStore
+    @StateObject private var scrollPageCoordinator = ScrollPageCoordinator()
 
     private var isCurrentSession: Bool { playback.book?.id == book.id }
     private var currentIndex: Int { isCurrentSession ? playback.chapterIndex : initialChapterIndex }
@@ -22,6 +25,18 @@ struct ChapterPagerView: View {
             .environmentObject(playback)
             .environmentObject(network)
             .environmentObject(session)
+            .environmentObject(scrollPageCoordinator)
+            .background {
+                // Zero-size buttons purely to register the .pageUp/.pageDown
+                // app-level shortcuts (same mechanism as the ←/→ chapter
+                // buttons below) — SwiftUI's ScrollView never becomes first
+                // responder on macOS, so plain key handling never reaches
+                // it; ScrollPageCoordinator scrolls it directly instead.
+                Button("") { scrollPageCoordinator.scrollPage(up: true) }
+                    .keyboardShortcut(.pageUp, modifiers: [])
+                Button("") { scrollPageCoordinator.scrollPage(up: false) }
+                    .keyboardShortcut(.pageDown, modifiers: [])
+            }
             .toolbar {
                 ToolbarItemGroup {
                     Button {
@@ -30,8 +45,9 @@ struct ChapterPagerView: View {
                         Image(systemName: "chevron.left")
                     }
                     .disabled(currentIndex <= 0)
-                    .keyboardShortcut(.leftArrow, modifiers: .command)
+                    .keyboardShortcut(.leftArrow, modifiers: [])
                     .help("Chương trước")
+                    .accessibilityIdentifier("prevChapterButton")
 
                     Button {
                         playback.skipChapter(by: 1)
@@ -39,8 +55,9 @@ struct ChapterPagerView: View {
                         Image(systemName: "chevron.right")
                     }
                     .disabled(currentIndex + 1 >= book.n)
-                    .keyboardShortcut(.rightArrow, modifiers: .command)
+                    .keyboardShortcut(.rightArrow, modifiers: [])
                     .help("Chương sau")
+                    .accessibilityIdentifier("nextChapterButton")
                 }
             }
     }
