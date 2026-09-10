@@ -87,11 +87,24 @@ final class AudioPlaybackService: NSObject, ObservableObject {
     }
     #endif
 
+    enum PlaybackError: Error {
+        case failedToStart
+    }
+
     func play(data: Data) throws {
         let newPlayer = try AVAudioPlayer(data: data)
         newPlayer.delegate = self
         player = newPlayer
-        newPlayer.play()
+        // AVAudioPlayer.play() returns false instead of throwing when the OS
+        // refuses to start (e.g. audio hardware unavailable) — left
+        // unchecked, isPlaying/MPNowPlayingInfoCenter would flip to
+        // "playing" with no sound and no `audioPlayerDidFinishPlaying`
+        // callback ever coming to unstick playback, i.e. the pause icon
+        // stays up forever with nothing audible.
+        guard newPlayer.play() else {
+            player = nil
+            throw PlaybackError.failedToStart
+        }
         isPlaying = true
         MPNowPlayingInfoCenter.default().playbackState = .playing
     }
