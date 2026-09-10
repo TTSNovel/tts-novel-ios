@@ -34,8 +34,14 @@ struct ChapterPagerView: View {
                 // it; ScrollPageCoordinator scrolls it directly instead.
                 Button("") { scrollPageCoordinator.scrollPage(up: true) }
                     .keyboardShortcut(.pageUp, modifiers: [])
+                    .buttonStyle(.plain)
+                    .frame(width: 0, height: 0)
+                    .opacity(0)
                 Button("") { scrollPageCoordinator.scrollPage(up: false) }
                     .keyboardShortcut(.pageDown, modifiers: [])
+                    .buttonStyle(.plain)
+                    .frame(width: 0, height: 0)
+                    .opacity(0)
             }
             .toolbar {
                 ToolbarItemGroup {
