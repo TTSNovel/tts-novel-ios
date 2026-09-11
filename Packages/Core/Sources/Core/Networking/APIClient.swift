@@ -162,6 +162,28 @@ public final class APIClient: @unchecked Sendable {
         return try JSONDecoder.readingProgress.decode(ReadingProgress.self, from: data)
     }
 
+    /// Server-side counterpart: app/server.py's `/api/filter-words` routes
+    /// (tts-webnovel repo) — one shared list per account, synced whole-list-
+    /// at-once (see `FilterWordsStore`).
+    public func fetchFilterWords(baseURL: URL) async throws -> FilterWordSet {
+        var request = URLRequest(url: baseURL.appendingPathComponent("api/filter-words"))
+        request.httpMethod = "GET"
+        let (data, response) = try await session.data(for: request)
+        try Self.checkOK(response)
+        return try JSONDecoder.readingProgress.decode(FilterWordSet.self, from: data)
+    }
+
+    public func postFilterWords(baseURL: URL, rules: [FilterWordRule]) async throws -> FilterWordSet {
+        var request = URLRequest(url: baseURL.appendingPathComponent("api/filter-words"))
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONEncoder.readingProgress.encode(FilterWordsRequestBody(rules: rules))
+
+        let (data, response) = try await session.data(for: request)
+        try Self.checkOK(response)
+        return try JSONDecoder.readingProgress.decode(FilterWordSet.self, from: data)
+    }
+
     private static func checkOK(_ response: URLResponse) throws {
         guard let http = response as? HTTPURLResponse else { throw APIError.invalidResponse }
         if http.statusCode == 401 { throw APIError.notAuthenticated }
@@ -207,6 +229,10 @@ private struct ProgressRequestBody: Encodable {
         case chapterIndex = "chapter"
         case sentenceIndex = "sentence"
     }
+}
+
+private struct FilterWordsRequestBody: Encodable {
+    let rules: [FilterWordRule]
 }
 
 private extension String {

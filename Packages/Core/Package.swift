@@ -20,6 +20,10 @@ let package = Package(
             dependencies: [
                 .product(name: "SwiftSoup", package: "SwiftSoup")
             ]
+        ),
+        .testTarget(
+            name: "CoreTests",
+            dependencies: ["Core"]
         )
     ]
 )

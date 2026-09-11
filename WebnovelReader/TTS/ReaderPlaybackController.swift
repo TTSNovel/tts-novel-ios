@@ -1685,6 +1685,8 @@ final class ReaderPlaybackController: ObservableObject {
     /// the title as a separate header, so this doesn't create a visible
     /// duplicate.
     static func sentenceSequence(for chapter: Chapter) -> [String] {
-        [chapter.title] + TextSegmentation.sentences(from: TextSegmentation.cleaned(chapter.text))
+        let rules = FilterWordsStore.shared.rules
+        return [TextSegmentation.cleaned(chapter.title, filterRules: rules)]
+            + TextSegmentation.sentences(from: TextSegmentation.cleaned(chapter.text, filterRules: rules))
     }
 }

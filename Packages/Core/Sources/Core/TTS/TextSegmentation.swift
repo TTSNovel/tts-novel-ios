@@ -15,7 +15,11 @@ public enum TextSegmentation {
     /// Paragraph-preserving cleanup — strips decorative characters and
     /// collapses ellipses, but deliberately does NOT touch `\n`/`\n\n` (the
     /// element boundaries `sentences(from:)` below needs to see).
-    public static func cleaned(_ text: String) -> String {
+    ///
+    /// `filterRules` are the user's own "Filter Words" list (see
+    /// `FilterWordsStore`) — applied last, after the fixed cleanup below, so
+    /// a user's own pattern always runs against already-normalized text.
+    public static func cleaned(_ text: String, filterRules: [FilterWordRule] = []) -> String {
         var s = text
         // Inline formatting tags (`<i>`, `<b>`, etc.) some source chapters
         // carry straight through from their original HTML/epub markup —
@@ -43,7 +47,22 @@ public enum TextSegmentation {
         s = s.replacingOccurrences(of: "[·‧・•]", with: "", options: .regularExpression)
         s = s.replacingOccurrences(of: "~", with: "")
         s = s.replacingOccurrences(of: "\\.{2,}", with: ".", options: .regularExpression)
+        for rule in filterRules {
+            s = applying(rule, to: s)
+        }
         return s.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    /// Invalid regex patterns are skipped, not thrown — a bad user-entered
+    /// rule shouldn't be able to break playback.
+    private static func applying(_ rule: FilterWordRule, to text: String) -> String {
+        guard rule.isRegex else {
+            return text.replacingOccurrences(of: rule.pattern, with: "")
+        }
+        guard let regex = try? NSRegularExpression(pattern: rule.pattern) else { return text }
+        return regex.stringByReplacingMatches(
+            in: text, range: NSRange(text.startIndex..., in: text), withTemplate: ""
+        )
     }
 
     /// One HTML element (`<p>`/paragraph) per entry if it fits in one TTS

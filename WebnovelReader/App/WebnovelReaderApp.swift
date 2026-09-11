@@ -7,6 +7,7 @@ struct WebnovelReaderApp: App {
     @StateObject private var session = SessionStore.shared
     @StateObject private var downloads = DownloadManager.shared
     @StateObject private var progressStore = ProgressStore.shared
+    @StateObject private var filterWords = FilterWordsStore.shared
     @StateObject private var network = NetworkMonitor.shared
     @StateObject private var playback = ReaderPlaybackController.shared
     @StateObject private var eventLog = EventLogStore.shared
@@ -65,6 +66,7 @@ struct WebnovelReaderApp: App {
             .environmentObject(session)
             .environmentObject(downloads)
             .environmentObject(progressStore)
+            .environmentObject(filterWords)
             .environmentObject(network)
             .environmentObject(playback)
             .environmentObject(eventLog)
@@ -75,6 +77,7 @@ struct WebnovelReaderApp: App {
                 await session.restoreSession()
                 if session.isLoggedIn && !session.isOfflineSession {
                     await progressStore.refreshFromServer(baseURL: SessionStore.baseURL)
+                    await filterWords.refreshFromServer(baseURL: SessionStore.baseURL)
                 }
                 #if os(iOS)
                 if session.isLoggedIn {
