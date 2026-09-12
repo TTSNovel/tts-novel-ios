@@ -90,6 +90,14 @@ targets:
       - package: onnxruntime-libs
         product: onnxruntime-ios
       - package: Core
+      # Embeds the watchOS app inside the iOS .ipa's Watch/ directory
+      # (Xcode's "Embed Watch Content" build phase) so a sideloaded install
+      # of just this iOS app carries the paired Watch app along with it —
+      # without this, WKCompanionAppBundleIdentifier alone only links the
+      # two bundle IDs in metadata; it doesn't put the Watch app inside the
+      # IPA for iOS to offer installing onto the paired Watch.
+      - target: WebnovelReaderWatch
+        embed: true
       # Vendored (see WebnovelReader/Vendor/*/README-ish doc comments in
       # the TTS/VieNeuOfflineV2 sources for how each was built): SeaG2P is a
       # static lib (sea-g2p Rust core, PyO3 stripped, shared by both V2 and
