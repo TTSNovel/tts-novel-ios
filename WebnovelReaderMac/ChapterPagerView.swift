@@ -22,6 +22,13 @@ struct ChapterPagerView: View {
 
     var body: some View {
         ChapterPageContent(book: book, index: currentIndex)
+            // Forces a fresh ChapterPageContent/ScrollView per chapter — on
+            // iOS each chapter already gets its own UIHostingController (see
+            // ChapterPagerView's doc comment there), which naturally resets
+            // scroll position; without a stable-but-distinct `.id` here,
+            // this single long-lived instance kept its old scroll offset
+            // across chapter changes instead of starting at the top.
+            .id(currentIndex)
             .environmentObject(playback)
             .environmentObject(network)
             .environmentObject(session)

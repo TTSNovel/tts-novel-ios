@@ -85,7 +85,7 @@ struct FilterWordsView: View {
                 context: context,
                 onSave: { rule in
                     switch context {
-                    case .add: store.add(pattern: rule.pattern, isRegex: rule.isRegex)
+                    case .add: store.add(pattern: rule.pattern, isRegex: rule.isRegex, label: rule.label)
                     case .edit: store.update(rule)
                     }
                     editorContext = nil
@@ -138,7 +138,7 @@ struct FilterWordsView: View {
         // No native swipeActions outside List (see this view's doc comment)
         // — wording reflects the actual delete paths instead of promising a
         // gesture that no longer exists.
-        Text("Tap an item to edit. Long-press or right-click to delete. Raw pattern is not shown here — only in the edit screen.")
+        Text("Tap an item to edit. Long-press or right-click to delete.")
             .font(.system(size: 12))
             .foregroundStyle(.secondary)
             .lineSpacing(3)
@@ -158,10 +158,21 @@ struct FilterWordsView: View {
             VStack(spacing: 0) {
                 HStack(alignment: .center, spacing: 10) {
                     VStack(alignment: .leading, spacing: 3) {
-                        Text(rule.label ?? rule.pattern)
-                            .font(.system(size: 13.5))
-                            .foregroundStyle(.primary)
-                            .lineLimit(2)
+                        if let label = rule.label, !label.isEmpty {
+                            Text(label)
+                                .font(.system(size: 13.5))
+                                .foregroundStyle(.primary)
+                                .lineLimit(2)
+                            Text(rule.pattern)
+                                .font(.system(size: 11, design: .monospaced))
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                        } else {
+                            Text(rule.pattern)
+                                .font(.system(size: 13.5, design: .monospaced))
+                                .foregroundStyle(.primary)
+                                .lineLimit(2)
+                        }
                         Text(rule.isRegex ? "REGEX" : "PLAIN TEXT")
                             .font(.system(size: 10.5, weight: .semibold))
                             .tracking(0.2)
@@ -226,6 +237,7 @@ private struct FilterWordEditorView: View {
     let onDelete: () -> Void
     let onCancel: () -> Void
 
+    @State private var name: String
     @State private var pattern: String
     @State private var isRegex: Bool
     @State private var showingDeleteConfirm = false
@@ -235,6 +247,7 @@ private struct FilterWordEditorView: View {
         self.onSave = onSave
         self.onDelete = onDelete
         self.onCancel = onCancel
+        _name = State(initialValue: context.existingRule?.label ?? "")
         _pattern = State(initialValue: context.existingRule?.pattern ?? "")
         _isRegex = State(initialValue: context.existingRule?.isRegex ?? true)
     }
@@ -269,6 +282,14 @@ private struct FilterWordEditorView: View {
             // .field-group { padding: 6px 14px 14px; gap: 10px; }
             VStack(alignment: .leading, spacing: 10) {
                 // .text-input { padding: 8px 10px; border-radius: 7px; font-size: 13.5px; }
+                TextField("Name (optional)", text: $name)
+                    .textFieldStyle(.plain)
+                    .font(.system(size: 13.5))
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 8)
+                    .background(RoundedRectangle(cornerRadius: 7).fill(patternFieldBackground))
+                    .overlay(RoundedRectangle(cornerRadius: 7).strokeBorder(Color.secondary.opacity(0.3)))
+                    .accessibilityIdentifier("filterWordNameField")
                 TextField("Pattern", text: $pattern, axis: .vertical)
                     .textFieldStyle(.plain)
                     .font(.system(.body, design: .monospaced))
@@ -352,16 +373,12 @@ private struct FilterWordEditorView: View {
     }
 
     private func save() {
-        // Cleared once the pattern/isRegex actually change — see
-        // FilterWordRule's doc comment: a label describes the *original*
-        // pattern, so it stops being accurate the moment that changes.
-        let original = context.existingRule
-        let unchanged = original?.pattern == trimmedPattern && original?.isRegex == isRegex
+        let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
         let rule = FilterWordRule(
-            id: original?.id ?? UUID(),
+            id: context.existingRule?.id ?? UUID(),
             pattern: trimmedPattern,
             isRegex: isRegex,
-            label: unchanged ? original?.label : nil
+            label: trimmedName.isEmpty ? nil : trimmedName
         )
         onSave(rule)
     }

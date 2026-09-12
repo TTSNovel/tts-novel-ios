@@ -8,11 +8,10 @@ public struct FilterWordRule: Codable, Equatable, Identifiable, Sendable {
     public var id: UUID
     public var pattern: String
     public var isRegex: Bool
-    /// Human-readable name shown in place of the raw pattern — set for the
-    /// shipped defaults (see `DefaultFilterWords`), left `nil` for rules the
-    /// user types in themselves, since there's nothing to name those with.
-    /// Cleared on edit — once the user changes the pattern it's no longer
-    /// what the label described.
+    /// Optional human-readable name for the rule, editable by the user in
+    /// the Add/Edit sheet. Shown alongside the raw pattern in the list row.
+    /// Set for the shipped defaults (see `DefaultFilterWords`); `nil` when
+    /// left blank.
     public var label: String?
 
     public init(id: UUID = UUID(), pattern: String, isRegex: Bool, label: String? = nil) {

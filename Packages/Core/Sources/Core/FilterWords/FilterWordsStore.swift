@@ -28,9 +28,9 @@ public final class FilterWordsStore: ObservableObject {
 
     public var rules: [FilterWordRule] { filterSet.rules }
 
-    public func add(pattern: String, isRegex: Bool) {
+    public func add(pattern: String, isRegex: Bool, label: String? = nil) {
         var updated = filterSet.rules
-        updated.append(FilterWordRule(pattern: pattern, isRegex: isRegex))
+        updated.append(FilterWordRule(pattern: pattern, isRegex: isRegex, label: label))
         apply(rules: updated)
     }
 
