@@ -1323,6 +1323,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				INFOPLIST_FILE = "Generated-Info-Watch.plist";
+				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = dev.yanglong.webnovelreader.watch;
 				PRODUCT_NAME = "Novel Reader";
 				SDKROOT = watchos;
@@ -1413,6 +1414,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				INFOPLIST_FILE = "Generated-Info-Watch.plist";
+				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = dev.yanglong.webnovelreader.watch;
 				PRODUCT_NAME = "Novel Reader";
 				SDKROOT = watchos;
@@ -1437,6 +1439,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = dev.yanglong.webnovelreader;
 				PRODUCT_NAME = WebnovelReader;
 				SDKROOT = iphoneos;
@@ -1598,6 +1601,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = dev.yanglong.webnovelreader;
 				PRODUCT_NAME = WebnovelReader;
 				SDKROOT = iphoneos;
