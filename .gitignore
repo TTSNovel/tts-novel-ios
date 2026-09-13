@@ -30,3 +30,6 @@ Scripts/kiwi/*.env
 Scripts/kiwi/test_case_map.yml
 Scripts/kiwi/__pycache__/
 TestResults.xcresult/
+
+# Local reference checkout, not part of this project
+sidestore-source/

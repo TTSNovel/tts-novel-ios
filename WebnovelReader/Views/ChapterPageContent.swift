@@ -43,6 +43,14 @@ struct ChapterPageContent: View {
     private var titleFont: Font { .system(size: 22 * playback.fontScale, weight: .bold) }
     private var bodyFont: Font { .system(size: 17 * playback.fontScale) }
 
+    /// Same Filter Words rules TTS reads through (`ReaderPlaybackController
+    /// .sentenceSequence`) — applied here too so raw-text fallbacks (the
+    /// brief pre-segmentation flash below, and neighboring chapters'
+    /// preview page) never show what TTS wouldn't say out loud.
+    private static func filtered(_ text: String) -> String {
+        TextSegmentation.cleaned(text, filterRules: FilterWordsStore.shared.rules)
+    }
+
     var body: some View {
         if isLive {
             livePage
@@ -174,8 +182,8 @@ struct ChapterPageContent: View {
     @ViewBuilder
     private func chapterBody(_ chapter: Chapter) -> some View {
         if playback.sentences.isEmpty {
-            Text(chapter.title).font(titleFont)
-            Text(chapter.text).font(bodyFont)
+            Text(Self.filtered(chapter.title)).font(titleFont)
+            Text(Self.filtered(chapter.text)).font(bodyFont)
         } else {
             // Falls back to the original `sentences` per-sentence for
             // whichever ones translation isn't showing, isn't needed, or
@@ -250,8 +258,8 @@ struct ChapterPageContent: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 12) {
                 if let chapter = playback.cachedChapter(index: index) {
-                    Text(chapter.title).font(titleFont)
-                    Text(chapter.text).font(bodyFont)
+                    Text(Self.filtered(chapter.title)).font(titleFont)
+                    Text(Self.filtered(chapter.text)).font(bodyFont)
                 } else {
                     ProgressView()
                         .frame(maxWidth: .infinity)

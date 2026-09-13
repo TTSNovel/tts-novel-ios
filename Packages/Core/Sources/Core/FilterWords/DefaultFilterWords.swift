@@ -35,7 +35,7 @@ public enum DefaultFilterWords {
         // patterns.
         FilterWordRule(
             id: UUID(uuidString: "7A1D84D0-86FB-4676-9C6D-5E5A9F6A4CF8")!,
-            pattern: #"\b[a-zA-Z0-9-]+\.(com|net|org|vn|info|me|tv|club|xyz|top|shop|ly|gg|io)\b"#, isRegex: true,
+            pattern: #"\b[a-zA-Z0-9-]+\.(com|net|org|vn|info|me|tv|club|xyz|top|shop|ly|gg|io|fun)\b"#, isRegex: true,
             label: "Website domain (.com, .vn, .net, ...)"
         ),
         // Untranslated CJK leftovers (CJK Unified Ideographs, Hiragana/

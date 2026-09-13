@@ -1,3 +1,4 @@
+import Combine
 import Foundation
 import NaturalLanguage
 import Core
@@ -303,6 +304,7 @@ final class ReaderPlaybackController: ObservableObject {
     private var hasCheckedResume = false
 
     private var active = false
+    private var filterWordsCancellable: AnyCancellable?
     /// Set right when an AVAudioSession interruption (call/alarm/Maps
     /// prompt) begins, cleared once consumed on .ended — see
     /// player.onInterruptionBegan/onInterruptionEnded in init().
@@ -480,6 +482,19 @@ final class ReaderPlaybackController: ObservableObject {
             guard let self, wasPlayingBeforeInterruption else { return }
             wasPlayingBeforeInterruption = false
             remotePlay()
+        }
+        // `sentences` (what both TTS and the on-screen per-sentence view
+        // read) is otherwise only rebuilt from `chapter` at
+        // beginChapter()/prepareResume() — a Filter Words rule added or
+        // edited while a chapter is already open would silently keep
+        // reading/showing the stale pre-edit text until the chapter was
+        // closed and reopened. Re-deriving it here re-applies the current
+        // rules to the same already-loaded chapter text; deliberately does
+        // NOT touch playback/currentSentenceIndex — just keeps the
+        // text in sync with the rules.
+        filterWordsCancellable = FilterWordsStore.shared.$filterSet.dropFirst().sink { [weak self] _ in
+            guard let self, let chapter else { return }
+            sentences = Self.sentenceSequence(for: chapter)
         }
     }
 

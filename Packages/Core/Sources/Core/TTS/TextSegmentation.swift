@@ -45,6 +45,18 @@ public enum TextSegmentation {
         // translation input.
         s = s.replacingOccurrences(of: "[<>]+", with: "", options: .regularExpression)
         s = s.replacingOccurrences(of: "[·‧・•]", with: "", options: .regularExpression)
+        // Zero-width/invisible characters (U+200B/U+200C/U+200D/U+2060/U+FEFF)
+        // that some source sites inject inside promo text and domain names
+        // specifically to defeat naive substring/regex ad-strippers — e.g.
+        // "kho\u{200B}truyenchu.f\u{200B}un" renders identically to a human
+        // but breaks any filter rule matching against the clean string.
+        // Stripped before `filterRules` runs below so a user's plain-text
+        // or domain pattern matches the text as it visually appears. Also
+        // stripped from `rule.pattern` itself in `applying` below — a
+        // pattern created by copy-pasting the same on-screen text would
+        // otherwise carry the identical invisible characters and stop
+        // matching this now-cleaned string.
+        s = s.replacingOccurrences(of: invisibleCharPattern, with: "", options: .regularExpression)
         s = s.replacingOccurrences(of: "~", with: "")
         s = s.replacingOccurrences(of: "\\.{2,}", with: ".", options: .regularExpression)
         for rule in filterRules {
@@ -53,13 +65,20 @@ public enum TextSegmentation {
         return s.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    private static let invisibleCharPattern = "[\u{200B}\u{200C}\u{200D}\u{2060}\u{FEFF}]"
+
     /// Invalid regex patterns are skipped, not thrown — a bad user-entered
     /// rule shouldn't be able to break playback.
     private static func applying(_ rule: FilterWordRule, to text: String) -> String {
+        // A rule created by copy-pasting on-screen text (e.g. a promo line)
+        // can carry the same invisible characters `text` above just had
+        // stripped from it — sanitize the pattern too, or it silently stops
+        // matching anything.
+        let pattern = rule.pattern.replacingOccurrences(of: invisibleCharPattern, with: "", options: .regularExpression)
         guard rule.isRegex else {
-            return text.replacingOccurrences(of: rule.pattern, with: "")
+            return text.replacingOccurrences(of: pattern, with: "")
         }
-        guard let regex = try? NSRegularExpression(pattern: rule.pattern) else { return text }
+        guard let regex = try? NSRegularExpression(pattern: pattern) else { return text }
         return regex.stringByReplacingMatches(
             in: text, range: NSRange(text.startIndex..., in: text), withTemplate: ""
         )
