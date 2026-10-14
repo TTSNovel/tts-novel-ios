@@ -42,6 +42,23 @@ final class ChapterFragmentParserTests: XCTestCase {
         XCTAssertEqual(chapter.text, "First.\n\nSecond.")
     }
 
+    /// Chapters with no `<p>` at all (Calibre's nested-`<div>` + `<br><br>`
+    /// layout, e.g. book 67 "Đả Công Tiên Tri") used to parse to an empty
+    /// body — iOS showed only the title while the web reader showed text.
+    func testDivAndBrOnlyChapterFallsBackToBlockText() {
+        let html = """
+        <h1>Chương 1 : A</h1>
+        <div class="calibre3">
+
+        <div class="calibre3">
+        <div class="calibre3"> First line.<br class="calibre3"/><br class="calibre3"/>	Second &amp; more.<br/>Same para.</div>
+        </div></div>
+        """
+        let chapter = ChapterFragmentParser.parse(html: html, index: 0)
+        XCTAssertEqual(chapter.title, "Chương 1 : A")
+        XCTAssertEqual(chapter.text, "First line.\n\nSecond & more.\nSame para.")
+    }
+
     // MARK: - Real chapters (book 85, chapters 84-92 — the ones reported broken)
 
     /// Fetches real chapter fragments straight from the live server (same

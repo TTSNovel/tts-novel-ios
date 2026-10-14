@@ -19,8 +19,46 @@ public enum ChapterFragmentParser {
         let h1Text = (try? doc.select("h1").first()?.text()) ?? nil
         let title = (h1Text?.isEmpty == false) ? h1Text! : fallbackTitle
         let paragraphs = (try? doc.select("p").array()) ?? []
-        let body = paragraphs.map(paragraphText).joined(separator: "\n\n")
+        var body = paragraphs.map(paragraphText).joined(separator: "\n\n")
+        if body.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, let root = doc.body() {
+            body = blockText(root, skipping: try? doc.select("h1").first())
+        }
         return Chapter(index: index, title: title, text: body)
+    }
+
+    /// Fallback for epubs whose chapter body has no `<p>` at all — some
+    /// Calibre conversions (books 58, 67, 73, 114, 117 at the time of
+    /// writing) put the whole chapter in nested `<div>`s with `<br><br>`
+    /// between paragraphs. reader.js renders those fine via innerHTML; the
+    /// `<p>`-only path above would show the title and nothing else. Mirrors
+    /// `innerText`: `<br>` -> "\n", a block element's boundary -> "\n\n",
+    /// then each line is trimmed and runs of blank lines collapse to a
+    /// single paragraph break, so `<br><br>` lands as the "\n\n"
+    /// `TextSegmentation.splitParagraphs` keys on.
+    private static let blockTags: Set<String> = [
+        "div", "section", "article", "blockquote", "h1", "h2", "h3", "h4", "h5", "h6", "li", "ul", "ol", "table", "tr",
+    ]
+
+    private static func blockText(_ root: Element, skipping skipped: Element?) -> String {
+        var raw = ""
+        func walk(_ node: Node) {
+            if let text = node as? TextNode {
+                raw += text.text()
+            } else if let el = node as? Element {
+                if el === skipped { return }
+                let tag = el.tagName().lowercased()
+                if tag == "br" { raw += "\n"; return }
+                let isBlock = blockTags.contains(tag)
+                if isBlock { raw += "\n\n" }
+                el.getChildNodes().forEach(walk)
+                if isBlock { raw += "\n\n" }
+            }
+        }
+        walk(root)
+        let lines = raw.components(separatedBy: "\n").map { $0.trimmingCharacters(in: .whitespaces) }
+        return lines.joined(separator: "\n")
+            .replacingOccurrences(of: "\n{3,}", with: "\n\n", options: .regularExpression)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     /// One `<p>`'s own text, browser-`innerText`-style: a `<br>` becomes a
