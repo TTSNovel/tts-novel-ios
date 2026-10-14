@@ -8,6 +8,11 @@ import Foundation
 /// Unicode ranges) renders as unreadable tofu boxes in the settings list
 /// otherwise.
 public enum DefaultFilterWords {
+    /// The "Leftover Chinese/Japanese/Korean characters" rule below —
+    /// `ReaderPlaybackController.sentenceSequence` skips it for a chapter
+    /// that is itself Chinese, where it would wipe the whole text.
+    public static let leftoverCJKRuleID = UUID(uuidString: "4AF37E7E-64FB-4D46-8835-4B4DD3C24A4D")!
+
     public static let seed: [FilterWordRule] = [
         FilterWordRule(
             id: UUID(uuidString: "8FE527A7-15D5-4A03-AB9D-F3DD3232A9F1")!,
@@ -41,7 +46,7 @@ public enum DefaultFilterWords {
         // Untranslated CJK leftovers (CJK Unified Ideographs, Hiragana/
         // Katakana, Hangul) some scraped/converted novels still carry.
         FilterWordRule(
-            id: UUID(uuidString: "4AF37E7E-64FB-4D46-8835-4B4DD3C24A4D")!,
+            id: leftoverCJKRuleID,
             pattern: "[\u{4E00}-\u{9FFF}\u{3040}-\u{30FF}\u{AC00}-\u{D7A3}]+", isRegex: true,
             label: "Leftover Chinese/Japanese/Korean characters"
         ),

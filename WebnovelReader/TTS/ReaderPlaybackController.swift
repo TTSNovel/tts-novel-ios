@@ -244,6 +244,12 @@ final class ReaderPlaybackController: ObservableObject {
                 // `performPendingTranslation`.
                 translationGeneration += 1
                 translatedSentences = nil
+                // The previous engine may have rejected this language pair
+                // and turned the display off (see `performPendingTranslation`)
+                // — give the new one the same default as a fresh chapter.
+                showingTranslation = autoTranslate
+                // Buffered audio was read from the old engine's text.
+                invalidateAudioForActiveSentenceSourceChange()
                 Task { await performPendingTranslation() }
             }
         }
@@ -930,6 +936,8 @@ final class ReaderPlaybackController: ObservableObject {
             #else
             return nil
             #endif
+        case .vietPhrase:
+            return VietPhraseTranslationEngine.shared
         }
     }
 
@@ -1700,7 +1708,14 @@ final class ReaderPlaybackController: ObservableObject {
     /// the title as a separate header, so this doesn't create a visible
     /// duplicate.
     static func sentenceSequence(for chapter: Chapter) -> [String] {
-        let rules = FilterWordsStore.shared.rules
+        var rules = FilterWordsStore.shared.rules
+        // The leftover-CJK rule is for a stray Han character or two in a
+        // Vietnamese chapter — on a chapter that *is* Chinese it would
+        // wipe the whole text before any engine (VietPhrase, Apple) got a
+        // chance to translate it.
+        if HanVietConverter.isPredominantlyChinese(chapter.text) {
+            rules.removeAll { $0.id == DefaultFilterWords.leftoverCJKRuleID }
+        }
         return [TextSegmentation.cleaned(chapter.title, filterRules: rules)]
             + TextSegmentation.sentences(from: TextSegmentation.cleaned(chapter.text, filterRules: rules))
     }

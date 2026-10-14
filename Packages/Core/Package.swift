@@ -19,7 +19,10 @@ let package = Package(
             name: "Core",
             dependencies: [
                 .product(name: "SwiftSoup", package: "SwiftSoup")
-            ]
+            ],
+            // VietPhraseTranslationEngine's Hán Việt table — a copy of
+            // tts-webnovel's tools/data/phienam.txt.
+            resources: [.copy("Resources/phienam.txt")]
         ),
         .testTarget(
             name: "CoreTests",

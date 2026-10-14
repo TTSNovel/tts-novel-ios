@@ -89,8 +89,18 @@ public enum TextSegmentation {
     /// an element is too long to read as a single unit.
     public static func sentences(from text: String) -> [String] {
         splitParagraphs(text).flatMap { paragraph in
-            paragraph.count <= maxChars ? [paragraph] : splitLongParagraph(paragraph)
+            spokenLength(paragraph) <= maxChars ? [paragraph] : splitLongParagraph(paragraph)
         }
+    }
+
+    /// `maxChars` is sized for Vietnamese/English text, where a syllable
+    /// is several characters. A Han character is a whole syllable on its
+    /// own — and a Chinese chapter is read aloud as its Hán Việt reading
+    /// (see `VietPhraseTranslationEngine`), ~4 characters per syllable
+    /// with the space — so it's counted as that much here, keeping a
+    /// Chinese sentence about as long to speak as any other.
+    private static func spokenLength(_ text: String) -> Int {
+        text.unicodeScalars.reduce(0) { $0 + (HanVietConverter.isHan($1) ? 4 : 1) }
     }
 
     private static let paragraphBreak = try! NSRegularExpression(pattern: "\\n\\s*\\n+")
@@ -147,7 +157,8 @@ public enum TextSegmentation {
         return depth == 0 && !inStraightQuote
     }
 
-    private static let terminatorPattern = try! NSRegularExpression(pattern: "[^.!?]+[.!?]*\\s*")
+    /// Chinese sentence terminators (。！？) included alongside `.!?`.
+    private static let terminatorPattern = try! NSRegularExpression(pattern: "[^.!?。！？]+[.!?。！？]*\\s*")
 
     /// Only reached once a single paragraph/element is too long to read as
     /// one unit (see `sentences(from:)`) — tries `.!?` first, quote-aware so
@@ -192,25 +203,30 @@ public enum TextSegmentation {
     /// xong chưa? Nói xong thì cúp máy đi, nhé.” Hướng Du...` split right at
     /// "đi, nhé" — same unmatched-quote failure mode `mergeUnbalancedQuotes`
     /// above exists to prevent, just one level down).
+    /// Splits on the Chinese full-width comma (，) too, rejoining with
+    /// whichever comma was actually there.
     private static func chunkByComma(_ sentence: String) -> [String] {
-        guard sentence.count > maxChars else { return [sentence] }
+        guard spokenLength(sentence) > maxChars else { return [sentence] }
         var chunks: [String] = []
         var current = ""
-        for part in splitOutsideQuotes(sentence, on: ",") {
-            let next = current.isEmpty ? part : current + ", " + part
-            if next.count > maxChars, !current.isEmpty {
+        var joiner = ""
+        for (part, separator) in splitOutsideQuotes(sentence, on: [",", "，"]) {
+            let next = current.isEmpty ? part : current + joiner + part
+            if spokenLength(next) > maxChars, !current.isEmpty {
                 chunks.append(current)
                 current = part
             } else {
                 current = next
             }
+            joiner = separator == "，" ? "，" : ", "
         }
         if !current.isEmpty { chunks.append(current) }
         return chunks
     }
 
-    private static func splitOutsideQuotes(_ text: String, on separator: Character) -> [String] {
-        var parts: [String] = []
+    /// Each part paired with the separator that ended it (nil for the last).
+    private static func splitOutsideQuotes(_ text: String, on separators: Set<Character>) -> [(String, Character?)] {
+        var parts: [(String, Character?)] = []
         var current = ""
         var depth = 0
         var inStraightQuote = false
@@ -222,14 +238,16 @@ public enum TextSegmentation {
             } else if closingQuoteChars.contains(ch), depth > 0 {
                 depth -= 1
             }
-            if ch == separator, depth == 0, !inStraightQuote {
-                parts.append(current)
+            if separators.contains(ch), depth == 0, !inStraightQuote {
+                parts.append((current, ch))
                 current = ""
             } else {
                 current.append(ch)
             }
         }
-        parts.append(current)
-        return parts.map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+        parts.append((current, nil))
+        return parts
+            .map { ($0.0.trimmingCharacters(in: .whitespaces), $0.1) }
+            .filter { !$0.0.isEmpty }
     }
 }
