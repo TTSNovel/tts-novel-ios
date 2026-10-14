@@ -244,9 +244,10 @@ final class ReaderPlaybackController: ObservableObject {
                 // `performPendingTranslation`.
                 translationGeneration += 1
                 translatedSentences = nil
-                // The previous engine may have rejected this language pair
-                // and turned the display off (see `performPendingTranslation`)
-                // — give the new one the same default as a fresh chapter.
+                // A failed attempt with the previous engine (e.g. one that's
+                // unavailable on this platform) reverted `showingTranslation`
+                // — re-apply the auto-translate preference for the new one,
+                // same as `evaluateTranslation` does on chapter load.
                 showingTranslation = autoTranslate
                 // Buffered audio was read from the old engine's text.
                 invalidateAudioForActiveSentenceSourceChange()
@@ -925,9 +926,13 @@ final class ReaderPlaybackController: ObservableObject {
     /// first macOS bring-up (the embedded onnxruntime.framework came
     /// through unsigned) — deferred to the same macOS-offline follow-up
     /// phase as the offline TTS engines rather than blocking the rest of
-    /// the Mac scaffold on it.
+    /// the Mac scaffold on it. `.google` is built per chapter — the server
+    /// stores its translations under the book/chapter they belong to.
     private var currentTranslationEngine: TranslationEngine? {
         switch translationEngineKind {
+        case .google:
+            guard let book else { return nil }
+            return GoogleCloudTranslationEngine(baseURL: SessionStore.baseURL, bookID: book.id, chapterIndex: chapterIndex)
         case .apple:
             if #available(iOS 18.0, macOS 15.0, *) { return AppleTranslationEngine.shared } else { return nil }
         case .opusMT:

@@ -222,6 +222,10 @@ struct ReaderSettingsSheet: View {
                 .accessibilityIdentifier("translationEnginePicker")
             }
             Divider()
+            if playback.translationEngineKind == .google, let book = playback.book {
+                StoredTranslationsRow(bookID: book.id)
+                Divider()
+            }
             SettingsRow(label: "Auto-translate") {
                 Toggle("Auto-translate", isOn: $playback.autoTranslate)
                     .labelsHidden()
@@ -387,6 +391,59 @@ private struct SettingsRow<Content: View>: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
+    }
+}
+
+/// Google translations are stored on the server per chapter (see
+/// `GoogleCloudTranslationEngine`) — shows how many chapters of the open
+/// book are stored and lets them be deleted, e.g. to re-translate after a
+/// glossary edit without waiting for its lazy re-translation.
+private struct StoredTranslationsRow: View {
+    let bookID: Int
+    @State private var chapterCount: Int?
+    @State private var failed = false
+    @State private var isDeleting = false
+
+    var body: some View {
+        SettingsRow(label: "Saved translations") {
+            Text(summary)
+                .font(.system(size: 13))
+                .foregroundStyle(.secondary)
+                .accessibilityIdentifier("storedTranslationsCount")
+            Button("Delete", role: .destructive) {
+                Task { await delete() }
+            }
+            .disabled(isDeleting || (chapterCount ?? 0) == 0)
+            .accessibilityIdentifier("deleteStoredTranslationsButton")
+        }
+        .task(id: bookID) { await load() }
+    }
+
+    private var summary: String {
+        if failed { return "Unavailable" }
+        guard let chapterCount else { return "…" }
+        return chapterCount == 1 ? "1 chapter" : "\(chapterCount) chapters"
+    }
+
+    private func load() async {
+        do {
+            chapterCount = try await APIClient.shared.fetchStoredTranslationChapterCount(baseURL: SessionStore.baseURL, bookID: bookID)
+            failed = false
+        } catch {
+            failed = true
+        }
+    }
+
+    private func delete() async {
+        isDeleting = true
+        defer { isDeleting = false }
+        do {
+            try await APIClient.shared.deleteStoredTranslations(baseURL: SessionStore.baseURL, bookID: bookID)
+        } catch {
+            failed = true
+            return
+        }
+        await load()
     }
 }
 
