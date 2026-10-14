@@ -184,6 +184,43 @@ public final class APIClient: @unchecked Sendable {
         return try JSONDecoder.readingProgress.decode(FilterWordSet.self, from: data)
     }
 
+    /// Server-side counterpart: app/server.py's `/api/translate` (tts-webnovel
+    /// repo) — Google Cloud Translation v3 with the book's glossary. The
+    /// server stores every translated segment per chapter, so asking again
+    /// for something already translated (by this device, another one, or
+    /// the web reader) comes straight back from storage. Returns
+    /// translations aligned with `texts`.
+    public func translate(
+        baseURL: URL, bookID: Int, chapterIndex: Int, texts: [String], source: String, target: String
+    ) async throws -> [String] {
+        var request = URLRequest(url: baseURL.appendingPathComponent("api/translate"))
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONEncoder().encode(
+            TranslateRequestBody(bookID: bookID, chapter: chapterIndex, texts: texts, source: source, target: target)
+        )
+        let (data, response) = try await session.data(for: request)
+        try Self.checkOK(response)
+        let translations = try JSONDecoder().decode(TranslateResponseBody.self, from: data).translations
+        guard translations.count == texts.count else { throw APIError.invalidResponse }
+        return translations
+    }
+
+    /// How many chapters of `bookID` have translations stored on the server.
+    public func fetchStoredTranslationChapterCount(baseURL: URL, bookID: Int) async throws -> Int {
+        let (data, response) = try await session.data(from: baseURL.appendingPathComponent("api/translations/\(bookID)"))
+        try Self.checkOK(response)
+        return try JSONDecoder().decode(StoredTranslationsBody.self, from: data).chapters.count
+    }
+
+    /// Deletes every stored translation of `bookID` on the server.
+    public func deleteStoredTranslations(baseURL: URL, bookID: Int) async throws {
+        var request = URLRequest(url: baseURL.appendingPathComponent("api/translations/\(bookID)"))
+        request.httpMethod = "DELETE"
+        let (_, response) = try await session.data(for: request)
+        try Self.checkOK(response)
+    }
+
     private static func checkOK(_ response: URLResponse) throws {
         guard let http = response as? HTTPURLResponse else { throw APIError.invalidResponse }
         if http.statusCode == 401 { throw APIError.notAuthenticated }
@@ -233,6 +270,28 @@ private struct ProgressRequestBody: Encodable {
 
 private struct FilterWordsRequestBody: Encodable {
     let rules: [FilterWordRule]
+}
+
+private struct TranslateRequestBody: Encodable {
+    let bookID: Int
+    let chapter: Int
+    let texts: [String]
+    let source: String
+    let target: String
+
+    enum CodingKeys: String, CodingKey {
+        case bookID = "book_id"
+        case chapter, texts, source, target
+    }
+}
+
+private struct TranslateResponseBody: Decodable {
+    let translations: [String]
+}
+
+private struct StoredTranslationsBody: Decodable {
+    struct Chapter: Decodable {}
+    let chapters: [Chapter]
 }
 
 private extension String {

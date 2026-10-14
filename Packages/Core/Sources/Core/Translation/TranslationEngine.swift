@@ -5,12 +5,15 @@ import Foundation
 /// selects through this protocol, so adding/removing/swapping an engine
 /// never touches the state machine (`evaluateTranslation`/
 /// `performPendingTranslation`/the translate button/`autoTranslate`), only
-/// which concrete type gets picked. Two engines exist today:
+/// which concrete type gets picked. Three engines exist today:
 /// `AppleTranslationEngine` (on-device via Apple's Translation framework —
 /// best quality, but iOS 18+ only and, per real testing, refuses to run at
 /// all on the iOS Simulator) and `OpusMTTranslationEngine` (a small
 /// bundled ONNX model — always available offline on any iOS version, at a
-/// real quality cost on longer/complex prose — see its doc comment).
+/// real quality cost on longer/complex prose — see its doc comment), and
+/// `GoogleCloudTranslationEngine` (Google Cloud Translation through the
+/// site's server, with per-book glossaries and server-side storage of
+/// what's been translated).
 /// `Sendable` because `ReaderPlaybackController` (MainActor) holds a
 /// `currentTranslationEngine: TranslationEngine?` and calls `await
 /// engine.translate(...)` on it — crossing into whichever actor the
@@ -60,6 +63,7 @@ public struct TranslationProgress: Sendable, Equatable {
 public enum TranslationEngineKind: String, CaseIterable, Identifiable, Sendable {
     case apple
     case opusMT
+    case google
 
     public var id: String { rawValue }
 
@@ -67,6 +71,7 @@ public enum TranslationEngineKind: String, CaseIterable, Identifiable, Sendable 
         switch self {
         case .apple: return "Apple Translate"
         case .opusMT: return "OPUS-MT (offline)"
+        case .google: return "Google Translate (glossary)"
         }
     }
 }

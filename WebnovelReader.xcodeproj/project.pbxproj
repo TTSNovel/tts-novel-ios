@@ -58,6 +58,7 @@
 		504829D8DE45A4ABF87D4593 /* MODELS.md in Resources */ = {isa = PBXBuildFile; fileRef = 29F49AA85393485A66E79630 /* MODELS.md */; };
 		525D00CEE7BDBD175A01D2E4 /* OfflineDownloadUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DBCCF9522AFEE7CBAD6CA7D /* OfflineDownloadUITests.swift */; };
 		529FEF5471455299CA1020B4 /* VieNeuOfflineV3 in Resources */ = {isa = PBXBuildFile; fileRef = 87DD5111A0DE3174C3194230 /* VieNeuOfflineV3 */; };
+		A1C0FFEE0000000000000001 /* GoogleTranslationUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1C0FFEE0000000000000002 /* GoogleTranslationUITests.swift */; };
 		5558B1320AB26FC5635479D0 /* ReaderSettingsUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BB72CB88B3A201293115BC5 /* ReaderSettingsUITests.swift */; };
 		55C13A29FA0D2BA07DC14331 /* VieNeuOfflineV2TTSService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC2DD58615428784C26E486C /* VieNeuOfflineV2TTSService.swift */; };
 		57262FBBC76C649B19FE28F5 /* FilterWordsUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F0D696B1E54D66515C5D403 /* FilterWordsUITests.swift */; };
@@ -295,6 +296,7 @@
 		8885567368F5244DE28C3BF0 /* voice_pham_tuyen.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = voice_pham_tuyen.json; sourceTree = "<group>"; };
 		89F7E8C2E2FA78F23BC3571D /* llama.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = llama.xcframework; path = WebnovelReader/Vendor/llama.xcframework; sourceTree = "<group>"; };
 		8B341D7BF826C02000149E75 /* LibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryView.swift; sourceTree = "<group>"; };
+		A1C0FFEE0000000000000002 /* GoogleTranslationUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleTranslationUITests.swift; sourceTree = "<group>"; };
 		8BB72CB88B3A201293115BC5 /* ReaderSettingsUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReaderSettingsUITests.swift; sourceTree = "<group>"; };
 		8D8288C10AB76E1993B845CF /* WatchLibraryUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchLibraryUITests.swift; sourceTree = "<group>"; };
 		8DBCCF9522AFEE7CBAD6CA7D /* OfflineDownloadUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineDownloadUITests.swift; sourceTree = "<group>"; };
@@ -652,6 +654,7 @@
 				8F40CADA5F98A440CFA58826 /* ChapterListUITests.swift */,
 				5F0D696B1E54D66515C5D403 /* FilterWordsUITests.swift */,
 				7916C397BBED4D66D4E0B6D3 /* ReaderKeyboardShortcutsUITests.swift */,
+				A1C0FFEE0000000000000002 /* GoogleTranslationUITests.swift */,
 				8BB72CB88B3A201293115BC5 /* ReaderSettingsUITests.swift */,
 			);
 			path = WebnovelReaderMacUITests;
@@ -1118,6 +1121,7 @@
 				ADE49230E36D7F9600F3D342 /* ChapterListUITests.swift in Sources */,
 				57262FBBC76C649B19FE28F5 /* FilterWordsUITests.swift in Sources */,
 				4A761F52F97BE59A796C3DA0 /* ReaderKeyboardShortcutsUITests.swift in Sources */,
+				A1C0FFEE0000000000000001 /* GoogleTranslationUITests.swift in Sources */,
 				5558B1320AB26FC5635479D0 /* ReaderSettingsUITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
