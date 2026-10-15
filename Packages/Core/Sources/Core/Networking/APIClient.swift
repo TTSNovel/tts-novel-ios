@@ -206,6 +206,29 @@ public final class APIClient: @unchecked Sendable {
         return translations
     }
 
+    /// The whole translation glossary (shared + every book's terms) — see
+    /// `GlossaryTerm`.
+    public func fetchGlossary(baseURL: URL) async throws -> [GlossaryTerm] {
+        let (data, response) = try await session.data(from: baseURL.appendingPathComponent("api/glossary"))
+        try Self.checkOK(response)
+        return try JSONDecoder().decode(GlossaryBody.self, from: data).terms
+    }
+
+    /// Replaces the whole glossary; the server publishes it to Google before
+    /// answering (a few seconds per changed glossary). Returns the stored
+    /// list. A publish failure comes back as `APIError.httpStatus(502)` with
+    /// the list itself already saved.
+    public func saveGlossary(baseURL: URL, terms: [GlossaryTerm]) async throws -> [GlossaryTerm] {
+        var request = URLRequest(url: baseURL.appendingPathComponent("api/glossary"))
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.timeoutInterval = 300
+        request.httpBody = try JSONEncoder().encode(GlossaryBody(terms: terms))
+        let (data, response) = try await session.data(for: request)
+        try Self.checkOK(response)
+        return try JSONDecoder().decode(GlossaryBody.self, from: data).terms
+    }
+
     /// How many chapters of `bookID` have translations stored on the server.
     public func fetchStoredTranslationChapterCount(baseURL: URL, bookID: Int) async throws -> Int {
         let (data, response) = try await session.data(from: baseURL.appendingPathComponent("api/translations/\(bookID)"))
@@ -283,6 +306,10 @@ private struct TranslateRequestBody: Encodable {
         case bookID = "book_id"
         case chapter, texts, source, target
     }
+}
+
+private struct GlossaryBody: Codable {
+    let terms: [GlossaryTerm]
 }
 
 private struct TranslateResponseBody: Decodable {

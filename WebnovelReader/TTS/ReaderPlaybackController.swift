@@ -237,23 +237,28 @@ final class ReaderPlaybackController: ObservableObject {
     @Published var translationEngineKind: TranslationEngineKind {
         didSet {
             UserDefaults.standard.set(translationEngineKind.rawValue, forKey: Keys.translationEngineKind)
-            if translationSourceLanguage != nil {
-                // Bumped so a still-in-flight fetch from the *previous*
-                // engine can't race this one and overwrite its result —
-                // see the `generation == translationGeneration` guards in
-                // `performPendingTranslation`.
-                translationGeneration += 1
-                translatedSentences = nil
-                // A failed attempt with the previous engine (e.g. one that's
-                // unavailable on this platform) reverted `showingTranslation`
-                // — re-apply the auto-translate preference for the new one,
-                // same as `evaluateTranslation` does on chapter load.
-                showingTranslation = autoTranslate
-                // Buffered audio was read from the old engine's text.
-                invalidateAudioForActiveSentenceSourceChange()
-                Task { await performPendingTranslation() }
-            }
+            retranslateCurrentChapter()
         }
+    }
+
+    /// Throws away the current chapter's translation and translates it
+    /// again — after switching engines, or after a glossary edit (the server
+    /// re-translates segments stored under the old glossary).
+    func retranslateCurrentChapter() {
+        guard translationSourceLanguage != nil else { return }
+        // Bumped so a still-in-flight fetch from before can't race this one
+        // and overwrite its result — see the `generation ==
+        // translationGeneration` guards in `performPendingTranslation`.
+        translationGeneration += 1
+        translatedSentences = nil
+        // A failed attempt with the previous engine (e.g. one that's
+        // unavailable on this platform) reverted `showingTranslation` —
+        // re-apply the auto-translate preference, same as
+        // `evaluateTranslation` does on chapter load.
+        showingTranslation = autoTranslate
+        // Buffered audio was read from the old text.
+        invalidateAudioForActiveSentenceSourceChange()
+        Task { await performPendingTranslation() }
     }
     /// The language chapters get translated *into* — "Ngôn ngữ chính" in
     /// Cài đặt đọc. Defaults to "vi" (this app's primary audience), still

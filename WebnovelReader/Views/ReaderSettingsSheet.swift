@@ -223,6 +223,14 @@ struct ReaderSettingsSheet: View {
             }
             Divider()
             if playback.translationEngineKind == .google, let book = playback.book {
+                NavigationLink {
+                    GlossaryView(bookID: book.id)
+                } label: {
+                    SettingsLinkRow(icon: "character.book.closed", label: "Glossary")
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("glossaryLink")
+                Divider()
                 StoredTranslationsRow(bookID: book.id)
                 Divider()
             }
