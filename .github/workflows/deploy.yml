@@ -25,7 +25,7 @@ permissions:
 
 jobs:
   sidestore:
-    runs-on: [self-hosted, macOS]
+    runs-on: [self-hosted, macOS, ios-build]
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
