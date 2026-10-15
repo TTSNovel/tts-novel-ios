@@ -43,6 +43,10 @@ cat > "$BUILD_DIR/exportOptions.plist" <<'PLIST'
 </plist>
 PLIST
 
+# project.yml's prebuild script also runs this, but on a fresh checkout Xcode
+# validates the resource files exist before that phase gets to download them.
+"$PROJ_DIR/Scripts/fetch-models.sh"
+
 echo "==> Archiving version $VERSION ($BUILD_NUMBER)..."
 xcodebuild archive \
   -project "$PROJ_DIR/WebnovelReader.xcodeproj" \
