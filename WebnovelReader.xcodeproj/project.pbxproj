@@ -50,6 +50,7 @@
 		4745930E2969B279EBBF24B4 /* WatchPlaybackController.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB2447E99A089C4AE4DA61F1 /* WatchPlaybackController.swift */; };
 		4A26C19AF0AD93B58F0EFCED /* ChapterTranslationDriver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87F3222F005B11EF32FAED98 /* ChapterTranslationDriver.swift */; };
 		4A761F52F97BE59A796C3DA0 /* ReaderKeyboardShortcutsUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7916C397BBED4D66D4E0B6D3 /* ReaderKeyboardShortcutsUITests.swift */; };
+		4AA43CEA7494FD1693004D31 /* GoogleTranslationUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65AA449F0054F40C6410D722 /* GoogleTranslationUITests.swift */; };
 		4BD6C852923B36C639FF988B /* PlaybackBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38B2768DB2EF882C9504B517 /* PlaybackBar.swift */; };
 		4C123009177B239F38F4E159 /* VieNeuV2CodecONNX.mm in Sources */ = {isa = PBXBuildFile; fileRef = A2B7D7C9EC50448E43C367FE /* VieNeuV2CodecONNX.mm */; };
 		4C2FD0CE1A38BE36C260D241 /* SettingsAndPlaybarLayoutUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E77B7759E1190A621260BC2D /* SettingsAndPlaybarLayoutUITests.swift */; };
@@ -58,12 +59,12 @@
 		504829D8DE45A4ABF87D4593 /* MODELS.md in Resources */ = {isa = PBXBuildFile; fileRef = 29F49AA85393485A66E79630 /* MODELS.md */; };
 		525D00CEE7BDBD175A01D2E4 /* OfflineDownloadUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DBCCF9522AFEE7CBAD6CA7D /* OfflineDownloadUITests.swift */; };
 		529FEF5471455299CA1020B4 /* VieNeuOfflineV3 in Resources */ = {isa = PBXBuildFile; fileRef = 87DD5111A0DE3174C3194230 /* VieNeuOfflineV3 */; };
-		A1C0FFEE0000000000000001 /* GoogleTranslationUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1C0FFEE0000000000000002 /* GoogleTranslationUITests.swift */; };
 		5558B1320AB26FC5635479D0 /* ReaderSettingsUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BB72CB88B3A201293115BC5 /* ReaderSettingsUITests.swift */; };
 		55C13A29FA0D2BA07DC14331 /* VieNeuOfflineV2TTSService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC2DD58615428784C26E486C /* VieNeuOfflineV2TTSService.swift */; };
 		57262FBBC76C649B19FE28F5 /* FilterWordsUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F0D696B1E54D66515C5D403 /* FilterWordsUITests.swift */; };
 		589A1BFA8C2F69AA15C5B895 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4504947934A2B3AECF872F72 /* LoginView.swift */; };
 		5952907776FF164D7CFE6429 /* ReaderPlaybackController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D86948B589F016B404B328BE /* ReaderPlaybackController.swift */; };
+		5961E3BF7857D7010830C8B0 /* BookDetailBackUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1321AA8A3A86C598C60D96C8 /* BookDetailBackUITests.swift */; };
 		596AD1D3B2EC8EBEC19A2EE4 /* ActionHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C80348C35F790F0DE254630B /* ActionHistoryView.swift */; };
 		5D465174D209824D4D8A994A /* OpusMTTranslationEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = F260324088EFDCC145425CBF /* OpusMTTranslationEngine.swift */; };
 		5D9892CB3ADD91F8903A819C /* ResumeFlowUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A23CE4FF9D11C814434BC096 /* ResumeFlowUITests.swift */; };
@@ -234,6 +235,7 @@
 		0180275DF4F5BBAC753C3CA1 /* AppleTranslationEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleTranslationEngine.swift; sourceTree = "<group>"; };
 		055C4D56AA40D5C9F1E7D259 /* WebnovelReaderTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = WebnovelReaderTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		05A1A9D9C437AE8DB6DFC7C0 /* WatchSettingsUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchSettingsUITests.swift; sourceTree = "<group>"; };
+		1321AA8A3A86C598C60D96C8 /* BookDetailBackUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookDetailBackUITests.swift; sourceTree = "<group>"; };
 		19BB4D3E4A9827CF125F6CC5 /* vi_VN-vais1000-medium.onnx */ = {isa = PBXFileReference; path = "vi_VN-vais1000-medium.onnx"; sourceTree = "<group>"; };
 		1BB91FD5BDF27C6EC3C7E3F3 /* SeaG2PBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeaG2PBridge.swift; sourceTree = "<group>"; };
 		1C173D717D05F8E1A7640E14 /* FilterWordsUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterWordsUITests.swift; sourceTree = "<group>"; };
@@ -277,6 +279,7 @@
 		5D44E9F6922443881D20F71F /* SelectPersistsAcrossChapterNavigationUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectPersistsAcrossChapterNavigationUITests.swift; sourceTree = "<group>"; };
 		5F0D696B1E54D66515C5D403 /* FilterWordsUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterWordsUITests.swift; sourceTree = "<group>"; };
 		6501E541F5688086EE375D88 /* ChapterTitles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChapterTitles.swift; sourceTree = "<group>"; };
+		65AA449F0054F40C6410D722 /* GoogleTranslationUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleTranslationUITests.swift; sourceTree = "<group>"; };
 		66BAAE1683F2331178ACEE75 /* TextSegmentationMergeUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextSegmentationMergeUITests.swift; sourceTree = "<group>"; };
 		67FCD507015BA179DEAFCA4B /* PiperOfflineTTSService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PiperOfflineTTSService.swift; sourceTree = "<group>"; };
 		6CB0DB5D451A84BABAD77673 /* ReaderSettingsToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReaderSettingsToolbar.swift; sourceTree = "<group>"; };
@@ -297,7 +300,6 @@
 		8885567368F5244DE28C3BF0 /* voice_pham_tuyen.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = voice_pham_tuyen.json; sourceTree = "<group>"; };
 		89F7E8C2E2FA78F23BC3571D /* llama.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = llama.xcframework; path = WebnovelReader/Vendor/llama.xcframework; sourceTree = "<group>"; };
 		8B341D7BF826C02000149E75 /* LibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryView.swift; sourceTree = "<group>"; };
-		A1C0FFEE0000000000000002 /* GoogleTranslationUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleTranslationUITests.swift; sourceTree = "<group>"; };
 		8BB72CB88B3A201293115BC5 /* ReaderSettingsUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReaderSettingsUITests.swift; sourceTree = "<group>"; };
 		8D8288C10AB76E1993B845CF /* WatchLibraryUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchLibraryUITests.swift; sourceTree = "<group>"; };
 		8DBCCF9522AFEE7CBAD6CA7D /* OfflineDownloadUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineDownloadUITests.swift; sourceTree = "<group>"; };
@@ -355,7 +357,7 @@
 		F60BA012E937FDC3266CEAAC /* BookDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookDetailView.swift; sourceTree = "<group>"; };
 		FB87E7F5611D53CEA837235B /* VieNeuV2CodecDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VieNeuV2CodecDecoder.swift; sourceTree = "<group>"; };
 		FE5E9FF61219C4CAD0E71621 /* DownloadManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadManagerTests.swift; sourceTree = "<group>"; };
-		"TEMP_1BC0F634-D5BD-44D3-9832-296BC3C0E839" /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
+		"TEMP_53EE7E31-F750-4BD8-8704-EE31B58C94A2" /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -469,6 +471,7 @@
 			children = (
 				004CA44AC74B9034C629CF09 /* AudioInterruptionUITests.swift */,
 				DBDAC71CFDFC1EC6A3F6CD4E /* BookDetailActionsUITests.swift */,
+				1321AA8A3A86C598C60D96C8 /* BookDetailBackUITests.swift */,
 				D0553A498B15C3928D1254ED /* BugReportAndHistoryUITests.swift */,
 				590CE78C2F18BB27ED8D519A /* ChapterListUITests.swift */,
 				512B6B9B75EDE35A5C0B1A79 /* ChapterNavigationUITests.swift */,
@@ -655,8 +658,8 @@
 			children = (
 				8F40CADA5F98A440CFA58826 /* ChapterListUITests.swift */,
 				5F0D696B1E54D66515C5D403 /* FilterWordsUITests.swift */,
+				65AA449F0054F40C6410D722 /* GoogleTranslationUITests.swift */,
 				7916C397BBED4D66D4E0B6D3 /* ReaderKeyboardShortcutsUITests.swift */,
-				A1C0FFEE0000000000000002 /* GoogleTranslationUITests.swift */,
 				8BB72CB88B3A201293115BC5 /* ReaderSettingsUITests.swift */,
 				CBE708DE3675F4460832C64A /* VietPhraseTranslationUITests.swift */,
 			);
@@ -738,10 +741,10 @@
 			path = VieNeuOfflineV3;
 			sourceTree = "<group>";
 		};
-		"TEMP_3F24BC8B-8064-40C8-A754-730085484FE3" /* tts-novel-ios */ = {
+		"TEMP_E0682B6E-E7BF-4F5B-8ABF-FDFCA34CB3B7" /* tts-novel-ios */ = {
 			isa = PBXGroup;
 			children = (
-				"TEMP_1BC0F634-D5BD-44D3-9832-296BC3C0E839" /* Config.xcconfig */,
+				"TEMP_53EE7E31-F750-4BD8-8704-EE31B58C94A2" /* Config.xcconfig */,
 			);
 			path = "tts-novel-ios";
 			sourceTree = "<group>";
@@ -1123,8 +1126,8 @@
 			files = (
 				ADE49230E36D7F9600F3D342 /* ChapterListUITests.swift in Sources */,
 				57262FBBC76C649B19FE28F5 /* FilterWordsUITests.swift in Sources */,
+				4AA43CEA7494FD1693004D31 /* GoogleTranslationUITests.swift in Sources */,
 				4A761F52F97BE59A796C3DA0 /* ReaderKeyboardShortcutsUITests.swift in Sources */,
-				A1C0FFEE0000000000000001 /* GoogleTranslationUITests.swift in Sources */,
 				5558B1320AB26FC5635479D0 /* ReaderSettingsUITests.swift in Sources */,
 				9558391523C481C4570BB005 /* VietPhraseTranslationUITests.swift in Sources */,
 			);
@@ -1169,6 +1172,7 @@
 			files = (
 				E4E21985EA9A11DE76EE9640 /* AudioInterruptionUITests.swift in Sources */,
 				62E40856A93A1A0D969DCA5B /* BookDetailActionsUITests.swift in Sources */,
+				5961E3BF7857D7010830C8B0 /* BookDetailBackUITests.swift in Sources */,
 				76AE30B0AD63D65505777EC5 /* BugReportAndHistoryUITests.swift in Sources */,
 				12F8A89E5D0FD951278E87D3 /* ChapterListUITests.swift in Sources */,
 				F7789321C34C66899A40094C /* ChapterNavigationUITests.swift in Sources */,
@@ -1331,7 +1335,6 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				INFOPLIST_FILE = "Generated-Info-Watch.plist";
-				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = dev.yanglong.webnovelreader.watch;
 				PRODUCT_NAME = "Novel Reader";
 				SDKROOT = watchos;
@@ -1359,7 +1362,7 @@
 		};
 		8AD706A598674F6FFA3EB5E9 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_1BC0F634-D5BD-44D3-9832-296BC3C0E839" /* Config.xcconfig */;
+			baseConfigurationReference = "TEMP_53EE7E31-F750-4BD8-8704-EE31B58C94A2" /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -1422,7 +1425,6 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				INFOPLIST_FILE = "Generated-Info-Watch.plist";
-				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = dev.yanglong.webnovelreader.watch;
 				PRODUCT_NAME = "Novel Reader";
 				SDKROOT = watchos;
@@ -1447,7 +1449,6 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = dev.yanglong.webnovelreader;
 				PRODUCT_NAME = WebnovelReader;
 				SDKROOT = iphoneos;
@@ -1528,7 +1529,7 @@
 		};
 		F886F568F9EBDF1F6FD3EE07 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_1BC0F634-D5BD-44D3-9832-296BC3C0E839" /* Config.xcconfig */;
+			baseConfigurationReference = "TEMP_53EE7E31-F750-4BD8-8704-EE31B58C94A2" /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -1609,7 +1610,6 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = dev.yanglong.webnovelreader;
 				PRODUCT_NAME = WebnovelReader;
 				SDKROOT = iphoneos;

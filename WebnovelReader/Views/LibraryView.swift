@@ -134,6 +134,10 @@ struct LibraryView: View {
             .onChange(of: playback.pendingChapterRoute) { _, route in
                 guard let route else { return }
                 playback.pendingChapterRoute = nil
+                // Replace the stack rather than append to it — appending on
+                // top of an already-open BookDetail/Reader left a second
+                // copy of it underneath, so back needed two taps.
+                navPath = NavigationPath()
                 navPath.append(route.book)
                 navPath.append(route)
             }
