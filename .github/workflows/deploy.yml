@@ -1,0 +1,45 @@
+# Push to main → build a development-signed .ipa on the self-hosted Mac
+# runner (Xcode signed in to the personal Apple ID — GitHub-hosted runners
+# can't do automatic signing with it) and publish it to the SideStore feed.
+#
+# Push-to-main only: this repo is public and the runner is a personal Mac,
+# so nothing triggered by a PR/fork may ever reach it.
+#
+# Auth to GCP is keyless (Workload Identity Federation, tts-pipeline-infra's
+# environments/dev/ci.tf). Repo variables: GCP_WIF_PROVIDER, GCP_DEPLOYER_SA,
+# SIDESTORE_BUCKET, SERVER_BASE_URL.
+name: deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  sidestore:
+    runs-on: [self-hosted, macOS]
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Keep the gitignored model binaries Scripts/fetch-models.sh already
+          # downloaded (~600MB) instead of re-fetching them every build.
+          clean: false
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_DEPLOYER_SA }}
+      - uses: google-github-actions/setup-gcloud@v2
+      - name: Build and publish
+        env:
+          SIDESTORE_BUCKET: ${{ vars.SIDESTORE_BUCKET }}
+          SERVER_BASE_URL: ${{ vars.SERVER_BASE_URL }}
+        run: Scripts/publish-sidestore.sh
