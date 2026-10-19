@@ -21,7 +21,7 @@ else
   VERSION=$(sed -n 's/^ *MARKETING_VERSION: *"\{0,1\}\([0-9.]*\)"\{0,1\}.*/\1/p' "$PROJ_DIR/project.yml" | head -1)
   if [[ "$VERSION" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
     MAJOR=${BASH_REMATCH[1]} MINOR=${BASH_REMATCH[2]} PATCH=${BASH_REMATCH[3]}
-    LAST=$(git -C "$PROJ_DIR" tag -l "v$MAJOR.$MINOR.*" | sed "s/^v$MAJOR\.$MINOR\.//" | grep -E '^[0-9]+$' | sort -n | tail -1)
+    LAST=$(git -C "$PROJ_DIR" tag -l "v$MAJOR.$MINOR.*" | sed "s/^v$MAJOR\.$MINOR\.//" | { grep -E '^[0-9]+$' || true; } | sort -n | tail -1)
     if [[ -n "$LAST" && "$LAST" -ge "$PATCH" ]]; then
       echo "==> v$VERSION already published — bumping PATCH to $((LAST + 1))"
       VERSION="$MAJOR.$MINOR.$((LAST + 1))"
