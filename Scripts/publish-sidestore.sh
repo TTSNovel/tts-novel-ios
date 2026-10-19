@@ -7,13 +7,33 @@
 # by hand. Needs: Xcode signed in to the Apple ID for DEVELOPMENT_TEAM
 # (automatic signing), gcloud authenticated with write access to the bucket.
 # Usage: Scripts/publish-sidestore.sh [version]
-#   version defaults to a UTC timestamp (YYYY.MMDD.HHMM) so every publish
-#   sorts newer than the last and SideStore offers it as an update.
+#   version defaults to project.yml's MARKETING_VERSION (MAJOR.MINOR.PATCH).
+#   If that version was already published (git tag vX.Y.Z exists), PATCH is
+#   bumped past the highest published one — SideStore only offers an update
+#   when major.minor.patch is greater than what's installed. Prints
+#   "version=X.Y.Z" as the last line for the workflow to tag.
 set -euo pipefail
 
 PROJ_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-VERSION="${1:-$(date -u +%Y.%-m%d.%-H%M)}"
-BUILD_NUMBER="${GITHUB_RUN_NUMBER:-$(date -u +%s)}"
+if [[ -n "${1:-}" ]]; then
+  VERSION="$1"
+else
+  VERSION=$(sed -n 's/^ *MARKETING_VERSION: *"\{0,1\}\([0-9.]*\)"\{0,1\}.*/\1/p' "$PROJ_DIR/project.yml" | head -1)
+  if [[ "$VERSION" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+    MAJOR=${BASH_REMATCH[1]} MINOR=${BASH_REMATCH[2]} PATCH=${BASH_REMATCH[3]}
+    LAST=$(git -C "$PROJ_DIR" tag -l "v$MAJOR.$MINOR.*" | sed "s/^v$MAJOR\.$MINOR\.//" | grep -E '^[0-9]+$' | sort -n | tail -1)
+    if [[ -n "$LAST" && "$LAST" -ge "$PATCH" ]]; then
+      echo "==> v$VERSION already published — bumping PATCH to $((LAST + 1))"
+      VERSION="$MAJOR.$MINOR.$((LAST + 1))"
+    fi
+  fi
+fi
+if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+  echo "version '$VERSION' is not MAJOR.MINOR.PATCH" >&2
+  exit 1
+fi
+# CFBundleVersion: the CI run number (always increasing), else 1.
+BUILD_NUMBER="${GITHUB_RUN_NUMBER:-1}"
 : "${SIDESTORE_BUCKET:?SIDESTORE_BUCKET not set (e.g. gs://<project>-sidestore-source)}"
 BUILD_DIR="$(mktemp -d)"
 trap 'rm -rf "$BUILD_DIR"' EXIT
@@ -95,3 +115,4 @@ gcloud storage cp "$BUILD_DIR/repo.json" "$SIDESTORE_BUCKET/repo.json" \
   --cache-control="no-cache, must-revalidate" --content-type=application/json
 
 echo "==> Published $VERSION ($SIZE bytes)."
+echo "version=$VERSION"

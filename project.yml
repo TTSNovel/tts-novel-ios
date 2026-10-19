@@ -16,6 +16,13 @@ configFiles:
 settings:
   base:
     SWIFT_VERSION: "6.0"
+    # Semantic version MAJOR.MINOR.PATCH, set by hand. CI publishes exactly
+    # this; if it's already published (tag vX.Y.Z exists) it bumps PATCH to
+    # the next free one, so a push without a bump still reaches SideStore
+    # as an update. See Scripts/publish-sidestore.sh.
+    MARKETING_VERSION: "1.4.0"
+    # Build number (CFBundleVersion) — CI overrides with the run number.
+    CURRENT_PROJECT_VERSION: "1"
     DEVELOPMENT_TEAM: "R5U3W3463A"
     CODE_SIGN_STYLE: Automatic
 
@@ -121,6 +128,8 @@ targets:
       path: Generated-Info.plist
       properties:
         CFBundleDisplayName: "Novel Reader"
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         UILaunchScreen: {}
         UIBackgroundModes:
           - audio
@@ -208,6 +217,8 @@ targets:
       path: Generated-Info-Mac.plist
       properties:
         CFBundleDisplayName: "Novel Reader"
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
         SERVER_BASE_URL: "$(SERVER_BASE_URL)"
@@ -261,6 +272,8 @@ targets:
       path: Generated-Info-Watch.plist
       properties:
         CFBundleDisplayName: "Novel Reader"
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         WKApplication: true
         WKBackgroundModes:
           - audio

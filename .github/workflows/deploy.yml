@@ -20,7 +20,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: read
+  contents: write # push the vX.Y.Z tag for each published build
   id-token: write
 
 jobs:
@@ -33,13 +33,26 @@ jobs:
           # Keep the gitignored model binaries Scripts/fetch-models.sh already
           # downloaded (~600MB) instead of re-fetching them every build.
           clean: false
+          # Tags decide the next free PATCH (see Scripts/publish-sidestore.sh).
+          fetch-depth: 0
+          fetch-tags: true
       - uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
           service_account: ${{ vars.GCP_DEPLOYER_SA }}
       - uses: google-github-actions/setup-gcloud@v2
       - name: Build and publish
+        id: publish
         env:
           SIDESTORE_BUCKET: ${{ vars.SIDESTORE_BUCKET }}
           SERVER_BASE_URL: ${{ vars.SERVER_BASE_URL }}
-        run: Scripts/publish-sidestore.sh
+        shell: bash # -o pipefail, so a failed publish isn't masked by tee
+        run: |
+          Scripts/publish-sidestore.sh | tee "$RUNNER_TEMP/publish.log"
+          tail -1 "$RUNNER_TEMP/publish.log" >> "$GITHUB_OUTPUT"
+      - name: Tag release
+        env:
+          VERSION: ${{ steps.publish.outputs.version }}
+        run: |
+          git tag "v$VERSION" "$GITHUB_SHA"
+          git push origin "v$VERSION"
