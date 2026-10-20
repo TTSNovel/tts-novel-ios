@@ -241,6 +241,32 @@ final class ReaderPlaybackController: ObservableObject {
         }
     }
 
+    /// The server's glossary, for `AppleTranslationEngine` (applied on
+    /// device through `GlossaryTranslationEngine`; Google applies it
+    /// server-side). Re-fetched at most every `glossaryTTL` before a
+    /// translation; a failed fetch (offline, guest) keeps the last copy.
+    private var glossaryTerms: [GlossaryTerm] = []
+    private var glossaryFetchedAt: Date?
+    private static let glossaryTTL: TimeInterval = 60
+
+    private func refreshGlossary() async {
+        if let glossaryFetchedAt, Date().timeIntervalSince(glossaryFetchedAt) < Self.glossaryTTL { return }
+        do {
+            glossaryTerms = try await APIClient.shared.fetchGlossary(baseURL: SessionStore.baseURL)
+            glossaryFetchedAt = Date()
+        } catch {
+            EventLogStore.shared.record(.translation, "Không tải được glossary", detail: error.localizedDescription)
+        }
+    }
+
+    /// GlossaryView saved `terms` — re-translates the open chapter with them
+    /// for the engines that use the glossary.
+    func glossaryDidChange(_ terms: [GlossaryTerm]) {
+        glossaryTerms = terms
+        glossaryFetchedAt = Date()
+        if [.google, .apple].contains(translationEngineKind) { retranslateCurrentChapter() }
+    }
+
     /// Throws away the current chapter's translation and translates it
     /// again — after switching engines, or after a glossary edit (the server
     /// re-translates segments stored under the old glossary).
@@ -939,7 +965,12 @@ final class ReaderPlaybackController: ObservableObject {
             guard let book else { return nil }
             return GoogleCloudTranslationEngine(baseURL: SessionStore.baseURL, bookID: book.id, chapterIndex: chapterIndex)
         case .apple:
-            if #available(iOS 18.0, macOS 15.0, *) { return AppleTranslationEngine.shared } else { return nil }
+            guard #available(iOS 18.0, macOS 15.0, *) else { return nil }
+            let glossary = Glossary(
+                terms: glossaryTerms, bookID: book?.id,
+                source: translationSourceLanguage ?? Locale.Language(identifier: "en"), target: primaryLanguage
+            )
+            return GlossaryTranslationEngine(base: AppleTranslationEngine.shared, glossary: glossary)
         case .opusMT:
             #if os(iOS)
             return OpusMTTranslationEngine.shared
@@ -1064,6 +1095,12 @@ final class ReaderPlaybackController: ObservableObject {
     /// `TranslationEngine` protocol, so swapping engines never touches this
     /// method.
     func performPendingTranslation() async {
+        guard translationSourceLanguage != nil, !sentences.isEmpty else { return }
+        if translationEngineKind == .apple {
+            let generation = translationGeneration
+            await refreshGlossary()
+            guard generation == translationGeneration else { return }
+        }
         guard let source = translationSourceLanguage, !sentences.isEmpty else { return }
         let target = primaryLanguage
         let logDetail = book.map { "\($0.title) — Chương \(chapterIndex + 1) (\(source.minimalIdentifier)→\(target.minimalIdentifier))" } ?? ""

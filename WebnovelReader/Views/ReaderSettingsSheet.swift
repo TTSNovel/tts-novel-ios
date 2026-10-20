@@ -222,7 +222,7 @@ struct ReaderSettingsSheet: View {
                 .accessibilityIdentifier("translationEnginePicker")
             }
             Divider()
-            if playback.translationEngineKind == .google, let book = playback.book {
+            if [.google, .apple].contains(playback.translationEngineKind), let book = playback.book {
                 NavigationLink {
                     GlossaryView(bookID: book.id)
                 } label: {
@@ -231,8 +231,10 @@ struct ReaderSettingsSheet: View {
                 .buttonStyle(.plain)
                 .accessibilityIdentifier("glossaryLink")
                 Divider()
-                StoredTranslationsRow(bookID: book.id)
-                Divider()
+                if playback.translationEngineKind == .google {
+                    StoredTranslationsRow(bookID: book.id)
+                    Divider()
+                }
             }
             SettingsRow(label: "Auto-translate") {
                 Toggle("Auto-translate", isOn: $playback.autoTranslate)
