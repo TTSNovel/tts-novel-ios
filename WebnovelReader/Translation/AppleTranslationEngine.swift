@@ -60,6 +60,12 @@ final class AppleTranslationEngine: TranslationEngine, @unchecked Sendable {
                 do {
                     let session = await self.requestSession(for: source, target: target)
                     for (index, text) in texts.enumerated() {
+                        // The session dies with the `.translationTask`
+                        // that produced it (reader closed, pair changed);
+                        // calling into a dead one is a framework
+                        // assertion, not a thrown error — so bail out
+                        // instead of crashing the app.
+                        guard self.currentSession === session else { throw CancellationError() }
                         let response = try await session.translate(text)
                         continuation.yield((index, response.targetText))
                     }
@@ -95,5 +101,16 @@ final class AppleTranslationEngine: TranslationEngine, @unchecked Sendable {
         currentTargetLanguage = target
         pendingContinuation?.resume(returning: session)
         pendingContinuation = nil
+    }
+
+    /// Called by `ChapterTranslationDriver` when the `.translationTask`
+    /// that produced `session` ends (view gone or configuration replaced).
+    /// Past that point the framework asserts on any use of the session, so
+    /// drop it — the next `translate` asks the driver for a fresh one.
+    func expireSession(_ session: TranslationSession) {
+        guard currentSession === session else { return }
+        currentSession = nil
+        currentSourceLanguage = nil
+        currentTargetLanguage = nil
     }
 }

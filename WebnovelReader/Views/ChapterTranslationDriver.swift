@@ -40,6 +40,15 @@ private struct ChapterTranslationDriver: ViewModifier {
             .translationTask(configuration) { session in
                 guard let pendingSource, let pendingTarget else { return }
                 AppleTranslationEngine.shared.provideSession(session, for: pendingSource, target: pendingTarget)
+                // The session is only valid while this closure is running —
+                // returning right away and using it later is what tripped
+                // the Translation framework's assertion. Stay suspended
+                // until SwiftUI cancels the task (view disappears or the
+                // configuration changes), then expire it in the engine.
+                while !Task.isCancelled {
+                    try? await Task.sleep(for: .seconds(3600))
+                }
+                AppleTranslationEngine.shared.expireSession(session)
             }
     }
 }
