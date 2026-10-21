@@ -116,6 +116,14 @@ final class AudioPlaybackService: NSObject, ObservableObject {
     }
 
     func resume() {
+        // Pausing within the clip's last ~50ms (after its final buffer was
+        // already handed to the audio queue, before the finish callback)
+        // leaves AVAudioPlayer resuming into silence forever: play()
+        // returns true, isPlaying stays true, currentTime sits at duration,
+        // and audioPlayerDidFinishPlaying never fires — playback stuck with
+        // the pause icon up. Re-seeking to the same position re-primes the
+        // queue so the finish callback fires normally.
+        if let player { player.currentTime = player.currentTime }
         player?.play()
         isPlaying = true
         MPNowPlayingInfoCenter.default().playbackState = .playing
