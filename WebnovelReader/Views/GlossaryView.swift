@@ -1,8 +1,8 @@
 import SwiftUI
 import Core
 
-/// Reached from ReaderSettingsSheet ("Glossary", shown for the Google
-/// engine) — edits the server's translation glossary: terms shared by every
+/// Reached from ReaderSettingsSheet ("Glossary", shown for the Google and
+/// Apple engines — Apple's applies it on device, see `Glossary`) — edits the server's translation glossary: terms shared by every
 /// book, and terms of just the open book (see `GlossaryTerm`). Every
 /// add/edit/delete saves the whole list right away; the server publishes it
 /// to Google before answering, then the open chapter is re-translated.
@@ -193,7 +193,7 @@ struct GlossaryView: View {
         do {
             terms = try await APIClient.shared.saveGlossary(baseURL: SessionStore.baseURL, terms: terms)
             errorMessage = nil
-            if playback.translationEngineKind == .google { playback.retranslateCurrentChapter() }
+            playback.glossaryDidChange(terms)
         } catch {
             errorMessage = "Couldn't save the glossary (\(error.localizedDescription)). Your edit may not apply yet."
         }
