@@ -14,6 +14,26 @@ final class AudioPlaybackService: NSObject, ObservableObject {
 
     private var player: AVAudioPlayer?
 
+    /// A soft looping pad (waiting-filler.m4a — "Underwater Ambient Pad" by
+    /// isaiah658, CC0, opengameart.org) played while a listening session is
+    /// waiting on audio: the gap between chapters on auto-next, or a sentence
+    /// still translating/synthesizing. Besides filling the silence, it's what
+    /// keeps the app running with the screen off — iOS suspends a background
+    /// audio app as soon as it stops producing sound, which used to freeze
+    /// auto-next until the screen came back on. No delegate: it loops
+    /// forever and must never trigger `onFinishedPlaying`.
+    private lazy var fillerPlayer: AVAudioPlayer? = {
+        guard let url = Bundle.main.url(forResource: "waiting-filler", withExtension: "m4a"),
+              let filler = try? AVAudioPlayer(contentsOf: url) else { return nil }
+        filler.numberOfLoops = -1
+        filler.volume = 0
+        filler.prepareToPlay()
+        return filler
+    }()
+    private static let fillerVolume: Float = 0.25
+    /// Pending start (see `startFiller`) or pending stop after a fade-out.
+    private var fillerTransition: Task<Void, Never>?
+
     var onFinishedPlaying: (() -> Void)?
     var onNextChapter: (() -> Void)?
     var onPreviousChapter: (() -> Void)?
@@ -92,6 +112,7 @@ final class AudioPlaybackService: NSObject, ObservableObject {
     }
 
     func play(data: Data) throws {
+        stopFiller()
         let newPlayer = try AVAudioPlayer(data: data)
         newPlayer.delegate = self
         player = newPlayer
@@ -110,6 +131,7 @@ final class AudioPlaybackService: NSObject, ObservableObject {
     }
 
     func pause() {
+        stopFiller()
         player?.pause()
         isPlaying = false
         MPNowPlayingInfoCenter.default().playbackState = .paused
@@ -130,10 +152,43 @@ final class AudioPlaybackService: NSObject, ObservableObject {
     }
 
     func stop() {
+        stopFiller()
         player?.stop()
         player = nil
         isPlaying = false
         MPNowPlayingInfoCenter.default().playbackState = .stopped
+    }
+
+    /// Starts the waiting filler unless real audio starts within `delay` —
+    /// so a sentence whose audio is already buffered doesn't get a blip of
+    /// filler in front of it. The session is kept alive from the call on,
+    /// though: the filler player is started at volume 0 right away and
+    /// only faded in after the delay.
+    func startFiller(after delay: TimeInterval = 0.4) {
+        guard let filler = fillerPlayer else { return }
+        fillerTransition?.cancel()
+        if !filler.isPlaying {
+            filler.volume = 0
+            filler.play()
+        }
+        fillerTransition = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+            guard !Task.isCancelled, let filler = self?.fillerPlayer, filler.isPlaying else { return }
+            filler.setVolume(Self.fillerVolume, fadeDuration: 0.5)
+        }
+    }
+
+    /// Fades the filler out (overlapping the start of whatever plays next)
+    /// and stops it.
+    func stopFiller() {
+        guard let filler = fillerPlayer, filler.isPlaying else { return }
+        fillerTransition?.cancel()
+        filler.setVolume(0, fadeDuration: 0.4)
+        fillerTransition = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: 450_000_000)
+            guard !Task.isCancelled else { return }
+            self?.fillerPlayer?.stop()
+        }
     }
 
     func updateNowPlaying(bookTitle: String, chapterTitle: String) {

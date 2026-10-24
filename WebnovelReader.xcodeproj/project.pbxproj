@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		F1E2D3C4B5A6978812345602 /* waiting-filler.m4a in Resources */ = {isa = PBXBuildFile; fileRef = F1E2D3C4B5A6978812345601 /* waiting-filler.m4a */; };
+		F1E2D3C4B5A6978812345603 /* waiting-filler.m4a in Resources */ = {isa = PBXBuildFile; fileRef = F1E2D3C4B5A6978812345601 /* waiting-filler.m4a */; };
 		01734EB50A00E0841EC71B45 /* VieNeuOfflineV2UITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F456FE71D617BD6DEC0F52A6 /* VieNeuOfflineV2UITests.swift */; };
 		039C27826E9137E2EF2DD916 /* CrossPlatformToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8F61816289B66E74EFC4220 /* CrossPlatformToolbar.swift */; };
 		057BB42A7DC6DA1662FFC305 /* BookDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F60BA012E937FDC3266CEAAC /* BookDetailView.swift */; };
@@ -233,6 +235,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		F1E2D3C4B5A6978812345601 /* waiting-filler.m4a */ = {isa = PBXFileReference; lastKnownFileType = file; path = "waiting-filler.m4a"; sourceTree = "<group>"; };
 		00478963429E208A80C957D7 /* WatchPlaybackView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchPlaybackView.swift; sourceTree = "<group>"; };
 		004CA44AC74B9034C629CF09 /* AudioInterruptionUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioInterruptionUITests.swift; sourceTree = "<group>"; };
 		0180275DF4F5BBAC753C3CA1 /* AppleTranslationEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleTranslationEngine.swift; sourceTree = "<group>"; };
@@ -623,6 +626,7 @@
 			isa = PBXGroup;
 			children = (
 				39AFB5C424CB4F3411EF2E1C /* AudioPlaybackService.swift */,
+				F1E2D3C4B5A6978812345601 /* waiting-filler.m4a */,
 			);
 			path = Audio;
 			sourceTree = "<group>";
@@ -985,6 +989,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F1E2D3C4B5A6978812345602 /* waiting-filler.m4a in Resources */,
 				60D547ECFC0BF5D6FBA4D62A /* Assets.xcassets in Resources */,
 				504829D8DE45A4ABF87D4593 /* MODELS.md in Resources */,
 				612DFC120BB91EA4786463CC /* SeaG2P.xcframework in Resources */,
@@ -1011,6 +1016,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F1E2D3C4B5A6978812345603 /* waiting-filler.m4a in Resources */,
 				A4666DF257B2B797427E5918 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
