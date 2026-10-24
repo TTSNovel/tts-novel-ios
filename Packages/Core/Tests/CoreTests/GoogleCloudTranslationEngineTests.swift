@@ -7,7 +7,7 @@ final class GoogleCloudTranslationEngineTests: XCTestCase {
 
     func testChunksRespectSegmentAndCharacterLimits() {
         let many = Array(repeating: "a", count: 95)
-        XCTAssertEqual(GoogleCloudTranslationEngine.chunkIndices(for: many).map(\.count), [40, 40, 15])
+        XCTAssertEqual(GoogleCloudTranslationEngine.chunkIndices(for: many).map(\.count), [8, 40, 40, 7])
 
         let long = String(repeating: "x", count: 5000)
         XCTAssertEqual(GoogleCloudTranslationEngine.chunkIndices(for: [long, long, "short"]), [[0], [1, 2]])

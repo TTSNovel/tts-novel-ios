@@ -35,7 +35,9 @@ final class AppleTranslationEngine: TranslationEngine, @unchecked Sendable {
     private var currentSession: TranslationSession?
     private var currentSourceLanguage: Locale.Language?
     private var currentTargetLanguage: Locale.Language?
-    private var pendingContinuation: CheckedContinuation<TranslationSession, Never>?
+    /// Every `translate` waiting on a session — the open chapter and the
+    /// next chapter's warm-up translation can both be asking at once.
+    private var pendingRequests: [(source: Locale.Language, target: Locale.Language, continuation: CheckedContinuation<TranslationSession, Never>)] = []
 
     /// Apple's framework covers broad language coverage and the only real
     /// way to know if a specific pair truly works is to attempt it — so
@@ -88,8 +90,9 @@ final class AppleTranslationEngine: TranslationEngine, @unchecked Sendable {
             return currentSession
         }
         return await withCheckedContinuation { continuation in
-            pendingContinuation = continuation
-            sessionRequest?(source, target)
+            let alreadyRequested = pendingRequests.contains { $0.source == source && $0.target == target }
+            pendingRequests.append((source, target, continuation))
+            if !alreadyRequested { sessionRequest?(source, target) }
         }
     }
 
@@ -99,8 +102,11 @@ final class AppleTranslationEngine: TranslationEngine, @unchecked Sendable {
         currentSession = session
         currentSourceLanguage = source
         currentTargetLanguage = target
-        pendingContinuation?.resume(returning: session)
-        pendingContinuation = nil
+        let ready = pendingRequests.filter { $0.source == source && $0.target == target }
+        pendingRequests.removeAll { $0.source == source && $0.target == target }
+        for request in ready { request.continuation.resume(returning: session) }
+        // A waiter for a different pair asks again now that this one's done.
+        if let other = pendingRequests.first { sessionRequest?(other.source, other.target) }
     }
 
     /// Called by `ChapterTranslationDriver` when the `.translationTask`

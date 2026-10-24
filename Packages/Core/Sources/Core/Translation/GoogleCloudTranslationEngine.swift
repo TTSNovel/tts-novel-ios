@@ -20,6 +20,10 @@ public struct GoogleCloudTranslationEngine: TranslationEngine {
     /// the reader is) lands quickly.
     static let maxSegmentsPerChunk = 40
     static let maxCharsPerChunk = 8000
+    /// The first chunk is the start of the chapter — what audio needs first
+    /// — so it's kept small: its sentences go to TTS as soon as it's back,
+    /// without waiting on a full 40-segment chunk.
+    static let maxSegmentsInFirstChunk = 8
 
     private let translateChunk: TranslateChunk
 
@@ -72,15 +76,16 @@ public struct GoogleCloudTranslationEngine: TranslationEngine {
         }
     }
 
-    /// Consecutive index runs of at most `maxSegmentsPerChunk` segments /
-    /// `maxCharsPerChunk` characters (a single oversized segment still gets
-    /// its own chunk).
+    /// Consecutive index runs of at most `maxSegmentsPerChunk` segments
+    /// (`maxSegmentsInFirstChunk` for the first) / `maxCharsPerChunk`
+    /// characters (a single oversized segment still gets its own chunk).
     static func chunkIndices(for texts: [String]) -> [[Int]] {
         var chunks: [[Int]] = []
         var current: [Int] = []
         var chars = 0
         for (index, text) in texts.enumerated() {
-            if !current.isEmpty, current.count >= maxSegmentsPerChunk || chars + text.count > maxCharsPerChunk {
+            let maxSegments = chunks.isEmpty ? maxSegmentsInFirstChunk : maxSegmentsPerChunk
+            if !current.isEmpty, current.count >= maxSegments || chars + text.count > maxCharsPerChunk {
                 chunks.append(current)
                 current = []
                 chars = 0

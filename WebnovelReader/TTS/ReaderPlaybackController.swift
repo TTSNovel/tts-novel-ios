@@ -228,6 +228,9 @@ final class ReaderPlaybackController: ObservableObject {
         didSet {
             UserDefaults.standard.set(autoTranslate, forKey: Keys.autoTranslate)
             if translationSourceLanguage != nil { showingTranslation = autoTranslate }
+            // The next chapter's warm-up translated (or didn't) under the
+            // old setting.
+            cancelNextChapterWarmup()
         }
     }
     /// Which `TranslationEngine` actually performs the translation — see
@@ -271,6 +274,8 @@ final class ReaderPlaybackController: ObservableObject {
     /// again — after switching engines, or after a glossary edit (the server
     /// re-translates segments stored under the old glossary).
     func retranslateCurrentChapter() {
+        // The next chapter's warm-up translated with the old engine/glossary.
+        cancelNextChapterWarmup()
         guard translationSourceLanguage != nil else { return }
         // Bumped so a still-in-flight fetch from before can't race this one
         // and overwrite its result — see the `generation ==
@@ -295,6 +300,7 @@ final class ReaderPlaybackController: ObservableObject {
     @Published var primaryLanguageCode: String {
         didSet {
             UserDefaults.standard.set(primaryLanguageCode, forKey: Keys.primaryLanguageCode)
+            cancelNextChapterWarmup()
             // Whether the *current* chapter needs translating, and what
             // source language it needs translating from, both depend on
             // this — fully re-derive rather than just re-fetching with the
@@ -426,6 +432,24 @@ final class ReaderPlaybackController: ObservableObject {
     private var nextChapterSentences: [String] = []
     private var nextChapterAudioTasks: [Int: Task<Data, Error>] = [:]
     private var nextChapterPreloadedData: [Int: Data] = [:]
+    /// The text each `nextChapterPreloadedData` entry was synthesized from
+    /// (original or translated) — `adoptNextChapterWarmup` only keeps audio
+    /// whose text is what that chapter actually reads once it opens.
+    private var nextChapterWarmTexts: [Int: String] = [:]
+    /// The next chapter's translation, run alongside its audio warm-up when
+    /// that chapter needs one and `autoTranslate` is on (see
+    /// `startNextChapterTranslation`). Each sentence feeds the warm-up as
+    /// soon as its chunk comes back — audio never waits on the whole
+    /// chapter — and `evaluateTranslation` adopts what landed once that
+    /// chapter opens, so it isn't translated twice.
+    private var nextChapterTranslation: NextChapterTranslation?
+    private struct NextChapterTranslation {
+        let source: Locale.Language
+        let target: Locale.Language
+        let engineKind: TranslationEngineKind
+        var translated: [String?]
+        var task: Task<Void, Never>?
+    }
     /// Separate, smaller concurrency budget than `maxConcurrentFetches` —
     /// this work is purely speculative and must not meaningfully compete
     /// with the current chapter's own (playback-critical) preload fetches.
@@ -759,7 +783,13 @@ final class ReaderPlaybackController: ObservableObject {
     private func resumeAutoPlayIfNeeded() {
         guard shouldAutoPlayNextChapter else { return }
         shouldAutoPlayNextChapter = false
-        beginChapter(startIndex: 0)
+        // `prepareSentencesForDisplay` just primed preloading from the top
+        // (seeded from the next-chapter warm-up, see `prepareResume`) —
+        // keep it, same as `start()` does, instead of resetting and losing
+        // the warm audio its refill may already have handed over.
+        let primed = pendingResumeIndex == 0
+        pendingResumeIndex = nil
+        beginChapter(startIndex: 0, resetPreload: !primed)
     }
 
     /// A chapter finished playing on its own (not stopped/errored). If
@@ -960,6 +990,10 @@ final class ReaderPlaybackController: ObservableObject {
     /// the Mac scaffold on it. `.google` is built per chapter — the server
     /// stores its translations under the book/chapter they belong to.
     private var currentTranslationEngine: TranslationEngine? {
+        translationEngine(chapterIndex: chapterIndex, source: translationSourceLanguage)
+    }
+
+    private func translationEngine(chapterIndex: Int, source: Locale.Language?) -> TranslationEngine? {
         switch translationEngineKind {
         case .google:
             guard let book else { return nil }
@@ -968,7 +1002,7 @@ final class ReaderPlaybackController: ObservableObject {
             guard #available(iOS 18.0, macOS 15.0, *) else { return nil }
             let glossary = Glossary(
                 terms: glossaryTerms, bookID: book?.id,
-                source: translationSourceLanguage ?? Locale.Language(identifier: "en"), target: primaryLanguage
+                source: source ?? Locale.Language(identifier: "en"), target: primaryLanguage
             )
             return GlossaryTranslationEngine(base: AppleTranslationEngine.shared, glossary: glossary)
         case .opusMT:
@@ -1007,21 +1041,7 @@ final class ReaderPlaybackController: ObservableObject {
             showingTranslation = false
             return
         }
-        let recognizer = NLLanguageRecognizer()
-        // Unconstrained, `NLLanguageRecognizer` picks from *any* language it
-        // knows — on short/unusual passages (legal boilerplate, proper
-        // nouns, a preface page) it can confidently misfire on something
-        // this app will never actually see as source content (confirmed:
-        // "The Odyssey" front matter misdetected as Italian). Constraining
-        // to the languages this app's translation UI actually offers
-        // (`PrimaryLanguageOption`, plus whatever `primaryLanguageCode`
-        // currently is even if custom) makes it pick the best candidate
-        // *among those*, which is both the only meaningful choice for this
-        // feature and far more accurate in practice.
-        let candidateCodes = Set(PrimaryLanguageOption.allCases.map(\.rawValue) + [primaryLanguageCode])
-        recognizer.languageConstraints = candidateCodes.map { NLLanguage($0) }
-        recognizer.processString(sentences.joined(separator: "\n"))
-        let dominant = recognizer.dominantLanguage
+        let dominant = dominantLanguage(of: sentences)
         guard let dominant, dominant.rawValue != primaryLanguageCode else {
             translationSourceLanguage = nil
             showingTranslation = false
@@ -1045,7 +1065,37 @@ final class ReaderPlaybackController: ObservableObject {
             .translation, "Phát hiện chương cần dịch",
             detail: "\(book.map { "\($0.title) — Chương \(chapterIndex + 1)" } ?? "") — phát hiện: \(dominant.rawValue)"
         )
+        // The previous chapter's warm-up may already have translated this
+        // one (see `startNextChapterTranslation`) — start from whatever
+        // landed; `performPendingTranslation` only asks for the rest.
+        if let warm = nextChapterTranslation, nextChapterPreloadIndex == chapterIndex, nextChapterSentences == sentences,
+           warm.source == translationSourceLanguage, warm.target == primaryLanguage, warm.engineKind == translationEngineKind {
+            warm.task?.cancel()
+            nextChapterTranslation?.task = nil
+            translatedSentences = warm.translated
+        }
         Task { await performPendingTranslation() }
+    }
+
+    /// `sentences`' dominant language among the ones this app translates
+    /// between — shared by `evaluateTranslation` (current chapter) and the
+    /// next-chapter warm-up, so both decide "needs translating" the same way.
+    private func dominantLanguage(of sentences: [String]) -> NLLanguage? {
+        let recognizer = NLLanguageRecognizer()
+        // Unconstrained, `NLLanguageRecognizer` picks from *any* language it
+        // knows — on short/unusual passages (legal boilerplate, proper
+        // nouns, a preface page) it can confidently misfire on something
+        // this app will never actually see as source content (confirmed:
+        // "The Odyssey" front matter misdetected as Italian). Constraining
+        // to the languages this app's translation UI actually offers
+        // (`PrimaryLanguageOption`, plus whatever `primaryLanguageCode`
+        // currently is even if custom) makes it pick the best candidate
+        // *among those*, which is both the only meaningful choice for this
+        // feature and far more accurate in practice.
+        let candidateCodes = Set(PrimaryLanguageOption.allCases.map(\.rawValue) + [primaryLanguageCode])
+        recognizer.languageConstraints = candidateCodes.map { NLLanguage($0) }
+        recognizer.processString(sentences.joined(separator: "\n"))
+        return recognizer.dominantLanguage
     }
 
     /// The toolbar translate button's action — switches the reader between
@@ -1120,24 +1170,38 @@ final class ReaderPlaybackController: ObservableObject {
             return
         }
         let generation = translationGeneration
-        let textsToTranslate = sentences
+        let total = sentences.count
+        // Keeps whatever already landed — the next-chapter warm-up's
+        // translation (see `evaluateTranslation`), or an earlier attempt
+        // that failed partway — and only translates what's missing.
+        var existing = translatedSentences ?? []
+        if existing.count != total { existing = [String?](repeating: nil, count: total) }
+        let missingIndices = existing.indices.filter { existing[$0] == nil }
+        let textsToTranslate = missingIndices.map { sentences[$0] }
         isTranslating = true
-        translatedSentences = [String?](repeating: nil, count: textsToTranslate.count)
-        translationProgress = TranslationProgress(completed: 0, total: textsToTranslate.count)
+        translatedSentences = existing
+        var completedCount = total - missingIndices.count
+        translationProgress = TranslationProgress(completed: completedCount, total: total)
         translationErrorMessage = nil
-        EventLogStore.shared.record(.translation, "Bắt đầu dịch chương", detail: "\(logDetail) — \(engine.displayName), \(textsToTranslate.count) câu")
+        refillPreloadQueue()
+        EventLogStore.shared.record(
+            .translation, "Bắt đầu dịch chương",
+            detail: "\(logDetail) — \(engine.displayName), \(textsToTranslate.count)/\(total) câu"
+        )
         let startedAt = Date()
-        var completedCount = 0
         do {
             // Each sentence is displayed/made playable the moment it lands
             // — not buffered until the whole chapter finishes — via
             // `translatedSentences?[index]` below, which `displaySentences`
             // and `isSentenceReady` both read per-index.
-            for try await (index, text) in engine.translate(texts: textsToTranslate, source: source, target: target) {
+            let stream = textsToTranslate.isEmpty
+                ? AsyncThrowingStream { $0.finish() }
+                : engine.translate(texts: textsToTranslate, source: source, target: target)
+            for try await (position, text) in stream {
                 guard generation == translationGeneration else { return }
-                translatedSentences?[index] = text
+                translatedSentences?[missingIndices[position]] = text
                 completedCount += 1
-                translationProgress = TranslationProgress(completed: completedCount, total: textsToTranslate.count)
+                translationProgress = TranslationProgress(completed: completedCount, total: total)
                 // Preload/TTS may have been waiting on exactly this index —
                 // see `isSentenceReady` — nudge it forward as each sentence
                 // lands instead of only once at the very end.
@@ -1239,6 +1303,9 @@ final class ReaderPlaybackController: ObservableObject {
         preloadedDisplayCount = sentenceIndex
         preloadCursor = sentenceIndex
         cancelInFlightFetches()
+        // Landing on the chapter the warm-up targeted (auto-next, a swipe,
+        // a manual next) — don't re-synthesize what it already has.
+        adoptNextChapterWarmup(startIndex: sentenceIndex)
         refillPreloadQueue()
     }
 
@@ -1267,40 +1334,19 @@ final class ReaderPlaybackController: ObservableObject {
         currentSentenceIndex = startIndex
         updateNowPlayingProgress()
         if resetPreload {
+            preloadedIndices = []
+            preloadedData = [:]
+            preloadedThroughIndex = startIndex - 1
+            preloadedPrefixCount = startIndex
+            preloadedDisplayCount = startIndex
+            preloadCursor = startIndex
+            cancelInFlightFetches()
             // If the just-finished chapter's warm-up (see
             // `beginNextChapterAudioWarmup`) already speculatively
             // synthesized this exact chapter's opening sentences, seed from
             // that instead of starting the preload window from empty — the
-            // whole point of the warm-up. The content-equality check (not
-            // just an index match) guards against `chapterCache` having
-            // been evicted/replaced with different content in the meantime.
-            // `nextChapterPreloadedData` is always synthesized from the
-            // *original* text (see `makeNextChapterWarmupTask`/
-            // `nextChapterSentences`, both computed straight off the raw
-            // chapter, with no translation awareness) — `!showingTranslation`
-            // guards against seeding wrong-language audio into a chapter
-            // that's actually supposed to read translated text; falling
-            // through to the plain-reset branch below re-fetches correctly
-            // via `activeSentenceText(at:)` instead.
-            if !showingTranslation, chapterIndex == nextChapterPreloadIndex, nextChapterSentences == sentences, !nextChapterPreloadedData.isEmpty {
-                preloadedData = nextChapterPreloadedData
-                preloadedIndices = Set(nextChapterPreloadedData.keys)
-                preloadedPrefixCount = startIndex
-                var next = startIndex
-                while preloadedIndices.contains(next) { next += 1 }
-                preloadedThroughIndex = next - 1
-                preloadedDisplayCount = preloadedPrefixCount + preloadedIndices.filter { $0 >= startIndex }.count
-                preloadCursor = max(startIndex, next)
-                cancelInFlightFetches()
-            } else {
-                preloadedIndices = []
-                preloadedData = [:]
-                preloadedThroughIndex = startIndex - 1
-                preloadedPrefixCount = startIndex
-                preloadedDisplayCount = startIndex
-                preloadCursor = startIndex
-                cancelInFlightFetches()
-            }
+            // whole point of the warm-up.
+            adoptNextChapterWarmup(startIndex: startIndex)
             cancelNextChapterWarmup()
             generation += 1
         }
@@ -1561,7 +1607,73 @@ final class ReaderPlaybackController: ObservableObject {
         cancelNextChapterWarmup()
         nextChapterPreloadIndex = targetIndex
         nextChapterSentences = Self.sentenceSequence(for: nextChapter)
+        startNextChapterTranslation()
         refillNextChapterWarmup()
+    }
+
+    /// Starts translating the warm-up's target chapter if it will open
+    /// translated (it needs translating and `autoTranslate` is on) — same
+    /// detection and engine `evaluateTranslation`/`performPendingTranslation`
+    /// use, so the result is exactly what that chapter would have produced
+    /// itself. Each translated sentence is synthesized right away (see
+    /// `refillNextChapterWarmup`); a failure just leaves the rest for that
+    /// chapter's own translation to fill in once it opens.
+    private func startNextChapterTranslation() {
+        guard autoTranslate, let targetIndex = nextChapterPreloadIndex,
+              let dominant = dominantLanguage(of: nextChapterSentences), dominant.rawValue != primaryLanguageCode else { return }
+        let source = Locale.Language(identifier: dominant.rawValue)
+        let target = primaryLanguage
+        guard let engine = translationEngine(chapterIndex: targetIndex, source: source),
+              engine.canTranslate(from: source, to: target) else { return }
+        let texts = nextChapterSentences
+        let logDetail = book.map { "\($0.title) — Chương \(targetIndex + 1) (\(source.minimalIdentifier)→\(target.minimalIdentifier))" } ?? ""
+        nextChapterTranslation = NextChapterTranslation(
+            source: source, target: target, engineKind: translationEngineKind,
+            translated: [String?](repeating: nil, count: texts.count)
+        )
+        EventLogStore.shared.record(.translation, "Dịch trước chương tiếp", detail: "\(logDetail) — \(engine.displayName), \(texts.count) câu")
+        nextChapterTranslation?.task = Task(priority: .utility) {
+            do {
+                for try await (index, text) in engine.translate(texts: texts, source: source, target: target) {
+                    guard self.nextChapterPreloadIndex == targetIndex, self.nextChapterTranslation != nil else { return }
+                    self.nextChapterTranslation?.translated[index] = text
+                    self.refillNextChapterWarmup()
+                }
+            } catch {
+                guard !Task.isCancelled else { return }
+                EventLogStore.shared.record(.translation, "Không dịch trước được chương tiếp", detail: "\(logDetail) — \(error.localizedDescription)")
+            }
+        }
+    }
+
+    /// What the warm-up should synthesize for `index` — the translation
+    /// when the target chapter will open translated (nil until that
+    /// sentence's chunk lands), the original text otherwise.
+    private func nextChapterWarmText(at index: Int) -> String? {
+        guard let translation = nextChapterTranslation else { return nextChapterSentences[index] }
+        return translation.translated[index]
+    }
+
+    /// Moves whatever the warm-up synthesized for the chapter now opening
+    /// into the regular preload cache — only audio whose text is what this
+    /// chapter actually reads now (translated vs. original, see
+    /// `activeSentenceText(at:)`), so a translation toggle in between never
+    /// plays the wrong language. Expects the preload state already reset to
+    /// `startIndex`.
+    private func adoptNextChapterWarmup(startIndex: Int) {
+        guard chapterIndex == nextChapterPreloadIndex, nextChapterSentences == sentences else { return }
+        let usable = nextChapterPreloadedData.filter { index, _ in
+            index >= startIndex && sentences.indices.contains(index) && isSentenceReady(index)
+                && nextChapterWarmTexts[index] == activeSentenceText(at: index)
+        }
+        guard !usable.isEmpty else { return }
+        preloadedData = usable
+        preloadedIndices = Set(usable.keys)
+        var next = startIndex
+        while preloadedIndices.contains(next) { next += 1 }
+        preloadedThroughIndex = next - 1
+        preloadedDisplayCount = preloadedPrefixCount + preloadedIndices.count
+        preloadCursor = max(startIndex, next)
     }
 
     private func refillNextChapterWarmup() {
@@ -1573,15 +1685,16 @@ final class ReaderPlaybackController: ObservableObject {
         let budget = min(preloadAhead, nextChapterSentences.count)
         var index = 0
         while index < budget, nextChapterAudioTasks.count < nextChapterWarmupBudget {
-            if nextChapterPreloadedData[index] == nil, nextChapterAudioTasks[index] == nil {
-                nextChapterAudioTasks[index] = makeNextChapterWarmupTask(index: index)
+            // A not-yet-translated sentence is skipped, not waited on —
+            // later ones whose chunk already came back go ahead.
+            if nextChapterPreloadedData[index] == nil, nextChapterAudioTasks[index] == nil, let text = nextChapterWarmText(at: index) {
+                nextChapterAudioTasks[index] = makeNextChapterWarmupTask(index: index, text: text)
             }
             index += 1
         }
     }
 
-    private func makeNextChapterWarmupTask(index: Int) -> Task<Data, Error> {
-        let text = nextChapterSentences[index]
+    private func makeNextChapterWarmupTask(index: Int, text: String) -> Task<Data, Error> {
         let voice = self.voice
         let vieNeuOfflineV2Voice = self.vieNeuOfflineV2Voice
         let vieNeuOfflineV3Voice = self.vieNeuOfflineV3Voice
@@ -1601,14 +1714,15 @@ final class ReaderPlaybackController: ObservableObject {
                 vieNeuOfflineV3Voice: vieNeuOfflineV3Voice, gwenTTSSpeaker: gwenTTSSpeaker,
                 speed: speed, baseURL: baseURL, isConnected: isConnected, isLoggedIn: isLoggedIn
             )
-            self.markNextChapterWarmed(index: index, data: data, targetIndex: targetIndex)
+            self.markNextChapterWarmed(index: index, text: text, data: data, targetIndex: targetIndex)
             return data
         }
     }
 
-    private func markNextChapterWarmed(index: Int, data: Data, targetIndex: Int?) {
+    private func markNextChapterWarmed(index: Int, text: String, data: Data, targetIndex: Int?) {
         guard targetIndex == nextChapterPreloadIndex else { return }
         nextChapterPreloadedData[index] = data
+        nextChapterWarmTexts[index] = text
         nextChapterAudioTasks[index] = nil
         refillNextChapterWarmup()
     }
@@ -1621,6 +1735,9 @@ final class ReaderPlaybackController: ObservableObject {
         for task in nextChapterAudioTasks.values { task.cancel() }
         nextChapterAudioTasks = [:]
         nextChapterPreloadedData = [:]
+        nextChapterWarmTexts = [:]
+        nextChapterTranslation?.task?.cancel()
+        nextChapterTranslation = nil
         nextChapterPreloadIndex = nil
         nextChapterSentences = []
     }
