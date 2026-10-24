@@ -633,6 +633,7 @@ final class ReaderPlaybackController: ObservableObject {
             return
         }
         stop()
+        player.startFiller(after: 0)
         shouldAutoPlayNextChapter = true
         chapter = nil
         chapterIndex = index
@@ -694,6 +695,7 @@ final class ReaderPlaybackController: ObservableObject {
         } catch {
             guard generation == self.generation else { return }
             loadError = "Không tải được nội dung chương"
+            player.stopFiller()
             let detail = "\(book.title) — Chương \(chapterIndex + 1): \(error.localizedDescription)"
             surfaceError(loadError!, detail: detail)
             EventLogStore.shared.record(.error, "Không tải được nội dung chương", detail: detail)
@@ -802,6 +804,11 @@ final class ReaderPlaybackController: ObservableObject {
             abandonSleepTimerIfIdle()
             return
         }
+        // Loading/translating/synthesizing the next chapter happens with
+        // nothing playing — without the filler, iOS suspends the app right
+        // here when the screen is off, and auto-next only continues once
+        // it's turned back on.
+        player.startFiller(after: 0)
         shouldAutoPlayNextChapter = true
         chapter = nil
         chapterIndex += 1
@@ -1358,6 +1365,7 @@ final class ReaderPlaybackController: ObservableObject {
         // otherwise pressing Play on a cold chapter (no cache yet) shows no
         // feedback at all until the whole buffer wait finishes.
         isLoadingAudio = true
+        player.startFiller()
         Task {
             await waitForInitialBuffer(startIndex: startIndex, generation: generation)
             await playCurrentSentence(generation: generation)
@@ -1479,6 +1487,9 @@ final class ReaderPlaybackController: ObservableObject {
         // audio suddenly starts, which reads as "the tap didn't do
         // anything."
         isLoadingAudio = true
+        // Fills (and keeps the app awake through) a wait on this sentence's
+        // translation/synthesis; `player.play(data:)` stops it.
+        player.startFiller()
         preloadCursor = max(preloadCursor, currentSentenceIndex + 1)
         // Never fetch/play against text that's about to be swapped out once
         // this specific sentence's translation lands — see
@@ -1516,6 +1527,7 @@ final class ReaderPlaybackController: ObservableObject {
             isLoadingAudio = false
             guard generation == self.generation else { return }
             errorMessage = "Không tạo được audio — thử lại hoặc đổi giọng đọc"
+            player.stopFiller()
             let detail = "\(playbackDetail() ?? "") — \(error.localizedDescription)"
             surfaceError("Không tạo được audio", detail: detail)
             active = false
