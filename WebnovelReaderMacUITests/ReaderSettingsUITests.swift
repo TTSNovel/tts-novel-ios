@@ -50,7 +50,7 @@ final class ReaderSettingsUITests: XCTestCase {
         XCTAssertTrue(filterWordsLink.exists)
         // These two rows previously duplicated their section header text in
         // Form's own label column — now the model picker sits directly
-        // below its "Model" header instead of an indented "Model" row label.
+        // sits in the Listen section, above Reading's font size.
         XCTAssertLessThan(modelPicker.frame.minY, fontSizePicker.frame.minY)
         attachScreenshot(app, named: "ReaderSettings-Root-macOS")
 

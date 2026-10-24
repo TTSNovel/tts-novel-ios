@@ -78,7 +78,7 @@ extension XCTestCase {
     }
 
     /// A guest session (fresh machine/VM — no saved login) logs in from
-    /// Reader Settings → "Log In", using TTS_TEST_USER / TTS_TEST_PASS from
+    /// Settings → "Log In", using TTS_TEST_USER / TTS_TEST_PASS from
     /// the runner's environment. Expects ReaderView to be showing.
     func loginIfGuest(_ app: XCUIApplication) {
         // ChapterPageContent's footnote only shows for a guest (with an
