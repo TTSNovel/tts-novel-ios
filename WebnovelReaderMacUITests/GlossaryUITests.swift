@@ -55,7 +55,7 @@ final class GlossaryUITests: XCTestCase {
         // whichever of the two is still needed (⌘[ sometimes closes the
         // whole sheet).
         let sheet = app.sheets.firstMatch
-        let back = sheet.buttons.matching(NSPredicate(format: "label IN {'Back', 'Reader Settings'}")).firstMatch
+        let back = sheet.buttons.matching(NSPredicate(format: "label IN {'Back', 'Settings'}")).firstMatch
         if back.waitForExistence(timeout: 5) { back.click() }
         let done = sheet.buttons["Done"].firstMatch
         if done.waitForExistence(timeout: 5) { done.click() }

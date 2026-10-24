@@ -25,6 +25,16 @@ import Core
 // itself). Its own `.toolbar` "Done" button is likewise unaffected by the
 // bottom-bar-overlap bug documented on FilterWordsView, since that bug is
 // specific to pushed destinations too.
+//
+// Layout is grouped by what the reader is trying to do, most-used first:
+// LISTEN (which voice reads the chapter, its speaker, speed), TRANSLATE
+// (which translator, into what, glossary), READING (font size), PLAYBACK
+// (auto-advance, sleep timer, preload), then tools and account. The two
+// pickers people actually come here for — the TTS voice and the
+// translator — used to be a bare unlabeled "Model" dropdown and an
+// "Engine" row buried mid-sheet; they now lead their sections as labeled
+// rows with an icon and a one-line description of the current choice, and
+// their menus group options into Online / On-device.
 struct ReaderSettingsSheet: View {
     @EnvironmentObject private var playback: ReaderPlaybackController
     @EnvironmentObject private var session: SessionStore
@@ -36,13 +46,11 @@ struct ReaderSettingsSheet: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
-                    modelSection
-                    readingSpeedSection
-                    fontSizeSection
-                    translationSection
-                    automaticSection
-                    preloadSection
-                    linksSection
+                    listenSection
+                    translateSection
+                    readingSection
+                    playbackSection
+                    toolsSection
                     accountSection
                 }
             }
@@ -55,7 +63,7 @@ struct ReaderSettingsSheet: View {
                 Color.clear.frame(height: 44)
             }
             #endif
-            .navigationTitle("Reader Settings")
+            .navigationTitle("Settings")
             .inlineNavigationTitle()
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
@@ -84,85 +92,28 @@ struct ReaderSettingsSheet: View {
 
     // MARK: - Sections
 
-    @ViewBuilder
-    private var modelSection: some View {
-        sectionHeader("Model")
-        SettingsRow {
-            Picker("Model", selection: $playback.voice) {
-                ForEach(TTSVoice.allCases) { voice in
-                    Text(voice.displayName).tag(voice)
-                }
-            }
-            .labelsHidden()
-            .pickerStyle(.menu)
-            // .menu tints the selected-value text + chevron with the app's
-            // accent color (blue) by default — .tint here overrides that so
-            // it reads as a plain secondary-gray value, matching every
-            // other row on this screen.
-            .tint(.secondary)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .accessibilityIdentifier("modelPicker")
-        }
-
-        // vieNeuOfflineV2/V3 currently have more than one selectable
-        // speaker preset (see VieNeuOfflineV2Voice) — every other model has
-        // a single fixed voice, so this row only shows up once there's an
-        // actual choice to make.
-        if playback.voice == .vieNeuOfflineV2 {
-            sectionHeader("Voice")
-            SettingsRow {
-                Picker("Voice", selection: $playback.vieNeuOfflineV2Voice) {
-                    ForEach(VieNeuOfflineV2Voice.allCases) { preset in
-                        Text(preset.displayName).tag(preset)
-                    }
-                }
-                .labelsHidden()
-                .pickerStyle(.menu)
-                .tint(.secondary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .accessibilityIdentifier("vieNeuOfflineV2VoicePicker")
-            }
-        }
-
-        if playback.voice == .vieNeuOfflineV3 {
-            sectionHeader("Voice")
-            SettingsRow {
-                Picker("Voice", selection: $playback.vieNeuOfflineV3Voice) {
-                    ForEach(VieNeuOfflineV3Voice.allCases) { preset in
-                        Text(preset.displayName).tag(preset)
-                    }
-                }
-                .labelsHidden()
-                .pickerStyle(.menu)
-                .tint(.secondary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .accessibilityIdentifier("vieNeuOfflineV3VoicePicker")
-            }
-        }
-
-        // gwen_tts's 9 built-in reference speakers (see GwenTTSSpeaker) —
-        // same pattern as vieNeuOfflineV2 above.
-        if playback.voice == .gwenTTS {
-            sectionHeader("Voice")
-            SettingsRow {
-                Picker("Voice", selection: $playback.gwenTTSSpeaker) {
-                    ForEach(GwenTTSSpeaker.allCases) { speaker in
-                        Text(speaker.displayName).tag(speaker)
-                    }
-                }
-                .labelsHidden()
-                .pickerStyle(.menu)
-                .tint(.secondary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .accessibilityIdentifier("gwenTTSSpeakerPicker")
-            }
-        }
-    }
-
-    private var readingSpeedSection: some View {
+    private var listenSection: some View {
         VStack(alignment: .leading, spacing: 0) {
-            sectionHeader("Reading Speed")
-            SettingsRow {
+            sectionHeader("Listen")
+            SettingsRow(icon: "waveform", label: "Reading voice", detail: playback.voice.settingsDetail) {
+                Picker("Reading voice", selection: $playback.voice) {
+                    Section("Online") {
+                        ForEach(TTSVoice.allCases.filter { !$0.isOffline }) { voice in
+                            Text(voice.displayName).tag(voice)
+                        }
+                    }
+                    Section("On this device") {
+                        ForEach(TTSVoice.allCases.filter(\.isOffline)) { voice in
+                            Text(voice.displayName).tag(voice)
+                        }
+                    }
+                }
+                .settingsMenuPicker()
+                .accessibilityIdentifier("modelPicker")
+            }
+            speakerRow
+            Divider()
+            SettingsRow(icon: "speedometer", label: "Speed", stacked: true) {
                 Picker("Speed", selection: $playback.speed) {
                     ForEach([0.85, 1.0, 1.15, 1.3, 1.5], id: \.self) { speed in
                         Text("\(speed, specifier: "%.2g")x").tag(speed)
@@ -174,16 +125,114 @@ struct ReaderSettingsSheet: View {
         }
     }
 
-    private var fontSizeSection: some View {
+    // vieNeuOfflineV2/V3 and gwen_tts have more than one selectable
+    // speaker preset (see VieNeuOfflineV2Voice/GwenTTSSpeaker) — every
+    // other voice has a single fixed speaker, so this row only shows up
+    // once there's an actual choice to make.
+    @ViewBuilder
+    private var speakerRow: some View {
+        switch playback.voice {
+        case .vieNeuOfflineV2:
+            Divider()
+            SettingsRow(icon: "person.wave.2", label: "Speaker") {
+                Picker("Speaker", selection: $playback.vieNeuOfflineV2Voice) {
+                    ForEach(VieNeuOfflineV2Voice.allCases) { preset in
+                        Text(preset.displayName).tag(preset)
+                    }
+                }
+                .settingsMenuPicker()
+                .accessibilityIdentifier("vieNeuOfflineV2VoicePicker")
+            }
+        case .vieNeuOfflineV3:
+            Divider()
+            SettingsRow(icon: "person.wave.2", label: "Speaker") {
+                Picker("Speaker", selection: $playback.vieNeuOfflineV3Voice) {
+                    ForEach(VieNeuOfflineV3Voice.allCases) { preset in
+                        Text(preset.displayName).tag(preset)
+                    }
+                }
+                .settingsMenuPicker()
+                .accessibilityIdentifier("vieNeuOfflineV3VoicePicker")
+            }
+        case .gwenTTS:
+            Divider()
+            SettingsRow(icon: "person.wave.2", label: "Speaker") {
+                Picker("Speaker", selection: $playback.gwenTTSSpeaker) {
+                    ForEach(GwenTTSSpeaker.allCases) { speaker in
+                        Text(speaker.displayName).tag(speaker)
+                    }
+                }
+                .settingsMenuPicker()
+                .accessibilityIdentifier("gwenTTSSpeakerPicker")
+            }
+        default:
+            EmptyView()
+        }
+    }
+
+    private var translateSection: some View {
         VStack(alignment: .leading, spacing: 0) {
-            sectionHeader("Font Size")
-            SettingsRow {
+            sectionHeader("Translate")
+            SettingsRow(icon: "character.bubble", label: "Translator", detail: playback.translationEngineKind.settingsDetail) {
+                Picker("Translator", selection: $playback.translationEngineKind) {
+                    Section("On this device") {
+                        ForEach(TranslationEngineKind.allCases.filter { !$0.isOnline }) { kind in
+                            Text(kind.displayName).tag(kind)
+                        }
+                    }
+                    Section("Online") {
+                        ForEach(TranslationEngineKind.allCases.filter(\.isOnline)) { kind in
+                            Text(kind.displayName).tag(kind)
+                        }
+                    }
+                }
+                .settingsMenuPicker()
+                .accessibilityIdentifier("translationEnginePicker")
+            }
+            Divider()
+            SettingsRow(icon: "globe", label: "Translate into") {
+                Picker("Translate into", selection: $playback.primaryLanguageCode) {
+                    ForEach(PrimaryLanguageOption.allCases) { option in
+                        Text(option.displayName).tag(option.rawValue)
+                    }
+                }
+                .settingsMenuPicker()
+                .accessibilityIdentifier("primaryLanguagePicker")
+            }
+            Divider()
+            SettingsRow(icon: "wand.and.stars", label: "Auto-translate chapters") {
+                Toggle("Auto-translate chapters", isOn: $playback.autoTranslate)
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .accessibilityIdentifier("autoTranslateToggle")
+            }
+            if [.google, .apple].contains(playback.translationEngineKind), let book = playback.book {
+                Divider()
+                NavigationLink {
+                    GlossaryView(bookID: book.id)
+                } label: {
+                    SettingsLinkRow(icon: "character.book.closed", label: "Glossary")
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("glossaryLink")
+                if playback.translationEngineKind == .google {
+                    Divider()
+                    StoredTranslationsRow(bookID: book.id)
+                }
+            }
+        }
+    }
+
+    private var readingSection: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            sectionHeader("Reading")
+            SettingsRow(icon: "textformat.size", label: "Font size", stacked: true) {
                 // Tried a Stepper here first (auto-disables at bounds, lays
                 // out fine) — but its arrows are a tiny ~20pt hit target,
                 // fiddly to click. A segmented Picker — the same control
-                // "Reading Speed" above already uses — gives every value
-                // its own full-height tappable segment instead.
-                Picker("Font Size", selection: $playback.fontScale) {
+                // "Speed" above already uses — gives every value its own
+                // full-height tappable segment instead.
+                Picker("Font size", selection: $playback.fontScale) {
                     ForEach(ReaderPlaybackController.fontScaleSteps, id: \.self) { scale in
                         Text("\(Int((scale * 100).rounded()))%").tag(scale)
                     }
@@ -195,110 +244,61 @@ struct ReaderSettingsSheet: View {
         }
     }
 
-    private var translationSection: some View {
+    private var playbackSection: some View {
         VStack(alignment: .leading, spacing: 0) {
-            sectionHeader("Translation")
-            SettingsRow(label: "Primary language") {
-                Picker("Primary language", selection: $playback.primaryLanguageCode) {
-                    ForEach(PrimaryLanguageOption.allCases) { option in
-                        Text(option.displayName).tag(option.rawValue)
-                    }
-                }
-                .labelsHidden()
-                .pickerStyle(.menu)
-                .tint(.secondary)
-                .accessibilityIdentifier("primaryLanguagePicker")
-            }
-            Divider()
-            SettingsRow(label: "Engine") {
-                Picker("Engine", selection: $playback.translationEngineKind) {
-                    ForEach(TranslationEngineKind.allCases) { kind in
-                        Text(kind.displayName).tag(kind)
-                    }
-                }
-                .labelsHidden()
-                .pickerStyle(.menu)
-                .tint(.secondary)
-                .accessibilityIdentifier("translationEnginePicker")
-            }
-            Divider()
-            if [.google, .apple].contains(playback.translationEngineKind), let book = playback.book {
-                NavigationLink {
-                    GlossaryView(bookID: book.id)
-                } label: {
-                    SettingsLinkRow(icon: "character.book.closed", label: "Glossary")
-                }
-                .buttonStyle(.plain)
-                .accessibilityIdentifier("glossaryLink")
-                Divider()
-                if playback.translationEngineKind == .google {
-                    StoredTranslationsRow(bookID: book.id)
-                    Divider()
-                }
-            }
-            SettingsRow(label: "Auto-translate") {
-                Toggle("Auto-translate", isOn: $playback.autoTranslate)
-                    .labelsHidden()
-                    .toggleStyle(.switch)
-                    .accessibilityIdentifier("autoTranslateToggle")
-            }
-        }
-    }
-
-    @ViewBuilder
-    private var automaticSection: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            sectionHeader("Automatic")
-            SettingsRow(label: "Auto-advance to next chapter") {
+            sectionHeader("Playback")
+            SettingsRow(icon: "forward.end", label: "Auto-advance to next chapter") {
                 Toggle("Auto-advance to next chapter", isOn: $playback.autoNextChapter)
                     .labelsHidden()
                     .toggleStyle(.switch)
             }
             Divider()
-            SettingsRow(label: "Sleep timer") {
+            SettingsRow(icon: "moon.zzz", label: "Sleep timer") {
                 Picker("Sleep timer", selection: $playback.autoStopMinutes) {
                     Text("Off").tag(0.0)
                     ForEach([5.0, 15.0, 30.0, 45.0, 60.0, 90.0, 120.0], id: \.self) { minutes in
                         Text("\(Int(minutes)) min").tag(minutes)
                     }
                 }
-                .labelsHidden()
-                .pickerStyle(.menu)
-                .tint(.secondary)
+                .settingsMenuPicker()
             }
             // See PlaybackBar's matching countdown for why
             // "deadline > Date()" guards Text(timerInterval:).
             if let deadline = playback.sleepTimerDeadline, deadline > Date() {
                 Divider()
-                SettingsRow(label: "Turns off in") {
+                SettingsRow(icon: "timer", label: "Turns off in") {
                     Text(timerInterval: Date()...deadline, countsDown: true)
                         .font(.system(size: 13.5))
                         .foregroundStyle(.secondary)
                         .monospacedDigit()
                 }
             }
-        }
-    }
-
-    private var preloadSection: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            sectionHeader("Preload")
-            SettingsRow(label: "Sentences to preload") {
-                Picker("Sentences to preload", selection: $playback.preloadAhead) {
+            Divider()
+            SettingsRow(
+                icon: "square.stack.3d.down.right",
+                label: "Preload audio",
+                detail: "Sentences buffered ahead of the playhead — smoother playback, more bandwidth."
+            ) {
+                Picker("Preload audio", selection: $playback.preloadAhead) {
                     ForEach([3, 5, 10, 15, 20], id: \.self) { n in
                         Text("\(n) sentences").tag(n)
                     }
                 }
-                .labelsHidden()
-                .pickerStyle(.menu)
-                .tint(.secondary)
+                .settingsMenuPicker()
             }
-            sectionFooter("How many sentences' audio to buffer ahead of the playhead — smoother playback, but uses more bandwidth.")
         }
     }
 
-    private var linksSection: some View {
+    private var toolsSection: some View {
         VStack(alignment: .leading, spacing: 0) {
+            sectionHeader("Tools")
+            NavigationLink {
+                FilterWordsView()
+            } label: {
+                SettingsLinkRow(icon: "line.3.horizontal.decrease.circle", label: "Filter Words")
+            }
+            .buttonStyle(.plain)
+            .accessibilityIdentifier("filterWordsLink")
             Divider()
             NavigationLink {
                 ActionHistoryView()
@@ -308,14 +308,6 @@ struct ReaderSettingsSheet: View {
             .buttonStyle(.plain)
             .accessibilityIdentifier("actionHistoryLink")
             Divider()
-            NavigationLink {
-                FilterWordsView()
-            } label: {
-                SettingsLinkRow(icon: "line.3.horizontal.decrease.circle", label: "Filter Words")
-            }
-            .buttonStyle(.plain)
-            .accessibilityIdentifier("filterWordsLink")
-            Divider()
             Button {
                 showingBugReport = true
             } label: {
@@ -323,25 +315,29 @@ struct ReaderSettingsSheet: View {
             }
             .buttonStyle(.plain)
             .accessibilityIdentifier("bugReportLink")
-            Divider()
         }
-        .padding(.top, 14)
     }
 
     private var accountSection: some View {
         VStack(alignment: .leading, spacing: 0) {
+            sectionHeader("Account")
             if session.isLoggedIn {
                 Button {
                     isPresented = false
                     session.logout()
                 } label: {
-                    Text("Log Out")
-                        .font(.system(size: 13.5))
-                        .foregroundStyle(.red)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 10)
-                        .contentShape(Rectangle())
+                    HStack(spacing: 10) {
+                        Image(systemName: "rectangle.portrait.and.arrow.right")
+                            .font(.system(size: 13))
+                            .frame(width: 20)
+                        Text("Log Out")
+                            .font(.system(size: 13.5))
+                        Spacer(minLength: 0)
+                    }
+                    .foregroundStyle(.red)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
             } else {
@@ -366,7 +362,7 @@ struct ReaderSettingsSheet: View {
             .textCase(.uppercase)
             .foregroundStyle(.secondary)
             .padding(.horizontal, 14)
-            .padding(.top, 14)
+            .padding(.top, 20)
             .padding(.bottom, 6)
     }
 
@@ -381,26 +377,96 @@ struct ReaderSettingsSheet: View {
     }
 }
 
-// A row with an optional leading label and a trailing control — when
-// `label` is nil, `content` fills the row's full width instead of being
-// pushed to the trailing edge, so bare pickers (Model, Reading Speed, Font
-// Size, Preload) read as a full-width control rather than a tiny floating
-// dropdown.
+// UI copy for the two headline pickers — kept here rather than on the Core
+// enums since it's Settings-sheet wording, not model data.
+private extension TTSVoice {
+    var settingsDetail: String {
+        switch self {
+        case .piperVi: return "Online · fast, lightweight server voice. Needs login."
+        case .googleTTS: return "Online · Google Cloud's natural voice. Needs login."
+        case .vieNeu: return "Online · expressive Vietnamese, handles mixed English. Needs login."
+        case .gwenTTS: return "Online · cloned speakers, highest quality but slow (10–90 s per sentence). Needs login."
+        case .piperOffline: return "On this device · works without internet, light on battery."
+        case .vieNeuOfflineV2: return "On this device · VieNeu v2, no internet needed, heavier on battery."
+        case .vieNeuOfflineV3: return "On this device · same VieNeu v3 model as the online voice, heavier on battery."
+        }
+    }
+}
+
+private extension TranslationEngineKind {
+    var isOnline: Bool { self == .google }
+
+    var settingsDetail: String {
+        switch self {
+        case .apple: return "On this device · best quality, needs iOS 18 / macOS 15."
+        case .opusMT: return "On this device · small bundled model, English → Vietnamese only."
+        case .google: return "Online · supports a per-book glossary; translations are saved on the server."
+        case .vietPhrase: return "On this device · Chinese → Hán Việt reading, character by character."
+        }
+    }
+}
+
+private extension View {
+    // .menu tints the selected-value text + chevron with the app's accent
+    // color (blue) by default — .tint here overrides that so it reads as a
+    // plain secondary-gray value, matching every other row on this screen.
+    func settingsMenuPicker() -> some View {
+        labelsHidden()
+            .pickerStyle(.menu)
+            .tint(.secondary)
+    }
+}
+
+// A row with a leading icon + label and a trailing control, plus an
+// optional description line underneath (indented to line up with the
+// label, full row width so it doesn't fight the trailing picker for room).
+// `stacked` puts the control on its own full-width line below the label
+// instead — for segmented pickers (Speed, Font size) whose five segments
+// don't fit beside a label on a phone-width sheet.
 private struct SettingsRow<Content: View>: View {
+    var icon: String? = nil
     var label: String? = nil
+    var detail: String? = nil
+    var stacked = false
     @ViewBuilder var content: Content
 
     var body: some View {
-        HStack(spacing: 10) {
-            if let label {
-                Text(label)
-                    .font(.system(size: 13.5))
-                Spacer(minLength: 8)
+        VStack(alignment: .leading, spacing: stacked ? 8 : 3) {
+            if stacked {
+                labelView
+                content
+            } else {
+                HStack(spacing: 10) {
+                    labelView
+                    Spacer(minLength: 8)
+                    content
+                }
             }
-            content
+            if let detail {
+                Text(detail)
+                    .font(.system(size: 12))
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.leading, icon == nil ? 0 : 30)
+            }
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
+    }
+
+    private var labelView: some View {
+        HStack(spacing: 10) {
+            if let icon {
+                Image(systemName: icon)
+                    .font(.system(size: 13))
+                    .foregroundStyle(Color.accentColor)
+                    .frame(width: 20)
+            }
+            if let label {
+                Text(label)
+                    .font(.system(size: 13.5))
+            }
+        }
     }
 }
 

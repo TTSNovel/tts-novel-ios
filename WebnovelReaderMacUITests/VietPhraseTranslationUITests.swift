@@ -57,7 +57,7 @@ final class VietPhraseTranslationUITests: XCTestCase {
         XCTAssertTrue(startButton.waitForExistence(timeout: 10) || continueButton.waitForExistence(timeout: 1))
         (startButton.exists ? startButton : continueButton).tap()
 
-        // Pick VietPhrase in Reader Settings -> Translation -> Engine.
+        // Pick VietPhrase in Settings -> Translate -> Translator.
         let settingsButton = app.buttons["voiceMenuButton"].firstMatch
         XCTAssertTrue(settingsButton.waitForExistence(timeout: 15))
         settingsButton.tap()
