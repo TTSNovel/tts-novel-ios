@@ -15,7 +15,9 @@ import Foundation
 ///
 /// Matching follows the server's Google glossary: case-sensitive (the terms
 /// are capitalized system names — "Strength" — that also occur as ordinary
-/// words — "strength"), whole words only, longest term first.
+/// words — "strength"), whole words only, longest term first — and, like the
+/// server's `term_variants`, every English term also covers its other number
+/// and a capitalized first letter ("class" → "classes", "Class", "Classes").
 public struct Glossary: Sendable, Equatable {
     /// source → target, for the terms that apply.
     public let entries: [String: String]
@@ -30,14 +32,61 @@ public struct Glossary: Sendable, Equatable {
             return
         }
         let sourceCode = source.languageCode?.identifier ?? "en"
-        var entries: [String: String] = [:]
-        for term in terms where term.bookID == nil && Self.language(of: term.source) == sourceCode {
-            entries[term.source] = term.target
+        var shared: [String: String] = [:]
+        var own: [String: String] = [:]
+        for term in terms where Self.language(of: term.source) == sourceCode {
+            if term.bookID == nil {
+                shared[term.source] = term.target
+            } else if term.bookID == bookID {
+                own[term.source] = term.target
+            }
         }
-        for term in terms where term.bookID != nil && term.bookID == bookID && Self.language(of: term.source) == sourceCode {
-            entries[term.source] = term.target
+        self.init(entries: Self.withVariants(shared).merging(Self.withVariants(own)) { $1 })
+    }
+
+    /// `entries` plus every term's variants, translated the same — except a
+    /// keep-original term's, which keep their own spelling ("Classes" stays
+    /// "Classes", not "class"). A term entered as such wins over another's
+    /// variant.
+    static func withVariants(_ entries: [String: String]) -> [String: String] {
+        var expanded: [String: String] = [:]
+        for (source, target) in entries.sorted(by: { $0.key < $1.key }) {
+            for variant in variants(of: source) where expanded[variant] == nil {
+                expanded[variant] = target == source ? variant : target
+            }
         }
-        self.init(entries: entries)
+        return expanded.merging(entries) { $1 }
+    }
+
+    /// The other spellings an English term also applies to (same rules as
+    /// the server's `term_variants`): singular/plural of its last word
+    /// ("Dao Seed" ↔ "Dao Seeds", "Ability" ↔ "Abilities") and, for each,
+    /// the first letter capitalized ("class" → "Class"). Never lowercased —
+    /// "Strength" mustn't catch "strength" — nor all-caps, rare in prose.
+    static func variants(of source: String) -> [String] {
+        guard language(of: source) == "en" else { return [] }
+        var forms = [source]
+        if let range = source.range(of: "[A-Za-z]+$", options: .regularExpression), source[range].count > 1 {
+            forms.append(source[..<range.lowerBound] + otherNumber(String(source[range])))
+        }
+        forms += forms.compactMap { form in
+            guard let first = form.first, first.isLowercase else { return nil }
+            return first.uppercased() + form.dropFirst()
+        }
+        var seen: Set<String> = [source]
+        return forms.filter { seen.insert($0).inserted }
+    }
+
+    /// `word`'s plural, or its singular if it already looks plural.
+    private static func otherNumber(_ word: String) -> String {
+        let lower = word.lowercased()
+        if lower.hasSuffix("ss") || lower.hasSuffix("us") || lower.hasSuffix("is") { return word + "es" }  // Class, Status, Axis
+        if lower.hasSuffix("ies") && word.count > 4 { return word.dropLast(3) + "y" }
+        if ["ches", "shes", "sses", "xes", "zes"].contains(where: lower.hasSuffix) { return String(word.dropLast(2)) }
+        if lower.hasSuffix("s") { return String(word.dropLast()) }
+        if ["ch", "sh", "x", "z"].contains(where: lower.hasSuffix) { return word + "es" }
+        if lower.hasSuffix("y"), lower.count > 1, !"aeiou".contains(lower.dropLast().last!) { return word.dropLast() + "ies" }
+        return word + "s"  // also for an acronym: "HP" → "HPs"
     }
 
     public init(entries: [String: String]) {
