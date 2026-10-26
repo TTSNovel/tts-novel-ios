@@ -66,9 +66,35 @@ final class GlossaryTranslationEngineTests: XCTestCase {
             GlossaryTerm(source: "Ladder", target: "Thang Thiên", bookID: 7),
             GlossaryTerm(source: "道", target: "Đạo", bookID: nil),
         ]
-        XCTAssertEqual(Glossary(terms: terms, bookID: 119, source: en, target: vi).entries, ["Dao": "Đạo", "Tutorial": "Tân Thủ Thôn"])
+        XCTAssertEqual(Glossary(terms: terms, bookID: 119, source: en, target: vi).entries, [
+            "Dao": "Đạo", "Daos": "Đạo", "Tutorial": "Tân Thủ Thôn", "Tutorials": "Tân Thủ Thôn",
+        ])
         XCTAssertEqual(Glossary(terms: terms, bookID: 119, source: Locale.Language(identifier: "zh-Hans"), target: vi).entries, ["道": "Đạo"])
         XCTAssertTrue(Glossary(terms: terms, bookID: 119, source: en, target: Locale.Language(identifier: "ja")).isEmpty)
+    }
+
+    func testVariantsMatchTheServer() {
+        let cases: [(String, [String])] = [
+            ("Dao Seed", ["Dao Seeds"]), ("Dao Seeds", ["Dao Seed"]),
+            ("Ability", ["Abilities"]), ("Abilities", ["Ability"]), ("Day", ["Days"]),
+            ("Branch", ["Branches"]), ("Boxes", ["Box"]), ("Status", ["Statuses"]),
+            ("class", ["classes", "Class", "Classes"]), ("Strength", ["Strengths"]),
+            ("HP", ["HPs"]), ("Fire Bolt!", []), ("林动", []),
+        ]
+        for (source, variants) in cases {
+            XCTAssertEqual(Glossary.variants(of: source), variants, source)
+        }
+    }
+
+    func testTermsCoverTheirVariantsButEnteredTermsWin() {
+        let terms = [
+            GlossaryTerm(source: "Seed", target: "Hạt Giống", bookID: nil),
+            GlossaryTerm(source: "Seeds", target: "Các Hạt", bookID: nil),
+            GlossaryTerm(source: "class", target: "class", bookID: nil),
+        ]
+        let glossary = Glossary(terms: terms, bookID: nil, source: en, target: vi)
+        XCTAssertEqual(glossary.entries["Seeds"], "Các Hạt")
+        XCTAssertEqual(glossary.protect("Classes begin. Three Seeds, one Seed.").text, "[Classes] begin. Three [Các Hạt], one [Hạt Giống].")
     }
 
     func testEngineProtectsBeforeAndRestoresAfter() async throws {
