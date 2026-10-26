@@ -7,6 +7,16 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		B2C200000000000000000001 /* PiperOfflineTTSService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67FCD507015BA179DEAFCA4B /* PiperOfflineTTSService.swift */; };
+		B2C200000000000000000002 /* PiperEnglishTransliterator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3876ED20FC3A9CC7CAEEB365 /* PiperEnglishTransliterator.swift */; };
+		B2C200000000000000000003 /* OfflineWavEncoding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F7B764ACADBCDD832A98421 /* OfflineWavEncoding.swift */; };
+		B2C200000000000000000004 /* WebnovelReaderFullSynthesizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F7B40318F0225E0F3D67318 /* WebnovelReaderFullSynthesizer.swift */; };
+		B2C200000000000000000005 /* tokens.txt in Resources */ = {isa = PBXBuildFile; fileRef = 2538B9C2D810DA7B997904AC /* tokens.txt */; };
+		B2C200000000000000000006 /* english_transliterations.LICENSE.txt in Resources */ = {isa = PBXBuildFile; fileRef = 55E23D23275AE1209FF86304 /* english_transliterations.LICENSE.txt */; };
+		B2C200000000000000000007 /* english_transliterations.csv in Resources */ = {isa = PBXBuildFile; fileRef = 98659431BF02FAEE2C667C0F /* english_transliterations.csv */; };
+		B2C200000000000000000008 /* vi_VN-vais1000-medium.onnx in Resources */ = {isa = PBXBuildFile; fileRef = 19BB4D3E4A9827CF125F6CC5 /* vi_VN-vais1000-medium.onnx */; };
+		B2C200000000000000000009 /* espeak-ng-data in Resources */ = {isa = PBXBuildFile; fileRef = D7D04640EB80155C062EFE5C /* espeak-ng-data */; };
+		B2C20000000000000000000B /* sherpa-onnx in Frameworks */ = {isa = PBXBuildFile; productRef = B2C20000000000000000000A /* sherpa-onnx */; };
 		09FD22B220F0F9D8E5B7A91F /* PiperEnglishTransliteratorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72AC633AE575EA45DF0830C4 /* PiperEnglishTransliteratorTests.swift */; };
 		36C407CEAF43B73EB9B3AF27 /* english_transliterations.LICENSE.txt in Resources */ = {isa = PBXBuildFile; fileRef = 55E23D23275AE1209FF86304 /* english_transliterations.LICENSE.txt */; };
 		F5F1E0F9E4F6FE103C25A3C7 /* english_transliterations.csv in Resources */ = {isa = PBXBuildFile; fileRef = 98659431BF02FAEE2C667C0F /* english_transliterations.csv */; };
@@ -244,6 +254,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		B2C20000000000000000000C /* Piper-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Piper-Bridging-Header.h"; sourceTree = "<group>"; };
 		72AC633AE575EA45DF0830C4 /* PiperEnglishTransliteratorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PiperEnglishTransliteratorTests.swift; sourceTree = "<group>"; };
 		55E23D23275AE1209FF86304 /* english_transliterations.LICENSE.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = english_transliterations.LICENSE.txt; sourceTree = "<group>"; };
 		98659431BF02FAEE2C667C0F /* english_transliterations.csv */ = {isa = PBXFileReference; lastKnownFileType = text; path = english_transliterations.csv; sourceTree = "<group>"; };
@@ -410,6 +421,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B2C20000000000000000000B /* sherpa-onnx in Frameworks */,
 				702B609C3FD341D70AE37602 /* Core in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -639,6 +651,7 @@
 			children = (
 				2F3A4F62F1CEF375F6C54ACC /* ChapterPagerView.swift */,
 				5977DE72BAE8A33534BE9E36 /* ScrollPageCoordinator.swift */,
+				B2C20000000000000000000C /* Piper-Bridging-Header.h */,
 				40C67F7F3A3EAA72A962C801 /* WebnovelReaderMac.entitlements */,
 			);
 			path = WebnovelReaderMac;
@@ -829,9 +842,11 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = E358AF00E8E33587A151DF37 /* Build configuration list for PBXNativeTarget "WebnovelReaderMac" */;
 			buildPhases = (
+				B2C2FFFFFFFFFFFFFFFF0001 /* Fetch Piper model (GCS) */,
 				9835B57654052C42CFB820CF /* Sources */,
 				3811F4BCFDF819CB459FA447 /* Resources */,
 				E25436B17278AC8381CCEBB0 /* Frameworks */,
+				B2C2FFFFFFFFFFFFFFFF0002 /* Drop static onnxruntime.framework stub */,
 			);
 			buildRules = (
 			);
@@ -839,6 +854,7 @@
 			);
 			name = WebnovelReaderMac;
 			packageProductDependencies = (
+				B2C20000000000000000000A /* sherpa-onnx */,
 				8B1BEAEA2CF05A35F709DDEC /* Core */,
 			);
 			productName = WebnovelReaderMac;
@@ -1043,6 +1059,11 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B2C200000000000000000005 /* tokens.txt in Resources */,
+				B2C200000000000000000006 /* english_transliterations.LICENSE.txt in Resources */,
+				B2C200000000000000000007 /* english_transliterations.csv in Resources */,
+				B2C200000000000000000008 /* vi_VN-vais1000-medium.onnx in Resources */,
+				B2C200000000000000000009 /* espeak-ng-data in Resources */,
 				F1E2D3C4B5A6978812345603 /* waiting-filler.m4a in Resources */,
 				A4666DF257B2B797427E5918 /* Assets.xcassets in Resources */,
 			);
@@ -1051,6 +1072,44 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		B2C2FFFFFFFFFFFFFFFF0002 /* Drop static onnxruntime.framework stub */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Drop static onnxruntime.framework stub";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# onnxruntime-macos is a static library packaged as a .framework: it is\n# already linked into the app, but SPM still embeds an empty, malformed\n# copy (Versions/Current is a directory, not a symlink) that codesign\n# rejects under the Hardened Runtime. Nothing loads it at runtime.\nrm -rf \"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/onnxruntime.framework\"\n";
+		};
+		B2C2FFFFFFFFFFFFFFFF0001 /* Fetch Piper model (GCS) */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Fetch Piper model (GCS)";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"$SRCROOT/Scripts/fetch-models.sh\" PiperOffline/vi_VN-vais1000-medium.onnx\n";
+		};
 		77FD44C1A9CBA6E0EFFD2CF0 /* Fetch offline models (GCS) */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
@@ -1183,6 +1242,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B2C200000000000000000001 /* PiperOfflineTTSService.swift in Sources */,
+				B2C200000000000000000002 /* PiperEnglishTransliterator.swift in Sources */,
+				B2C200000000000000000003 /* OfflineWavEncoding.swift in Sources */,
+				B2C200000000000000000004 /* WebnovelReaderFullSynthesizer.swift in Sources */,
 				596AD1D3B2EC8EBEC19A2EE4 /* ActionHistoryView.swift in Sources */,
 				12FCB8CA7445E9C3B2BEE3DE /* AppleTranslationEngine.swift in Sources */,
 				AD1C5C03BB3B5B1DBF211AB4 /* AudioPlaybackService.swift in Sources */,
@@ -1295,6 +1358,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = WebnovelReaderMac/WebnovelReaderMac.entitlements;
+				SWIFT_OBJC_BRIDGING_HEADER = "WebnovelReaderMac/Piper-Bridging-Header.h";
 				COMBINE_HIDPI_IMAGES = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = "Generated-Info-Mac.plist";
@@ -1367,6 +1431,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = WebnovelReaderMac/WebnovelReaderMac.entitlements;
+				SWIFT_OBJC_BRIDGING_HEADER = "WebnovelReaderMac/Piper-Bridging-Header.h";
 				COMBINE_HIDPI_IMAGES = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = "Generated-Info-Mac.plist";
@@ -1776,6 +1841,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		B2C20000000000000000000A /* sherpa-onnx */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E6AE861AF5232330B796CD85 /* XCRemoteSwiftPackageReference "sherpa-onnx" */;
+			productName = "sherpa-onnx";
+		};
 		3451C52244C57B54E6653600 /* Core */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = Core;

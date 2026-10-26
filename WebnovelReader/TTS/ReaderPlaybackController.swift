@@ -24,17 +24,11 @@ import Core
 final class ReaderPlaybackController: ObservableObject {
     static let shared = ReaderPlaybackController()
 
-    // WebnovelReaderFullSynthesizer (offline Piper/VieNeu engines + their
-    // vendored xcframeworks) is iOS-only for now — the macOS target scaffold
-    // ships online-only first, full offline TTS is a follow-up phase once
-    // those xcframeworks have a macOS slice (see project's macOS-offline-TTS
-    // plan). watchOS never reaches this file at all (its own, much smaller
-    // playback controller uses WebnovelReaderOnlineSynthesizer directly).
-    #if os(iOS)
+    // WebnovelReaderFullSynthesizer: online voices plus the on-device ones.
+    // macOS gets Piper only — VieNeu's vendored xcframeworks have no macOS
+    // slice yet. watchOS never reaches this file at all (its own, much
+    // smaller playback controller uses WebnovelReaderOnlineSynthesizer).
     let synthesizer: TTSSynthesizing = WebnovelReaderFullSynthesizer()
-    #else
-    let synthesizer: TTSSynthesizing = WebnovelReaderOnlineSynthesizer()
-    #endif
 
     // Now-playing identity — nil book means nothing has ever been opened
     // this app launch.

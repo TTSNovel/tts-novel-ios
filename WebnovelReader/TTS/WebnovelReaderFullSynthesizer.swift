@@ -22,6 +22,9 @@ final class WebnovelReaderFullSynthesizer: TTSSynthesizing {
         isConnected: Bool,
         isLoggedIn: Bool
     ) async throws -> Data {
+        #if os(iOS)
+        // VieNeu's llama.cpp / SeaG2P xcframeworks have no macOS slice yet —
+        // on Mac those voices fall through to Piper below.
         if voice == .vieNeuOfflineV2 {
             // No network round trip — runs the bundled GGUF backbone +
             // VieNeu-Codec ONNX decoder right here on-device (see
@@ -36,7 +39,9 @@ final class WebnovelReaderFullSynthesizer: TTSSynthesizing {
             return try await VieNeuOfflineV3TTSService.shared.synthesize(
                 text: text, speed: speed, voice: vieNeuOfflineV3Voice ?? .minhDuc
             )
-        } else if voice.isOffline || !isConnected || !isLoggedIn {
+        }
+        #endif
+        if voice.isOffline || !isConnected || !isLoggedIn {
             // No network round trip — runs the bundled ONNX model right
             // here on-device (see PiperOfflineTTSService).
             return try await PiperOfflineTTSService.shared.synthesize(text: text, speed: speed)
