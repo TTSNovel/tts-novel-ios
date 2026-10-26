@@ -92,8 +92,14 @@ actor PiperOfflineTTSService {
         let vits = sherpaOnnxOfflineTtsVitsModelConfig(model: model, lexicon: "", tokens: tokens, dataDir: dataDir)
         // sherpa-onnx defaults to 1 thread. 4 ran ~3x faster in a simulator
         // benchmark with identical output; parallel engines instead would
-        // race on espeak-ng's global state (garbled phonemes).
-        let modelConfig = sherpaOnnxOfflineTtsModelConfig(vits: vits, numThreads: 4)
+        // race on espeak-ng's global state (garbled phonemes). On the Mac
+        // (M4 Pro) 8 was ~1.4x faster than 4; past 8 it got slower again.
+        #if os(macOS)
+        let numThreads = 8
+        #else
+        let numThreads = 4
+        #endif
+        let modelConfig = sherpaOnnxOfflineTtsModelConfig(vits: vits, numThreads: numThreads)
         var config = sherpaOnnxOfflineTtsConfig(model: modelConfig)
         let engine = SherpaOnnxOfflineTtsWrapper(config: &config)
         tts = engine
