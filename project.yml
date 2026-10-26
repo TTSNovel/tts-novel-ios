@@ -197,6 +197,8 @@ targets:
       - path: WebnovelReader/TTS
         excludes:
           - "PiperOfflineTTSService.swift"
+          - "PiperEnglishTransliterator.swift"
+          - "EspeakPhonemes.h"
           - "SeaG2PBridge.swift"
           - "OfflineWavEncoding.swift"
           - "WebnovelReaderFullSynthesizer.swift"
