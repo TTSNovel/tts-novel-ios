@@ -115,6 +115,13 @@ final class AppleTranslationEngine: TranslationEngine, @unchecked Sendable {
     /// drop it — the next `translate` asks the driver for a fresh one.
     func expireSession(_ session: TranslationSession) {
         guard currentSession === session else { return }
+        resetSession()
+    }
+
+    /// Drops the current session so the next `translate` asks the driver
+    /// for a fresh one — a long-lived session can start failing every
+    /// call ("Unable to Translate") hours into an audio download.
+    func resetSession() {
         currentSession = nil
         currentSourceLanguage = nil
         currentTargetLanguage = nil
