@@ -352,8 +352,32 @@ final class AudioPredownloadManager: ObservableObject {
         var chapters: [Int]
         var completed: Int
         var currentChapter: Int?
+        /// What the current chapter is on, with a per-sentence count — a
+        /// chapter takes minutes, so whole-chapter progress alone looks stuck.
+        var step: Step?
+        var stepDone = 0
+        var stepTotal = 0
         var failure: String?
         var isRunning: Bool
+
+        enum Step: Equatable { case translating, synthesizing, saving }
+
+        /// Chapters done, counting the current one's sentences as a fraction.
+        var progressValue: Double {
+            let current: Double
+            switch step {
+            case .synthesizing: current = stepTotal > 0 ? Double(stepDone) / Double(stepTotal) : 0
+            case .saving: current = 1
+            default: current = 0
+            }
+            return min(Double(completed) + current, Double(chapters.count))
+        }
+    }
+
+    private func setStep(_ bookID: Int, _ step: Job.Step?, done: Int = 0, total: Int = 0) {
+        jobs[bookID]?.step = step
+        jobs[bookID]?.stepDone = done
+        jobs[bookID]?.stepTotal = total
     }
 
     /// The running (or last stopped/failed) job per book.
@@ -492,13 +516,19 @@ final class AudioPredownloadManager: ObservableObject {
                 jobs[book.id]?.currentChapter = index
                 try await renderChapter(book: book, index: index, voice: voice)
                 jobs[book.id]?.completed += 1
+                setStep(book.id, nil)
                 storageRevision += 1
                 updateBackgroundTaskProgress(bookID: book.id)
             }
             EventLogStore.shared.record(.download, "Tải audio xong", detail: book.title)
-        } catch is CancellationError {
-            EventLogStore.shared.record(.download, "Dừng tải audio", detail: book.title)
         } catch {
+            setStep(book.id, nil)
+            // Stopping mid-request surfaces as URLError.cancelled (or a
+            // translation error), not CancellationError — still a stop.
+            if error is CancellationError || Task.isCancelled {
+                EventLogStore.shared.record(.download, "Dừng tải audio", detail: book.title)
+                return
+            }
             jobs[book.id]?.failure = error.localizedDescription
             EventLogStore.shared.record(.error, "Tải audio thất bại", detail: "\(book.title): \(error.localizedDescription)")
         }
@@ -525,8 +555,27 @@ final class AudioPredownloadManager: ObservableObject {
             if playback.translationEngineKind == .apple { await playback.refreshGlossary() }
             if let engine = playback.translationEngine(bookID: book.id, chapterIndex: index, source: source),
                engine.canTranslate(from: source, to: targetLanguage) {
-                for try await (position, text) in engine.translate(texts: sentences, source: source, target: targetLanguage) {
-                    spoken[position] = text
+                // A transient engine failure shouldn't end a download that's
+                // hours in — retry the chapter on a fresh session first.
+                var attempt = 0
+                while true {
+                    setStep(book.id, .translating, total: sentences.count)
+                    do {
+                        var translatedCount = 0
+                        for try await (position, text) in engine.translate(texts: sentences, source: source, target: targetLanguage) {
+                            spoken[position] = text
+                            translatedCount += 1
+                            setStep(book.id, .translating, done: translatedCount, total: sentences.count)
+                        }
+                        break
+                    } catch where !(error is CancellationError) && !Task.isCancelled && attempt < 2 {
+                        attempt += 1
+                        EventLogStore.shared.record(.translation, "Dịch lại chương \(index + 1)", detail: "\(book.title): \(error.localizedDescription)")
+                        if #available(iOS 18.0, macOS 15.0, *), playback.translationEngineKind == .apple {
+                            AppleTranslationEngine.shared.resetSession()
+                        }
+                        try await Task.sleep(for: .seconds(2))
+                    }
                 }
                 engineName = playback.translationEngineKind.rawValue
                 target = playback.primaryLanguageCode
@@ -539,6 +588,8 @@ final class AudioPredownloadManager: ObservableObject {
         let isLoggedIn = SessionStore.shared.isLoggedIn
         let limit = maxConcurrentSynthesis
         let texts = spoken
+        let bookID = book.id
+        setStep(bookID, .synthesizing, total: texts.count)
         let clips = try await withThrowingTaskGroup(of: (Int, Data).self) { group in
             var results = [Data?](repeating: nil, count: texts.count)
             var next = 0
@@ -557,16 +608,19 @@ final class AudioPredownloadManager: ObservableObject {
                 }
             }
             for _ in 0..<min(limit, texts.count) { addNext() }
+            var synthesized = 0
             while let (position, data) = try await group.next() {
                 results[position] = data
+                synthesized += 1
+                setStep(bookID, .synthesizing, done: synthesized, total: texts.count)
                 addNext()
             }
             return results.compactMap { $0 }
         }
         try Task.checkCancellation()
 
+        setStep(bookID, .saving)
         let store = self.store
-        let bookID = book.id
         try await Task.detached(priority: .utility) {
             try store.writeChapter(
                 bookID: bookID, index: index, voiceKey: voice.key, sentences: sentences, spoken: texts,

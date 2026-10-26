@@ -14,7 +14,7 @@ struct AudioPredownloadButton: View {
             showingSheet = true
         } label: {
             if let job = manager.jobs[book.id], job.isRunning {
-                ProgressView(value: Double(job.completed), total: Double(max(job.chapters.count, 1)))
+                ProgressView(value: job.progressValue, total: Double(max(job.chapters.count, 1)))
                     .progressViewStyle(.circular)
                     .controlSize(.small)
             } else {
@@ -71,11 +71,14 @@ struct AudioPredownloadSheet: View {
 
                 if let job, job.isRunning || job.failure != nil {
                     Section("Tiến độ") {
-                        ProgressView(value: Double(job.completed), total: Double(max(job.chapters.count, 1)))
+                        ProgressView(value: job.progressValue, total: Double(max(job.chapters.count, 1)))
                         Text("\(job.completed)/\(job.chapters.count) chương")
                             .accessibilityIdentifier("audioPredownloadCompleted")
-                        if let current = job.currentChapter {
-                            Text("Đang tạo chương \(current + 1)").foregroundStyle(.secondary)
+                        if job.isRunning, let current = job.currentChapter {
+                            Text(Self.stepText(job, chapter: current))
+                                .foregroundStyle(.secondary)
+                                .monospacedDigit()
+                                .accessibilityIdentifier("audioPredownloadStep")
                         }
                         if let failure = job.failure {
                             Text(failure).foregroundStyle(.red)
@@ -147,6 +150,16 @@ struct AudioPredownloadSheet: View {
 
     private func start() {
         manager.start(book: book, range: range, voice: voice)
+    }
+
+    static func stepText(_ job: AudioPredownloadManager.Job, chapter: Int) -> String {
+        let prefix = "Chương \(chapter + 1)"
+        switch job.step {
+        case .translating: return "\(prefix) · đang dịch \(job.stepDone)/\(job.stepTotal) câu"
+        case .synthesizing: return "\(prefix) · đang tạo audio \(job.stepDone)/\(job.stepTotal) câu"
+        case .saving: return "\(prefix) · đang lưu"
+        case nil: return "\(prefix) · đang chuẩn bị"
+        }
     }
 
     static func duration(_ seconds: Double) -> String {
