@@ -908,8 +908,13 @@ final class AudioPredownloadManager: ObservableObject {
         guard #available(iOS 26.0, *) else { return }
         let identifier = "\(Self.backgroundTaskPrefix).\(bookID)"
         if !registeredBackgroundIDs.contains(identifier) {
-            let registered = BGTaskScheduler.shared.register(forTaskWithIdentifier: identifier, using: nil) { task in
-                guard let task = task as? BGContinuedProcessingTask else { return }
+            // `@Sendable` keeps the handler nonisolated: BGTaskScheduler calls
+            // it on a background queue, and an inferred @MainActor closure
+            // traps there (Swift 6 isolation check).
+            let registered = BGTaskScheduler.shared.register(forTaskWithIdentifier: identifier, using: nil) { @Sendable task in
+                // BGTask isn't Sendable; it's only touched on the main actor from here on.
+                guard let processingTask = task as? BGContinuedProcessingTask else { return }
+                nonisolated(unsafe) let task = processingTask
                 Task { @MainActor in self.attachBackgroundTask(task, bookID: bookID) }
             }
             guard registered else { return }
@@ -936,7 +941,7 @@ final class AudioPredownloadManager: ObservableObject {
         backgroundTasks[bookID] = task
         // An interruption, not a user stop: the job stays `wantsToRun` and
         // resumes on the next foreground.
-        task.expirationHandler = { [weak self] in
+        task.expirationHandler = { @Sendable [weak self] in
             Task { @MainActor in self?.tasks[bookID]?.cancel() }
         }
         updateBackgroundTaskProgress(bookID: bookID)
