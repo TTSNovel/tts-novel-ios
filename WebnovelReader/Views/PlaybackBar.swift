@@ -129,6 +129,13 @@ struct PlaybackBar: View {
                                 .foregroundStyle(.secondary)
                                 .accessibilityIdentifier("preloadPositionText")
                         }
+                        if playback.isPlayingPrerendered {
+                            Image(systemName: "arrow.down.circle.fill")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                                .accessibilityLabel("Downloaded audio")
+                                .accessibilityIdentifier("prerenderedAudioIndicator")
+                        }
                     }
                     .padding(.bottom, 4)
                 }

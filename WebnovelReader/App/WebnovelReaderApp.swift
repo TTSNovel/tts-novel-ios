@@ -63,6 +63,9 @@ struct WebnovelReaderApp: App {
                     LibraryView()
                 }
             }
+            // App-wide (not on ReaderView) so Apple Translate also works
+            // for audio pre-rendering, which runs without the reader open.
+            .chapterTranslationSupport()
             .environmentObject(session)
             .environmentObject(downloads)
             .environmentObject(progressStore)

@@ -131,6 +131,10 @@ targets:
         CFBundleShortVersionString: "$(MARKETING_VERSION)"
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         UILaunchScreen: {}
+        # Audio pre-download's BGContinuedProcessingTask (iOS 26+), see
+        # AudioPredownloadManager — submitted as <prefix>.<bookID>.
+        BGTaskSchedulerPermittedIdentifiers:
+          - dev.yanglong.webnovelreader.audio-predownload.*
         UIBackgroundModes:
           - audio
         UISupportedInterfaceOrientations:
