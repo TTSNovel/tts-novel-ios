@@ -390,7 +390,9 @@ final class AudioPredownloadManager: ObservableObject {
     /// Why the current voice can't be pre-rendered right now, if it can't.
     func unavailableReason(for voice: PrerenderVoice) -> String? {
         #if !os(iOS)
-        if voice.voice.isOffline { return "Offline voices aren't available on Mac — pick an online voice." }
+        if [.vieNeuOfflineV2, .vieNeuOfflineV3].contains(voice.voice) {
+            return "VieNeu offline voices aren't available on Mac — pick Piper (offline) or an online voice."
+        }
         #endif
         if !voice.voice.isOffline {
             if !SessionStore.shared.isLoggedIn { return "Log in to use online voices." }

@@ -172,16 +172,18 @@ targets:
     dependencies:
       - target: WebnovelReader
 
-  # Scaffold phase: online TTS only (WebnovelReaderOnlineSynthesizer, see
-  # ReaderPlaybackController) — the offline Piper/VieNeu engines need a
-  # macOS slice of their vendored xcframeworks (llama.xcframework,
-  # SeaG2P.xcframework) before they can be wired in here, tracked as a
-  # follow-up phase once those exist. Offline chapter translation
-  # (OpusMTTranslationEngine) IS included, via onnxruntime-macos — that
-  # package already ships a macOS product, unlike the two TTS xcframeworks.
+  # Online voices + Piper (offline) via sherpa-onnx, which ships a macOS
+  # build. VieNeu's offline engines still need a macOS slice of their
+  # vendored xcframeworks (llama.xcframework, SeaG2P.xcframework) — not
+  # wired in here yet.
   WebnovelReaderMac:
     type: application
     platform: macOS
+    # Piper's model only (VieNeu/OPUS-MT models aren't used on Mac).
+    prebuildScripts:
+      - script: '"$SRCROOT/Scripts/fetch-models.sh" PiperOffline/vi_VN-vais1000-medium.onnx'
+        name: "Fetch Piper model (GCS)"
+        basedOnDependencyAnalysis: false
     sources:
       - path: WebnovelReaderMac
       - path: WebnovelReader/App
@@ -200,17 +202,31 @@ targets:
           - "BundledTranslation/**"
       - path: WebnovelReader/TTS
         excludes:
-          - "PiperOfflineTTSService.swift"
-          - "PiperEnglishTransliterator.swift"
           - "EspeakPhonemes.h"
           - "SeaG2PBridge.swift"
-          - "OfflineWavEncoding.swift"
-          - "WebnovelReaderFullSynthesizer.swift"
           - "VieNeu-Bridging-Header.h"
           - "VieNeuOfflineV2/**"
           - "VieNeuOfflineV3/**"
+      # Piper (offline): model, tokens, English transliterations, and
+      # espeak-ng-data as a real folder (same layout as iOS).
+      - path: WebnovelReader/Resources/PiperOffline
+        excludes:
+          - "espeak-ng-data/**"
+      - path: WebnovelReader/Resources/PiperOffline/espeak-ng-data
+        type: folder
+        buildPhase: resources
+    postCompileScripts:
+      # onnxruntime-macos is a static library packaged as a .framework: it's
+      # already linked into the app, but SPM still embeds an empty, malformed
+      # copy (Versions/Current is a directory, not a symlink) that codesign
+      # rejects under the Hardened Runtime. Nothing loads it at runtime.
+      - script: 'rm -rf "${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/onnxruntime.framework"'
+        name: "Drop static onnxruntime.framework stub"
+        basedOnDependencyAnalysis: false
     dependencies:
       - package: Core
+      - package: SherpaOnnx
+        product: sherpa-onnx
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: dev.yanglong.webnovelreader.mac
@@ -219,6 +235,7 @@ targets:
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         ENABLE_HARDENED_RUNTIME: YES
         CODE_SIGN_ENTITLEMENTS: WebnovelReaderMac/WebnovelReaderMac.entitlements
+        SWIFT_OBJC_BRIDGING_HEADER: WebnovelReaderMac/Piper-Bridging-Header.h
     info:
       path: Generated-Info-Mac.plist
       properties:

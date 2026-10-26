@@ -27,6 +27,9 @@ FILES=(
   "BundledTranslation/en-vi/encoder.onnx"
 )
 
+# Optional args: fetch only those files (the macOS target needs just Piper).
+if [ "$#" -gt 0 ]; then FILES=("$@"); fi
+
 for f in "${FILES[@]}"; do
   dest="$RESOURCES/$f"
   if [ -f "$dest" ]; then
