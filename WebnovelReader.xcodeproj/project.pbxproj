@@ -842,6 +842,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = E358AF00E8E33587A151DF37 /* Build configuration list for PBXNativeTarget "WebnovelReaderMac" */;
 			buildPhases = (
+				B2C2FFFFFFFFFFFFFFFF0003 /* Lint error handling */,
 				B2C2FFFFFFFFFFFFFFFF0001 /* Fetch Piper model (GCS) */,
 				9835B57654052C42CFB820CF /* Sources */,
 				3811F4BCFDF819CB459FA447 /* Resources */,
@@ -865,6 +866,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 9658FDC098F79E43F90457DB /* Build configuration list for PBXNativeTarget "WebnovelReader" */;
 			buildPhases = (
+				B2C2FFFFFFFFFFFFFFFF0003 /* Lint error handling */,
 				77FD44C1A9CBA6E0EFFD2CF0 /* Fetch offline models (GCS) */,
 				6292A9195DA1F145FC9BDB42 /* Sources */,
 				3579980DC8B201EA4701BF26 /* Resources */,
@@ -1072,6 +1074,25 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		B2C2FFFFFFFFFFFFFFFF0003 /* Lint error handling */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Lint error handling";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "python3 \"$SRCROOT/Scripts/lint-error-handling.py\"\n";
+		};
 		B2C2FFFFFFFFFFFFFFFF0002 /* Drop static onnxruntime.framework stub */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;

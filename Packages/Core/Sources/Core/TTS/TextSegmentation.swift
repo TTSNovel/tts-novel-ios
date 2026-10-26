@@ -78,6 +78,7 @@ public enum TextSegmentation {
         guard rule.isRegex else {
             return text.replacingOccurrences(of: pattern, with: "")
         }
+        // nolog: FilterWordsView rejects invalid patterns before they're saved
         guard let regex = try? NSRegularExpression(pattern: pattern) else { return text }
         return regex.stringByReplacingMatches(
             in: text, range: NSRange(text.startIndex..., in: text), withTemplate: ""

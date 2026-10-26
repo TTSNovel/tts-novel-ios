@@ -33,7 +33,11 @@ final class DownloadManager: ObservableObject {
     }
 
     nonisolated func localChapter(bookID: Int, index: Int) -> Chapter? {
-        guard let html = try? String(contentsOf: chapterFileURL(bookID, index), encoding: .utf8) else { return nil }
+        let url = chapterFileURL(bookID, index)
+        guard FileManager.default.fileExists(atPath: url.path) else { return nil }
+        guard let html = Log.attempt(.storage, "Downloaded chapter unreadable", ["book": "\(bookID)", "chapter": "\(index)"], {
+            try String(contentsOf: url, encoding: .utf8)
+        }) else { return nil }
         return ChapterFragmentParser.parse(html: html, index: index)
     }
 
@@ -53,14 +57,14 @@ final class DownloadManager: ObservableObject {
     }
 
     func localCoverData(bookID: Int) -> Data? {
+        // nolog: book not downloaded
         guard let files = try? fileManager.contentsOfDirectory(at: bookDirectory(bookID), includingPropertiesForKeys: nil),
               let coverFile = files.first(where: { $0.lastPathComponent.hasPrefix("cover.") }) else { return nil }
-        return try? Data(contentsOf: coverFile)
+        return Log.attempt(.storage, "Downloaded cover unreadable", ["book": "\(bookID)"]) { try Data(contentsOf: coverFile) }
     }
 
     nonisolated func localBook(bookID: Int) -> Book? {
-        guard let data = try? Data(contentsOf: metaFileURL(bookID)) else { return nil }
-        return try? JSONDecoder().decode(Book.self, from: data)
+        StoredJSON.load(Book.self, from: metaFileURL(bookID), category: .download)
     }
 
     /// Reconstructs a library list purely from disk — what LibraryView
@@ -74,7 +78,7 @@ final class DownloadManager: ObservableObject {
         guard !downloading.contains(book.id), book.n > 0 else { return }
         downloading.insert(book.id)
         progress[book.id] = 0
-        EventLogStore.shared.record(.download, "Bắt đầu tải xuống", detail: book.title)
+        EventLogStore.shared.record(.download, "Start book download", detail: book.title)
         defer {
             downloading.remove(book.id)
             progress[book.id] = nil
@@ -100,17 +104,18 @@ final class DownloadManager: ObservableObject {
             // instead of serving a half-downloaded book as complete.
             try JSONEncoder().encode(book).write(to: metaFileURL(book.id))
             downloadedBookIDs.insert(book.id)
-            EventLogStore.shared.record(.download, "Tải xuống hoàn tất", detail: book.title)
+            EventLogStore.shared.record(.download, "Book download finished", detail: book.title)
         } catch {
-            EventLogStore.shared.record(.error, "Tải xuống thất bại", detail: "\(book.title): \(error.localizedDescription)")
+            Log.error(.download, "Book download failed", error: error, ["book": "\(book.id)", "chapters": "\(book.n)"])
+            EventLogStore.shared.record(.error, "Book download failed", detail: "\(book.title): \(error.localizedDescription)")
         }
     }
 
     func deleteDownload(bookID: Int) {
         let title = localBook(bookID: bookID)?.title
-        try? fileManager.removeItem(at: bookDirectory(bookID))
+        StoredJSON.remove(bookDirectory(bookID), category: .download)
         downloadedBookIDs.remove(bookID)
-        EventLogStore.shared.record(.download, "Xoá bản tải xuống", detail: title)
+        EventLogStore.shared.record(.download, "Delete downloaded book", detail: title)
     }
 
     /// Bounded concurrency (4 in flight) — book.n can run into the
@@ -149,7 +154,9 @@ final class DownloadManager: ObservableObject {
     private nonisolated func booksDirectory() -> URL {
         let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("Books", isDirectory: true)
-        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        Log.attempt(.storage, "Can't create the books directory") {
+            try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        }
         return dir
     }
 
@@ -178,7 +185,9 @@ final class DownloadManager: ObservableObject {
     }
 
     private func refreshDownloadedList() {
-        guard let entries = try? fileManager.contentsOfDirectory(at: booksDirectory(), includingPropertiesForKeys: nil) else { return }
+        guard let entries = Log.attempt(.storage, "Can't list downloaded books", [:], {
+            try fileManager.contentsOfDirectory(at: booksDirectory(), includingPropertiesForKeys: nil)
+        }) else { return }
         downloadedBookIDs = Set(entries.compactMap { Int($0.lastPathComponent) }.filter { isFullyDownloaded($0) })
     }
 }

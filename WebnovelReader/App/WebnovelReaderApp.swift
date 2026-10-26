@@ -20,6 +20,7 @@ struct WebnovelReaderApp: App {
     @State private var alertMessage: String?
 
     init() {
+        CrashReporting.install()
         #if os(iOS)
         // .playback (not .ambient/.soloAmbient) is what keeps audio going
         // when the screen locks or the app backgrounds — paired with the
@@ -32,14 +33,12 @@ struct WebnovelReaderApp: App {
             try AVAudioSession.sharedInstance().setCategory(.playback, mode: .spokenAudio)
             try AVAudioSession.sharedInstance().setActive(true)
         } catch {
+            Log.error(.playback, "Audio session setup failed", error: error)
             // EventLogStore.shared is @MainActor-isolated; init() here isn't
-            // guaranteed to already be on that actor, so hop over explicitly
-            // rather than assuming — this is also the app's only remaining
-            // plain print()-only diagnostic, folded in here so EventLogStore
-            // is genuinely the one place the app logs anything.
+            // guaranteed to already be on that actor, so hop over explicitly.
             let description = error.localizedDescription
             Task { @MainActor in
-                EventLogStore.shared.record(.error, "Không thiết lập được AVAudioSession", detail: description)
+                EventLogStore.shared.record(.error, "Audio session setup failed", detail: description)
             }
         }
         #endif

@@ -29,9 +29,11 @@ public struct HanVietConverter: Sendable {
     /// The bundled table, loaded once on first use. Nil only if the
     /// resource is missing from the bundle (a packaging bug).
     public static let bundled: HanVietConverter? = {
-        guard let url = Bundle.module.url(forResource: "phienam", withExtension: "txt"),
-              let text = try? String(contentsOf: url, encoding: .utf8)
-        else { return nil }
+        guard let url = Bundle.module.url(forResource: "phienam", withExtension: "txt") else {
+            Log.fault(.translation, "Bundled Sino-Vietnamese table missing")
+            return nil
+        }
+        guard let text = Log.attempt(.translation, "Bundled Sino-Vietnamese table unreadable", [:], { try String(contentsOf: url, encoding: .utf8) }) else { return nil }
         return HanVietConverter(dictionary: text)
     }()
 

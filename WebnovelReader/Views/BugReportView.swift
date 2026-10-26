@@ -28,7 +28,7 @@ struct BugReportView: View {
     /// Safety upper bound only, independent of the time window above — just
     /// keeps a pathological case (hours of continuous playback) from
     /// producing an unreasonably large request body.
-    private static let attachedEventSafetyCap = 2000
+    private static let attachedEventSafetyCap = 1000
 
     private var attachedEventCount: Int {
         min(eventLog.entries(since: Date().addingTimeInterval(-Self.attachedLogWindow)).count, Self.attachedEventSafetyCap)
@@ -106,6 +106,20 @@ struct BugReportView: View {
         let events = attachRecentLog
             ? Array(eventLog.entries(since: Date().addingTimeInterval(-Self.attachedLogWindow)).prefix(Self.attachedEventSafetyCap))
             : []
+        // The diagnostic log too: every error of the last week (its own
+        // file, so routine entries never pushed them out) plus the full
+        // runtime log of the attached window. Capped so the whole report
+        // stays inside the server's 2000-entry limit with the events.
+        let diagnostics: [LogEntry]
+        if attachRecentLog {
+            let errors = DiagnosticsLog.shared.entries(since: Date().addingTimeInterval(-7 * 24 * 60 * 60), errorsOnly: true).suffix(300)
+            let recent = DiagnosticsLog.shared.entries(since: Date().addingTimeInterval(-Self.attachedLogWindow))
+                .filter { !$0.level.isError }
+                .suffix(max(0, 2000 - errors.count - events.count))
+            diagnostics = (Array(errors) + Array(recent)).sorted { $0.time < $1.time }
+        } else {
+            diagnostics = []
+        }
         #if os(iOS)
         let device = UIDevice.current
         let deviceLabel = "\(device.model) (\(device.systemName) \(device.systemVersion))"
@@ -121,11 +135,13 @@ struct BugReportView: View {
                 device: deviceLabel,
                 osVersion: osVersion,
                 appVersion: Self.appVersionString(),
-                events: events
+                events: events,
+                diagnostics: diagnostics
             )
-            EventLogStore.shared.record(.navigation, "Đã gửi báo cáo lỗi")
+            EventLogStore.shared.record(.navigation, "Bug report sent")
             didSubmit = true
         } catch {
+            // nolog: APIClient logged the failed request
             submitError = NetworkMonitor.isNetworkError(error)
                 ? "Không có kết nối mạng — vui lòng thử lại"
                 : "Gửi báo cáo thất bại — thử lại sau"

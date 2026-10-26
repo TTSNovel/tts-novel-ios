@@ -66,7 +66,7 @@ actor VieNeuOfflineV3TTSService {
         }
         let path = dir.appendingPathComponent("\(voice.rawValue).json")
         guard let data = FileManager.default.contents(atPath: path.path),
-              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any], // nolog: throws voicePresetMalformed, logged by the synthesizer
               let embRaw = json["speaker_emb"] as? [Double],
               let codesRaw = json["ref_codes"] as? [[Int]]
         else { throw VieNeuOfflineV3Error.voicePresetMalformed }

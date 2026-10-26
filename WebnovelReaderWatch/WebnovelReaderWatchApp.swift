@@ -15,13 +15,15 @@ struct WebnovelReaderWatchApp: App {
         // (WebnovelReader/App/WebnovelReaderApp.swift) — .playback keeps
         // audio going with the screen off, paired with WKBackgroundModes
         // "audio" in Info.plist.
+        CrashReporting.install()
         do {
             try AVAudioSession.sharedInstance().setCategory(.playback, mode: .spokenAudio)
             try AVAudioSession.sharedInstance().setActive(true)
         } catch {
+            Log.error(.playback, "Audio session setup failed", error: error)
             let description = error.localizedDescription
             Task { @MainActor in
-                EventLogStore.shared.record(.error, "Không thiết lập được AVAudioSession", detail: description)
+                EventLogStore.shared.record(.error, "Audio session setup failed", detail: description)
             }
         }
     }

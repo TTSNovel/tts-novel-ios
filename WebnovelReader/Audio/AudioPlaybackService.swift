@@ -1,4 +1,5 @@
 import AVFoundation
+import Core
 import MediaPlayer
 
 /// Native counterpart to reader.js's single reused <audio> element +
@@ -24,7 +25,7 @@ final class AudioPlaybackService: NSObject, ObservableObject {
     /// forever and must never trigger `onFinishedPlaying`.
     private lazy var fillerPlayer: AVAudioPlayer? = {
         guard let url = Bundle.main.url(forResource: "waiting-filler", withExtension: "m4a"),
-              let filler = try? AVAudioPlayer(contentsOf: url) else { return nil }
+              let filler = Log.attempt(.playback, "Waiting filler can't be loaded", [:], { try AVAudioPlayer(contentsOf: url) }) else { return nil }
         filler.numberOfLoops = -1
         filler.volume = 0
         filler.prepareToPlay()
@@ -99,7 +100,9 @@ final class AudioPlaybackService: NSObject, ObservableObject {
             // reactivate it before handing back to onInterruptionEnded's
             // resume() so `player.play()` actually has audio hardware to
             // play into.
-            try? AVAudioSession.sharedInstance().setActive(true)
+            Log.attempt(.playback, "Can't reactivate the audio session after an interruption") {
+                try AVAudioSession.sharedInstance().setActive(true)
+            }
             onInterruptionEnded?()
         @unknown default:
             break

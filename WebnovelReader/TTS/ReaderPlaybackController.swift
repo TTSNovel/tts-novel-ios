@@ -255,7 +255,8 @@ final class ReaderPlaybackController: ObservableObject {
             glossaryTerms = try await APIClient.shared.fetchGlossary(baseURL: SessionStore.baseURL)
             glossaryFetchedAt = Date()
         } catch {
-            EventLogStore.shared.record(.translation, "Không tải được glossary", detail: error.localizedDescription)
+            // nolog: APIClient logged the failed request
+            EventLogStore.shared.record(.translation, "Glossary failed to load", detail: error.localizedDescription)
         }
     }
 
@@ -610,7 +611,7 @@ final class ReaderPlaybackController: ObservableObject {
         chapter = nil
         clearSentenceState()
         hasCheckedResume = false
-        EventLogStore.shared.record(.navigation, "Mở chương", detail: "\(book.title) — Chương \(chapterIndex + 1)")
+        EventLogStore.shared.record(.navigation, "Open chapter", detail: "\(book.title) — chapter \(chapterIndex + 1)")
         await loadChapter()
     }
 
@@ -623,8 +624,8 @@ final class ReaderPlaybackController: ObservableObject {
         stop()
         chapter = nil
         clearSentenceState()
-        let direction = index == chapterIndex + 1 ? "chương tiếp" : (index == chapterIndex - 1 ? "chương trước" : "chương \(index + 1)")
-        EventLogStore.shared.record(.navigation, "Chuyển \(direction)", detail: "\(book.title) — Chương \(index + 1)")
+        let direction = index == chapterIndex + 1 ? "next chapter" : (index == chapterIndex - 1 ? "previous chapter" : "chapter \(index + 1)")
+        EventLogStore.shared.record(.navigation, "Go to \(direction)", detail: "\(book.title) — chapter \(index + 1)")
         chapterIndex = index
         // Marks "now on this chapter" as a baseline even before any audio
         // plays — playCurrentSentence's progress recording takes over with
@@ -714,9 +715,10 @@ final class ReaderPlaybackController: ObservableObject {
             guard generation == self.generation else { return }
             loadError = "Không tải được nội dung chương"
             player.stopFiller()
-            let detail = "\(book.title) — Chương \(chapterIndex + 1): \(error.localizedDescription)"
+            let detail = "\(book.title) — chapter \(chapterIndex + 1): \(error.localizedDescription)"
             surfaceError(loadError!, detail: detail)
-            EventLogStore.shared.record(.error, "Không tải được nội dung chương", detail: detail)
+            Log.error(.playback, "Chapter content failed to load", error: error, ["book": "\(book.id)", "chapter": "\(chapterIndex)"])
+            EventLogStore.shared.record(.error, "Chapter content failed to load", detail: detail)
         }
     }
 
@@ -749,10 +751,10 @@ final class ReaderPlaybackController: ObservableObject {
             )
             chapterCache[index] = fetched
         } catch {
-            // Silent — this is speculative work; `loadChapter`'s own
-            // network fetch (with its user-facing error surface) is what
-            // actually matters if the user navigates here before this
-            // retries on its own.
+            // Speculative work — `loadChapter`'s own network fetch (with
+            // its user-facing error surface) is what actually matters if
+            // the user navigates here before this retries on its own.
+            Log.notice(.library, "Chapter prefetch failed", ["book": "\(book.id)", "chapter": "\(index)", "error": ErrorInfo(error).summary])
         }
     }
 
@@ -870,12 +872,12 @@ final class ReaderPlaybackController: ObservableObject {
     /// there but nothing happened, it's the latter — ActionHistoryView is
     /// how to tell the two apart without a live debugger attached.
     func seek(to index: Int) {
-        let detail = book.map { "\($0.title) — Chương \(chapterIndex + 1), câu \(index + 1)" }
-        EventLogStore.shared.record(.navigation, "Bấm chọn câu \(index + 1)", detail: detail)
+        let detail = book.map { "\($0.title) — chapter \(chapterIndex + 1), sentence \(index + 1)" }
+        EventLogStore.shared.record(.navigation, "Tap sentence \(index + 1)", detail: detail)
         guard sentences.indices.contains(index) else {
             EventLogStore.shared.record(
-                .error, "Bấm chọn câu ngoài phạm vi",
-                detail: "\(detail ?? "") — chỉ có \(sentences.count) câu"
+                .error, "Tapped sentence out of range",
+                detail: "\(detail ?? "") — only \(sentences.count) sentences"
             )
             return
         }
@@ -1029,6 +1031,12 @@ final class ReaderPlaybackController: ObservableObject {
     /// Also used by AudioPredownloadManager, which translates chapters of
     /// a book that isn't necessarily the open one.
     func translationEngine(bookID: Int?, chapterIndex: Int, source: Locale.Language?) -> TranslationEngine? {
+        rawTranslationEngine(bookID: bookID, chapterIndex: chapterIndex, source: source).map {
+            LoggedTranslationEngine(base: $0, context: ["book": "\(bookID ?? -1)", "chapter": "\(chapterIndex)"])
+        }
+    }
+
+    private func rawTranslationEngine(bookID: Int?, chapterIndex: Int, source: Locale.Language?) -> TranslationEngine? {
         switch translationEngineKind {
         case .google:
             guard let bookID else { return nil }
@@ -1090,18 +1098,18 @@ final class ReaderPlaybackController: ObservableObject {
             // report ("auto-translate sometimes doesn't work") this is
             // meant to make diagnosable after the fact instead of only
             // reproducible live.
-            let detail = book.map { "\($0.title) — Chương \(chapterIndex + 1)" } ?? ""
+            let detail = book.map { "\($0.title) — chapter \(chapterIndex + 1)" } ?? ""
             EventLogStore.shared.record(
-                .translation, "Không cần dịch (đã là ngôn ngữ chính)",
-                detail: "\(detail) — phát hiện: \(dominant?.rawValue ?? "không xác định"), ngôn ngữ chính: \(primaryLanguageCode)"
+                .translation, "No translation needed (already the primary language)",
+                detail: "\(detail) — detected: \(dominant?.rawValue ?? "unknown"), primary: \(primaryLanguageCode)"
             )
             return
         }
         translationSourceLanguage = Locale.Language(identifier: dominant.rawValue)
         showingTranslation = autoTranslate
         EventLogStore.shared.record(
-            .translation, "Phát hiện chương cần dịch",
-            detail: "\(book.map { "\($0.title) — Chương \(chapterIndex + 1)" } ?? "") — phát hiện: \(dominant.rawValue)"
+            .translation, "Chapter needs translation",
+            detail: "\(book.map { "\($0.title) — chapter \(chapterIndex + 1)" } ?? "") — detected: \(dominant.rawValue)"
         )
         // A pre-rendered chapter carries the translation its audio was
         // made from — reuse it instead of translating again. Otherwise the
@@ -1196,7 +1204,7 @@ final class ReaderPlaybackController: ObservableObject {
         }
         guard let source = translationSourceLanguage, !sentences.isEmpty else { return }
         let target = primaryLanguage
-        let logDetail = book.map { "\($0.title) — Chương \(chapterIndex + 1) (\(source.minimalIdentifier)→\(target.minimalIdentifier))" } ?? ""
+        let logDetail = book.map { "\($0.title) — chapter \(chapterIndex + 1) (\(source.minimalIdentifier)→\(target.minimalIdentifier))" } ?? ""
         guard let engine = currentTranslationEngine, engine.canTranslate(from: source, to: target) else {
             // Most common real cause: OpusMTTranslationEngine only bundles
             // one fixed en→vi pair, so a detected source language that
@@ -1209,7 +1217,7 @@ final class ReaderPlaybackController: ObservableObject {
             translationErrorMessage =
                 "\(currentTranslationEngine?.displayName ?? "Công cụ dịch hiện tại") không hỗ trợ \(source.minimalIdentifier)→\(target.minimalIdentifier)"
             showingTranslation = false
-            EventLogStore.shared.record(.translation, "Không có công cụ dịch khả dụng", detail: logDetail)
+            EventLogStore.shared.record(.translation, "No translation engine available", detail: logDetail)
             return
         }
         let generation = translationGeneration
@@ -1228,8 +1236,8 @@ final class ReaderPlaybackController: ObservableObject {
         translationErrorMessage = nil
         refillPreloadQueue()
         EventLogStore.shared.record(
-            .translation, "Bắt đầu dịch chương",
-            detail: "\(logDetail) — \(engine.displayName), \(textsToTranslate.count)/\(total) câu"
+            .translation, "Translate chapter",
+            detail: "\(logDetail) — \(engine.displayName), \(textsToTranslate.count)/\(total) sentences"
         )
         let startedAt = Date()
         do {
@@ -1254,7 +1262,7 @@ final class ReaderPlaybackController: ObservableObject {
             isTranslating = false
             translationProgress = nil
             EventLogStore.shared.record(
-                .translation, "Dịch chương xong",
+                .translation, "Chapter translated",
                 detail: "\(logDetail) — \(String(format: "%.1f", Date().timeIntervalSince(startedAt)))s"
             )
         } catch {
@@ -1272,8 +1280,9 @@ final class ReaderPlaybackController: ObservableObject {
             // since `displaySentences`/`activeSentenceText` both check
             // `showingTranslation` first and it's false now.
             showingTranslation = false
+            // nolog: LoggedTranslationEngine logged the failure with the sentence
             EventLogStore.shared.record(
-                .error, "Không dịch được nội dung chương",
+                .error, "Chapter translation failed",
                 detail: "\(logDetail) — \(error.localizedDescription)"
             )
         }
@@ -1462,7 +1471,7 @@ final class ReaderPlaybackController: ObservableObject {
         player.pause()
         isPlaying = false
         updateNowPlayingProgress()
-        EventLogStore.shared.record(.playback, "Tạm dừng", detail: playbackDetail())
+        EventLogStore.shared.record(.playback, "Pause", detail: playbackDetail())
         // Pausing ends the current sleep-timer "session" — the countdown
         // shouldn't keep ticking down (or fire) while nothing is playing.
         // resume() starts a fresh one, same as a brand-new start().
@@ -1475,12 +1484,12 @@ final class ReaderPlaybackController: ObservableObject {
         player.resume()
         isPlaying = true
         updateNowPlayingProgress()
-        EventLogStore.shared.record(.playback, "Tiếp tục phát", detail: playbackDetail())
+        EventLogStore.shared.record(.playback, "Resume", detail: playbackDetail())
     }
 
     private func playbackDetail() -> String? {
         guard let book else { return nil }
-        return "\(book.title) — Chương \(chapterIndex + 1), câu \(currentSentenceIndex + 1)"
+        return "\(book.title) — chapter \(chapterIndex + 1), sentence \(currentSentenceIndex + 1)"
     }
 
     private func advance() {
@@ -1559,7 +1568,7 @@ final class ReaderPlaybackController: ObservableObject {
             // just the user-initiated actions — so the history/log reflects
             // what was actually read aloud (câu 1, câu 2, ... câu 100), not
             // only "pressed play once."
-            EventLogStore.shared.record(.playback, "Phát câu \(currentSentenceIndex + 1)", detail: playbackDetail())
+            EventLogStore.shared.record(.playback, "Play sentence \(currentSentenceIndex + 1)", detail: playbackDetail())
             // Keep the preload queue topped up now that a slot may have
             // freed (or the playhead moved) — see refillPreloadQueue().
             refillPreloadQueue()
@@ -1574,7 +1583,11 @@ final class ReaderPlaybackController: ObservableObject {
             isPlaying = false
             updateNowPlayingProgress()
             clearAutoStopState()
-            EventLogStore.shared.record(.error, "Không tạo được audio", detail: detail)
+            Log.error(.tts, "Audio synthesis failed", error: error, [
+                "book": "\(book.id)", "chapter": "\(chapterIndex)", "sentence": "\(currentSentenceIndex)",
+                "voice": voice.rawValue, "text": currentSentenceIndex < sentences.count ? activeSentenceText(at: currentSentenceIndex) : "",
+            ])
+            EventLogStore.shared.record(.error, "Audio synthesis failed", detail: detail)
         }
     }
 
@@ -1680,12 +1693,12 @@ final class ReaderPlaybackController: ObservableObject {
         guard let engine = translationEngine(chapterIndex: targetIndex, source: source),
               engine.canTranslate(from: source, to: target) else { return }
         let texts = nextChapterSentences
-        let logDetail = book.map { "\($0.title) — Chương \(targetIndex + 1) (\(source.minimalIdentifier)→\(target.minimalIdentifier))" } ?? ""
+        let logDetail = book.map { "\($0.title) — chapter \(targetIndex + 1) (\(source.minimalIdentifier)→\(target.minimalIdentifier))" } ?? ""
         nextChapterTranslation = NextChapterTranslation(
             source: source, target: target, engineKind: translationEngineKind,
             translated: [String?](repeating: nil, count: texts.count)
         )
-        EventLogStore.shared.record(.translation, "Dịch trước chương tiếp", detail: "\(logDetail) — \(engine.displayName), \(texts.count) câu")
+        EventLogStore.shared.record(.translation, "Pre-translate next chapter", detail: "\(logDetail) — \(engine.displayName), \(texts.count) sentences")
         nextChapterTranslation?.task = Task(priority: .utility) {
             do {
                 for try await (index, text) in engine.translate(texts: texts, source: source, target: target) {
@@ -1695,7 +1708,8 @@ final class ReaderPlaybackController: ObservableObject {
                 }
             } catch {
                 guard !Task.isCancelled else { return }
-                EventLogStore.shared.record(.translation, "Không dịch trước được chương tiếp", detail: "\(logDetail) — \(error.localizedDescription)")
+                // nolog: LoggedTranslationEngine logged the failure with the sentence
+                EventLogStore.shared.record(.translation, "Next chapter pre-translation failed", detail: "\(logDetail) — \(error.localizedDescription)")
             }
         }
     }
@@ -1763,6 +1777,7 @@ final class ReaderPlaybackController: ObservableObject {
         // (plain `Task { }` in `makeFetchTask`) — under CPU contention from
         // on-device Piper/VieNeu synthesis, the scheduler should favor
         // whatever's actually about to play over this speculative work.
+        // nolog: returned Task — its awaiter gets the error; the synthesizer logs it
         return Task(priority: .utility) {
             let data = try await self.synthesizeAudio(
                 text: text, voice: voice, vieNeuOfflineV2Voice: vieNeuOfflineV2Voice,
@@ -1825,8 +1840,9 @@ final class ReaderPlaybackController: ObservableObject {
         if let prerendered = prerenderedChapter, prerendered.manifest.voiceKey == prerenderVoice.key,
            let range = prerendered.clipRange(index: index, text: text) {
             prerenderedClipIndices.insert(index)
+            // nolog: returned Task — its awaiter (playCurrentSentence) logs the error
             return Task {
-                let data = try await Task.detached(priority: .userInitiated) {
+                let data = try await Task.detached(priority: .userInitiated) { // nolog: awaited via .value
                     try prerendered.clipData(start: range.start, count: range.count)
                 }.value
                 self.markPreloaded(index: index, data: data, generation: generation)
@@ -1834,6 +1850,7 @@ final class ReaderPlaybackController: ObservableObject {
             }
         }
         prerenderedClipIndices.remove(index)
+        // nolog: returned Task — its awaiter gets the error; the synthesizer logs it
         return Task {
             let data = try await self.synthesizeAudio(
                 text: text, voice: voice, vieNeuOfflineV2Voice: vieNeuOfflineV2Voice,

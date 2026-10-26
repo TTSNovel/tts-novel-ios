@@ -19,13 +19,15 @@ public final class EventLogStore: ObservableObject {
 
     @Published public private(set) var events: [AppEvent] = []
 
-    private let fileManager = FileManager.default
-
     private init() {
         events = Self.loadFromDisk()
     }
 
     public func record(_ category: AppEventCategory, _ message: String, detail: String? = nil) {
+        // Mirrored into the diagnostic log so it has the same timeline the
+        // user sees. Not at error level even for `.error` events: the site
+        // that hit the error logs the full error itself via `Log.error`.
+        Log.info(category.logCategory, message, detail.map { ["detail": $0] } ?? [:])
         events.append(AppEvent(category: category, message: message, detail: detail))
         if events.count > Self.maxEntries {
             events.removeFirst(events.count - Self.maxEntries)
@@ -55,22 +57,28 @@ public final class EventLogStore: ObservableObject {
     }
 
     private func persistToDisk() {
-        guard let data = try? JSONEncoder.readingProgress.encode(events) else { return }
-        let url = Self.fileURL()
-        try? fileManager.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
-        try? data.write(to: url)
+        StoredJSON.save(events, to: Self.fileURL(), encoder: .readingProgress)
     }
 
     private static func loadFromDisk() -> [AppEvent] {
-        guard let data = try? Data(contentsOf: fileURL()),
-              let decoded = try? JSONDecoder.readingProgress.decode([AppEvent].self, from: data) else {
-            return []
-        }
-        return decoded
+        StoredJSON.load([AppEvent].self, from: fileURL(), decoder: .readingProgress) ?? []
     }
 
     private static func fileURL() -> URL {
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("event_log.json")
+    }
+}
+
+private extension AppEventCategory {
+    var logCategory: LogCategory {
+        switch self {
+        case .navigation: return .navigation
+        case .playback: return .playback
+        case .download: return .download
+        case .auth: return .auth
+        case .translation: return .translation
+        case .error: return .app
+        }
     }
 }

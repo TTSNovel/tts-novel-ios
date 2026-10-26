@@ -259,7 +259,7 @@ private struct FilterWordEditorView: View {
     private var isPatternValid: Bool {
         guard !trimmedPattern.isEmpty else { return false }
         guard isRegex else { return true }
-        return (try? NSRegularExpression(pattern: trimmedPattern)) != nil
+        return (try? NSRegularExpression(pattern: trimmedPattern)) != nil // nolog: validating user input as they type
     }
 
     // Matches the mockup's .text-input box: a single styled field with no

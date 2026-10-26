@@ -183,6 +183,7 @@ struct GlossaryView: View {
             isLoaded = true
             errorMessage = nil
         } catch {
+            // nolog: APIClient logged the failed request
             errorMessage = "Couldn't load the glossary (\(error.localizedDescription))."
         }
     }
@@ -195,6 +196,7 @@ struct GlossaryView: View {
             errorMessage = nil
             playback.glossaryDidChange(terms)
         } catch {
+            // nolog: APIClient logged the failed request
             errorMessage = "Couldn't save the glossary (\(error.localizedDescription)). Your edit may not apply yet."
         }
     }

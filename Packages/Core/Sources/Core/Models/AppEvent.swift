@@ -17,12 +17,12 @@ public enum AppEventCategory: String, Codable, CaseIterable, Identifiable, Senda
 
     public var displayName: String {
         switch self {
-        case .navigation: return "Điều hướng"
-        case .playback: return "Phát audio"
-        case .download: return "Tải xuống"
-        case .auth: return "Đăng nhập"
-        case .translation: return "Dịch chương"
-        case .error: return "Lỗi"
+        case .navigation: return "Navigation"
+        case .playback: return "Playback"
+        case .download: return "Download"
+        case .auth: return "Account"
+        case .translation: return "Translation"
+        case .error: return "Error"
         }
     }
 

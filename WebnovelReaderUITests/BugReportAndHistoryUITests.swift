@@ -81,8 +81,8 @@ final class BugReportAndHistoryUITests: XCTestCase {
         let filterButton = app.buttons["historyFilterButton"]
         XCTAssertTrue(filterButton.exists)
         filterButton.tap()
-        XCTAssertTrue(app.buttons["Điều hướng"].waitForExistence(timeout: 3))
-        app.buttons["Điều hướng"].tap()
+        XCTAssertTrue(app.buttons["Navigation"].waitForExistence(timeout: 3))
+        app.buttons["Navigation"].tap()
         // Filtered to navigation-only: the entry should still be visible.
         XCTAssertTrue(app.staticTexts["Mở trang chủ"].firstMatch.waitForExistence(timeout: 5))
     }

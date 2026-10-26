@@ -16,7 +16,10 @@ public actor CoverImageCache {
     private init() {
         directory = fileManager.urls(for: .cachesDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("CoverImages", isDirectory: true)
-        try? fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
+        let directory = directory
+        Log.attempt(.storage, "Can't create the cover cache directory") {
+            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        }
     }
 
     public func data(for url: URL) async -> Data? {
@@ -25,17 +28,24 @@ public actor CoverImageCache {
         }
 
         let file = diskURL(for: url)
-        if let onDisk = try? Data(contentsOf: file) {
+        if let onDisk = try? Data(contentsOf: file) { // nolog: not cached yet is the normal miss
             memory.setObject(onDisk as NSData, forKey: url as NSURL)
             return onDisk
         }
 
-        guard let (data, response) = try? await URLSession.shared.data(from: url),
-              let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+        guard let (data, response) = await Log.attempt(.network, "Cover download failed", ["path": url.path], {
+            try await URLSession.shared.data(from: url)
+        }) else {
+            return nil
+        }
+        guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+            Log.error(.network, "Cover request returned an error", ["path": url.path, "status": "\((response as? HTTPURLResponse)?.statusCode ?? -1)"])
             return nil
         }
         memory.setObject(data as NSData, forKey: url as NSURL)
-        try? data.write(to: file)
+        Log.attempt(.storage, "Can't write the cover to the cache", ["file": file.path]) {
+            try data.write(to: file)
+        }
         return data
     }
 

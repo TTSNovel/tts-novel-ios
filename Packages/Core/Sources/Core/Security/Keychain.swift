@@ -14,7 +14,11 @@ enum Keychain {
     }
 
     static func saveCredentials(username: String, password: String) {
-        guard let data = try? JSONEncoder().encode(Credentials(username: username, password: password)) else { return }
+        // Never logs the error's description — it could echo the credentials.
+        guard let data = try? JSONEncoder().encode(Credentials(username: username, password: password)) else { // nolog: see above
+            Log.error(.auth, "Can't encode credentials for the keychain")
+            return
+        }
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
@@ -23,7 +27,10 @@ enum Keychain {
         SecItemDelete(query as CFDictionary)
         var attributes = query
         attributes[kSecValueData as String] = data
-        SecItemAdd(attributes as CFDictionary, nil)
+        let status = SecItemAdd(attributes as CFDictionary, nil)
+        if status != errSecSuccess {
+            Log.error(.auth, "Keychain save failed", ["status": "\(status)"])
+        }
     }
 
     static func loadCredentials() -> Credentials? {
@@ -37,7 +44,11 @@ enum Keychain {
         var result: AnyObject?
         guard SecItemCopyMatching(query as CFDictionary, &result) == errSecSuccess,
               let data = result as? Data else { return nil }
-        return try? JSONDecoder().decode(Credentials.self, from: data)
+        guard let credentials = try? JSONDecoder().decode(Credentials.self, from: data) else { // nolog: logged below without the payload
+            Log.error(.auth, "Stored keychain credentials are unreadable")
+            return nil
+        }
+        return credentials
     }
 
     static func deleteCredentials() {

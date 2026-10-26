@@ -11,8 +11,6 @@ public final class FilterWordsStore: ObservableObject {
 
     @Published public private(set) var filterSet: FilterWordSet
 
-    private let fileManager = FileManager.default
-
     private init() {
         if let loaded = Self.loadFromDisk() {
             filterSet = loaded
@@ -66,13 +64,14 @@ public final class FilterWordsStore: ObservableObject {
         } catch {
             // Offline or server hiccup — local state already has this edit,
             // nothing to roll back.
+            Log.notice(.sync, "Filter words not pushed to the server", ["error": ErrorInfo(error).summary])
         }
     }
 
     /// Pulls the server's list and keeps whichever side is newer — this is
     /// what brings in edits made on another device sharing the same login.
     public func refreshFromServer(baseURL: URL) async {
-        guard let remote = try? await APIClient.shared.fetchFilterWords(baseURL: baseURL) else { return }
+        guard let remote = try? await APIClient.shared.fetchFilterWords(baseURL: baseURL) else { return } // nolog: APIClient logs the failed request
         if remote.updatedAt > filterSet.updatedAt {
             filterSet = remote
             persistToDisk()
@@ -87,15 +86,11 @@ public final class FilterWordsStore: ObservableObject {
     }
 
     private func persistToDisk() {
-        guard let data = try? JSONEncoder.readingProgress.encode(filterSet) else { return }
-        let url = Self.fileURL()
-        try? fileManager.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
-        try? data.write(to: url)
+        StoredJSON.save(filterSet, to: Self.fileURL(), encoder: .readingProgress)
     }
 
     private static func loadFromDisk() -> FilterWordSet? {
-        guard let data = try? Data(contentsOf: fileURL()) else { return nil }
-        return try? JSONDecoder.readingProgress.decode(FilterWordSet.self, from: data)
+        StoredJSON.load(FilterWordSet.self, from: fileURL(), decoder: .readingProgress)
     }
 
     private static func fileURL() -> URL {

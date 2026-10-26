@@ -10,6 +10,7 @@ struct ActionHistoryView: View {
     @EnvironmentObject private var eventLog: EventLogStore
     @State private var selectedCategories: Set<AppEventCategory> = []
     @State private var showingClearConfirm = false
+    @State private var diagnosticsExport: URL?
     #if os(watchOS)
     @State private var showingCategoryFilter = false
     #endif
@@ -85,6 +86,16 @@ struct ActionHistoryView: View {
                 .accessibilityIdentifier("historyShareButton")
             }
             ToolbarItem(placement: .readerTrailing) {
+                // The full diagnostic log (Log/DiagnosticsLog), not just
+                // this timeline — what to send when tracing a bug.
+                if let diagnosticsExport {
+                    ShareLink(item: diagnosticsExport) {
+                        Image(systemName: "doc.text.magnifyingglass")
+                    }
+                    .accessibilityIdentifier("diagnosticsShareButton")
+                }
+            }
+            ToolbarItem(placement: .readerTrailing) {
                 Button(role: .destructive) {
                     showingClearConfirm = true
                 } label: {
@@ -128,6 +139,9 @@ struct ActionHistoryView: View {
             }
         }
         #endif
+        .task {
+            diagnosticsExport = await Task.detached(priority: .utility) { DiagnosticsLog.shared.exportFile() }.value
+        }
         .confirmationDialog("Xoá toàn bộ nhật ký?", isPresented: $showingClearConfirm, titleVisibility: .visible) {
             Button("Xoá", role: .destructive) { eventLog.clear() }
             Button("Huỷ", role: .cancel) {}

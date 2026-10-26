@@ -28,7 +28,7 @@ enum ChapterTitles {
             cache[book.id] = local
             return local
         }
-        guard let fetched = try? await APIClient.shared.fetchChapterTitles(baseURL: SessionStore.baseURL, bookID: book.id) else {
+        guard let fetched = try? await APIClient.shared.fetchChapterTitles(baseURL: SessionStore.baseURL, bookID: book.id) else { // nolog: APIClient logged the failed request
             return nil
         }
         cache[book.id] = fetched

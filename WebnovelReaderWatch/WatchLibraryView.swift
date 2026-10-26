@@ -98,6 +98,7 @@ struct WatchLibraryView: View {
         do {
             books = try await APIClient.shared.fetchBooks(baseURL: SessionStore.baseURL)
         } catch {
+            // nolog: APIClient logged the failed request
             let offline = downloads.downloadedBooks()
             if !offline.isEmpty {
                 books = offline

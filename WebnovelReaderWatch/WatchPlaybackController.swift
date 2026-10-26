@@ -162,6 +162,7 @@ final class WatchPlaybackController: ObservableObject {
             needsFreshSynthesis = true
             isLoading = false
         } catch {
+            // nolog: APIClient logged the failed request
             guard myGeneration == generation else { return }
             errorMessage = "Không tải được chương — kiểm tra kết nối mạng"
             isLoading = false
@@ -220,6 +221,7 @@ final class WatchPlaybackController: ObservableObject {
             player.updateNowPlaying(bookTitle: book.title, chapterTitle: chapter?.title ?? "")
             refillPreloadQueue()
         } catch {
+            Log.error(.tts, "Watch synthesis failed", error: error, ["sentence": "\(sentenceIndex)"])
             guard myGeneration == generation else { return }
             // `/api/tts` requires a real session (confirmed against the
             // live server: an unauthenticated POST returns a plain 401) —
@@ -261,7 +263,7 @@ final class WatchPlaybackController: ObservableObject {
         preloadTask = Task {
             for index in (sentenceIndex + 1)...boundary {
                 guard !Task.isCancelled, myGeneration == self.generation, self.preloadedData[index] == nil else { continue }
-                if let data = try? await self.synthesize(text: toFetch[index]) {
+                if let data = try? await self.synthesize(text: toFetch[index]) { // nolog: preload; APIClient logged the failed request
                     guard !Task.isCancelled, myGeneration == self.generation else { return }
                     self.preloadedData[index] = data
                 }
