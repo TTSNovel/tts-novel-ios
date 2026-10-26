@@ -24,13 +24,55 @@ actor PiperOfflineTTSService {
     static let shared = PiperOfflineTTSService()
 
     private var tts: SherpaOnnxOfflineTtsWrapper?
+    private var transliterator: PiperEnglishTransliterator?
 
     private init() {}
 
     func synthesize(text: String, speed: Double) throws -> Data {
         let engine = try loadedEngine()
-        let audio = engine.generate(text: text, sid: 0, speed: Float(speed))
+        let audio = engine.generate(text: try spokenText(for: text), sid: 0, speed: Float(speed))
         return try Self.wavData(from: audio)
+    }
+
+    /// `text` with English words rewritten as Vietnamese syllables — what
+    /// Piper actually reads (see PiperEnglishTransliterator).
+    func spokenText(for text: String) throws -> String {
+        _ = try loadedEngine()
+        return loadedTransliterator().transliterate(text)
+    }
+
+    /// Built after `loadedEngine()`: the engine's construction is what
+    /// calls `espeak_Initialize`, which `englishIPA` relies on.
+    private func loadedTransliterator() -> PiperEnglishTransliterator {
+        if let transliterator { return transliterator }
+        let built = PiperEnglishTransliterator(
+            dictionary: PiperEnglishTransliterator.loadBundledDictionary(),
+            phonemize: Self.englishIPA
+        )
+        transliterator = built
+        return built
+    }
+
+    /// English IPA for each word from the espeak-ng that sherpa-onnx links
+    /// statically (en_dict already ships in the bundled espeak-ng-data).
+    /// Switching espeak's global voice to "en" is safe here: this runs
+    /// inside the actor, so never concurrently with `generate`, and
+    /// piper-phonemize sets the voice back to `vi` on every phonemize call.
+    private static func englishIPA(_ words: [String]) -> [String] {
+        guard espeak_SetVoiceByName("en") == 0 else { return words.map { _ in "" } }
+        let ipaMode: Int32 = 0x02 | (Int32(UInt8(ascii: "_")) << 8)  // IPA, "_" between phonemes
+        let utf8Text: Int32 = 1  // espeakCHARS_UTF8
+        return words.map { word in
+            word.withCString { cString in
+                var cursor: UnsafeRawPointer? = UnsafeRawPointer(cString)
+                var ipa = ""
+                // One call per clause; espeak advances `cursor` and nils it at the end.
+                while cursor != nil, let clause = espeak_TextToPhonemes(&cursor, utf8Text, ipaMode) {
+                    ipa += String(cString: clause) + " "
+                }
+                return ipa
+            }
+        }
     }
 
     /// Model construction (parsing the ~61MB onnx graph) is a one-time

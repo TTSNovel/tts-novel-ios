@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		09FD22B220F0F9D8E5B7A91F /* PiperEnglishTransliteratorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72AC633AE575EA45DF0830C4 /* PiperEnglishTransliteratorTests.swift */; };
+		36C407CEAF43B73EB9B3AF27 /* english_transliterations.LICENSE.txt in Resources */ = {isa = PBXBuildFile; fileRef = 55E23D23275AE1209FF86304 /* english_transliterations.LICENSE.txt */; };
+		F5F1E0F9E4F6FE103C25A3C7 /* english_transliterations.csv in Resources */ = {isa = PBXBuildFile; fileRef = 98659431BF02FAEE2C667C0F /* english_transliterations.csv */; };
+		04E81B19B5743B7A8F401173 /* PiperEnglishTransliterator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3876ED20FC3A9CC7CAEEB365 /* PiperEnglishTransliterator.swift */; };
 		F1E2D3C4B5A6978812345602 /* waiting-filler.m4a in Resources */ = {isa = PBXBuildFile; fileRef = F1E2D3C4B5A6978812345601 /* waiting-filler.m4a */; };
 		F1E2D3C4B5A6978812345603 /* waiting-filler.m4a in Resources */ = {isa = PBXBuildFile; fileRef = F1E2D3C4B5A6978812345601 /* waiting-filler.m4a */; };
 		01734EB50A00E0841EC71B45 /* VieNeuOfflineV2UITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F456FE71D617BD6DEC0F52A6 /* VieNeuOfflineV2UITests.swift */; };
@@ -235,6 +239,11 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		72AC633AE575EA45DF0830C4 /* PiperEnglishTransliteratorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PiperEnglishTransliteratorTests.swift; sourceTree = "<group>"; };
+		55E23D23275AE1209FF86304 /* english_transliterations.LICENSE.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = english_transliterations.LICENSE.txt; sourceTree = "<group>"; };
+		98659431BF02FAEE2C667C0F /* english_transliterations.csv */ = {isa = PBXFileReference; lastKnownFileType = text; path = english_transliterations.csv; sourceTree = "<group>"; };
+		957CDFEB51D9CEB5A4E91A16 /* EspeakPhonemes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = EspeakPhonemes.h; sourceTree = "<group>"; };
+		3876ED20FC3A9CC7CAEEB365 /* PiperEnglishTransliterator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PiperEnglishTransliterator.swift; sourceTree = "<group>"; };
 		F1E2D3C4B5A6978812345601 /* waiting-filler.m4a */ = {isa = PBXFileReference; lastKnownFileType = file; path = "waiting-filler.m4a"; sourceTree = "<group>"; };
 		00478963429E208A80C957D7 /* WatchPlaybackView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchPlaybackView.swift; sourceTree = "<group>"; };
 		004CA44AC74B9034C629CF09 /* AudioInterruptionUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioInterruptionUITests.swift; sourceTree = "<group>"; };
@@ -578,6 +587,7 @@
 				DF62CC9FACA427AC450D86AA /* ChapterFragmentParserTests.swift */,
 				FE5E9FF61219C4CAD0E71621 /* DownloadManagerTests.swift */,
 				D0DE54214FD181D972B3F283 /* TranslationPerformanceTests.swift */,
+				72AC633AE575EA45DF0830C4 /* PiperEnglishTransliteratorTests.swift */,
 				6B9BE05AB4EE50BE2CA0AAEE /* Resources */,
 			);
 			path = WebnovelReaderTests;
@@ -587,7 +597,9 @@
 			isa = PBXGroup;
 			children = (
 				2F7B764ACADBCDD832A98421 /* OfflineWavEncoding.swift */,
+				957CDFEB51D9CEB5A4E91A16 /* EspeakPhonemes.h */,
 				67FCD507015BA179DEAFCA4B /* PiperOfflineTTSService.swift */,
+				3876ED20FC3A9CC7CAEEB365 /* PiperEnglishTransliterator.swift */,
 				D86948B589F016B404B328BE /* ReaderPlaybackController.swift */,
 				1BB91FD5BDF27C6EC3C7E3F3 /* SeaG2PBridge.swift */,
 				5820BF99535AA4318F7F6700 /* VieNeu-Bridging-Header.h */,
@@ -657,6 +669,8 @@
 			isa = PBXGroup;
 			children = (
 				D7D04640EB80155C062EFE5C /* espeak-ng-data */,
+				55E23D23275AE1209FF86304 /* english_transliterations.LICENSE.txt */,
+				98659431BF02FAEE2C667C0F /* english_transliterations.csv */,
 				2538B9C2D810DA7B997904AC /* tokens.txt */,
 				19BB4D3E4A9827CF125F6CC5 /* vi_VN-vais1000-medium.onnx */,
 			);
@@ -1001,6 +1015,8 @@
 				E507BB1F75B2C0B1AEA4554F /* sea_g2p.bin in Resources */,
 				F6DC451A5DD5BBECEA70BA61 /* source_pieces.json in Resources */,
 				AEFD1810A6923AFCB301959D /* tokens.txt in Resources */,
+				36C407CEAF43B73EB9B3AF27 /* english_transliterations.LICENSE.txt in Resources */,
+				F5F1E0F9E4F6FE103C25A3C7 /* english_transliterations.csv in Resources */,
 				BC7774DC5AA3F54E7F5C5299 /* vi_VN-vais1000-medium.onnx in Resources */,
 				FC675CAE16A795786661CA43 /* vieneu-tts-v2-turbo.gguf in Resources */,
 				FB87FEED1B73B697FEB9CB0E /* vieneu_decoder_int8.onnx in Resources */,
@@ -1097,6 +1113,7 @@
 				406B5832FCFC8955C3CB43E0 /* OfflineWavEncoding.swift in Sources */,
 				5D465174D209824D4D8A994A /* OpusMTTranslationEngine.swift in Sources */,
 				C30C58DC9526D986385052DC /* PiperOfflineTTSService.swift in Sources */,
+				04E81B19B5743B7A8F401173 /* PiperEnglishTransliterator.swift in Sources */,
 				4BD6C852923B36C639FF988B /* PlaybackBar.swift in Sources */,
 				5952907776FF164D7CFE6429 /* ReaderPlaybackController.swift in Sources */,
 				B174696283E4D1D69C9A4ACA /* ReaderSettingsSheet.swift in Sources */,
@@ -1219,6 +1236,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				455FB6E16D6AA74E1D51DB9E /* ChapterFragmentParserTests.swift in Sources */,
+				09FD22B220F0F9D8E5B7A91F /* PiperEnglishTransliteratorTests.swift in Sources */,
 				82A582032CF59E97ABFEB21A /* DownloadManagerTests.swift in Sources */,
 				BC356F4C1D813BBC51ABF55F /* TranslationPerformanceTests.swift in Sources */,
 			);
