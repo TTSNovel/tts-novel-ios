@@ -90,7 +90,10 @@ actor PiperOfflineTTSService {
             throw PiperOfflineError.modelFilesMissing
         }
         let vits = sherpaOnnxOfflineTtsVitsModelConfig(model: model, lexicon: "", tokens: tokens, dataDir: dataDir)
-        let modelConfig = sherpaOnnxOfflineTtsModelConfig(vits: vits)
+        // sherpa-onnx defaults to 1 thread. 4 ran ~3x faster in a simulator
+        // benchmark with identical output; parallel engines instead would
+        // race on espeak-ng's global state (garbled phonemes).
+        let modelConfig = sherpaOnnxOfflineTtsModelConfig(vits: vits, numThreads: 4)
         var config = sherpaOnnxOfflineTtsConfig(model: modelConfig)
         let engine = SherpaOnnxOfflineTtsWrapper(config: &config)
         tts = engine
