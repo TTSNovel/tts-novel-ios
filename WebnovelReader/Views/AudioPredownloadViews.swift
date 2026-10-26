@@ -17,6 +17,9 @@ struct AudioPredownloadButton: View {
                 ProgressView(value: job.progressValue, total: Double(max(job.chapters.count, 1)))
                     .progressViewStyle(.circular)
                     .controlSize(.small)
+            } else if let job = manager.jobs[book.id], !job.failedChapters.isEmpty || job.stopReason != nil {
+                Image(systemName: "waveform.badge.exclamationmark")
+                    .foregroundStyle(.orange)
             } else {
                 Image(systemName: "waveform.badge.plus")
             }
@@ -38,6 +41,7 @@ struct AudioPredownloadSheet: View {
     /// nil = all remaining chapters.
     @State private var count: Int? = 10
     @State private var confirmingReplace = false
+    @State private var showingFailures = false
 
     private static let counts: [Int?] = [10, 50, 100, nil]
 
@@ -69,7 +73,7 @@ struct AudioPredownloadSheet: View {
                     Text("Audio được dịch và tạo sẵn theo giọng đang chọn, lúc nghe chỉ phát file — không cần mạng, đỡ tốn pin.")
                 }
 
-                if let job, job.isRunning || job.failure != nil {
+                if let job, job.isRunning || !job.failedChapters.isEmpty || job.stopReason != nil {
                     Section("Tiến độ") {
                         ProgressView(value: job.progressValue, total: Double(max(job.chapters.count, 1)))
                         Text("\(job.completed)/\(job.chapters.count) chương")
@@ -80,8 +84,11 @@ struct AudioPredownloadSheet: View {
                                 .monospacedDigit()
                                 .accessibilityIdentifier("audioPredownloadStep")
                         }
-                        if let failure = job.failure {
-                            Text(failure).foregroundStyle(.red)
+                        if let reason = job.stopReason {
+                            Text(reason).foregroundStyle(.red)
+                        }
+                        if !job.isRunning, !job.failedChapters.isEmpty {
+                            failedRow(job)
                         }
                     }
                 }
@@ -106,6 +113,9 @@ struct AudioPredownloadSheet: View {
                 #endif
             }
             .formStyle(.grouped)
+            .navigationDestination(isPresented: $showingFailures) {
+                AudioPredownloadFailuresView(bookID: book.id)
+            }
             .navigationTitle("Tải audio")
             .inlineNavigationTitle()
             .toolbar {
@@ -152,19 +162,91 @@ struct AudioPredownloadSheet: View {
         manager.start(book: book, range: range, voice: voice)
     }
 
+    /// "N chương lỗi · Thử lại" — the count opens the reasons.
+    private func failedRow(_ job: AudioPredownloadManager.Job) -> some View {
+        HStack {
+            Button {
+                showingFailures = true
+            } label: {
+                Label("\(job.failedChapters.count) chương lỗi", systemImage: "exclamationmark.triangle.fill")
+                    .foregroundStyle(.red)
+            }
+            .accessibilityIdentifier("audioPredownloadFailuresButton")
+            Text("·").foregroundStyle(.secondary)
+            Button("Thử lại") { manager.retryFailed(bookID: book.id) }
+                .disabled(manager.unavailableReason(for: job.voice) != nil)
+                .accessibilityIdentifier("audioPredownloadRetryButton")
+            Spacer()
+        }
+        .buttonStyle(.borderless)
+    }
+
     static func stepText(_ job: AudioPredownloadManager.Job, chapter: Int) -> String {
         let prefix = "Chương \(chapter + 1)"
-        switch job.step {
+        switch job.state(chapter) {
         case .translating: return "\(prefix) · đang dịch \(job.stepDone)/\(job.stepTotal) câu"
         case .synthesizing: return "\(prefix) · đang tạo audio \(job.stepDone)/\(job.stepTotal) câu"
         case .saving: return "\(prefix) · đang lưu"
-        case nil: return "\(prefix) · đang chuẩn bị"
+        default: return "\(prefix) · đang chuẩn bị"
         }
     }
 
     static func duration(_ seconds: Double) -> String {
         let minutes = Int((seconds / 60).rounded())
         return minutes >= 60 ? "~\(minutes / 60) giờ \(minutes % 60) phút" : "~\(minutes) phút"
+    }
+}
+
+/// Why each failed chapter of a book's audio download failed.
+struct AudioPredownloadFailuresView: View {
+    let bookID: Int
+    @ObservedObject private var manager = AudioPredownloadManager.shared
+
+    private var job: AudioPredownloadManager.Job? { manager.jobs[bookID] }
+
+    var body: some View {
+        Form {
+            if let job {
+                ForEach(job.failedChapters, id: \.self) { index in
+                    if let failure = job.state(index).failure {
+                        Section("Chương \(index + 1)") {
+                            LabeledContent("Bước", value: Self.stepName(failure.step))
+                            LabeledContent("Số lần thử", value: String(failure.attempts))
+                            Text(failure.reason)
+                                .foregroundStyle(.red)
+                                .textSelection(.enabled)
+                            if let sentence = failure.sentenceIndex {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("Câu \(sentence + 1)").font(.caption).foregroundStyle(.secondary)
+                                    if let text = failure.sentenceText {
+                                        Text(text).textSelection(.enabled)
+                                    }
+                                }
+                            }
+                        }
+                        .accessibilityIdentifier("audioPredownloadFailure_\(index)")
+                    }
+                }
+                if !job.isRunning, !job.failedChapters.isEmpty {
+                    Section {
+                        Button("Thử lại \(job.failedChapters.count) chương") { manager.retryFailed(bookID: bookID) }
+                            .disabled(manager.unavailableReason(for: job.voice) != nil)
+                    }
+                }
+            }
+        }
+        .formStyle(.grouped)
+        .navigationTitle("Chương lỗi")
+        .inlineNavigationTitle()
+    }
+
+    static func stepName(_ step: PredownloadChapterFailure.Step) -> String {
+        switch step {
+        case .loading: return "Đọc chương đã tải"
+        case .translating: return "Dịch"
+        case .synthesizing: return "Tạo audio"
+        case .saving: return "Lưu file"
+        }
     }
 }
 

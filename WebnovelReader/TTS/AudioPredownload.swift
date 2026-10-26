@@ -14,8 +14,9 @@ import BackgroundTasks
 // sentence-by-sentence play loop, highlight and seek work unchanged.
 //
 // Layout: Application Support/PrerenderedAudio/<bookID>/book.json (which
-// voice — one voice per book) + <chapter>.m4a/.json. A chapter counts as
-// rendered once its .json exists (written last, after the .m4a).
+// voice — one voice per book) + job.json (the last job's per-chapter
+// states) + <chapter>.m4a/.json. A chapter counts as rendered once its
+// .json exists (written last, after the .m4a).
 
 /// Everything that changes how a sentence sounds besides its text — the
 /// voice plus its speaker preset. Speed is deliberately not part of it:
@@ -97,12 +98,14 @@ enum PrerenderError: LocalizedError {
     case audioFormat
     case notDownloaded
     case voiceUnavailable(String)
+    case translationIncomplete
 
     var errorDescription: String? {
         switch self {
         case .audioFormat: return "Unsupported audio format"
         case .notDownloaded: return "Download the book first"
         case .voiceUnavailable(let reason): return reason
+        case .translationIncomplete: return "Translation returned no text"
         }
     }
 }
@@ -131,6 +134,25 @@ struct PrerenderedAudioStore: Sendable {
 
     private func bookInfoURL(_ bookID: Int) -> URL {
         bookDirectory(bookID).appendingPathComponent("book.json")
+    }
+
+    private func jobURL(_ bookID: Int) -> URL {
+        bookDirectory(bookID).appendingPathComponent("job.json")
+    }
+
+    func job(_ bookID: Int) -> PredownloadJob? {
+        StoredJSON.load(PredownloadJob.self, from: jobURL(bookID), category: .predownload)
+    }
+
+    func setJob(_ job: PredownloadJob) {
+        StoredJSON.save(job, to: jobURL(job.bookID), category: .predownload)
+    }
+
+    /// Books with a saved job (running, interrupted or finished).
+    func jobBookIDs() -> [Int] {
+        let entries = (try? FileManager.default.contentsOfDirectory(at: root, includingPropertiesForKeys: nil)) ?? [] // nolog: nothing downloaded yet
+        return entries.compactMap { Int($0.lastPathComponent) }
+            .filter { FileManager.default.fileExists(atPath: jobURL($0).path) }
     }
 
     func bookInfo(_ bookID: Int) -> PrerenderedBookInfo? {
@@ -341,47 +363,109 @@ enum WavEncoding {
     }
 }
 
-/// Runs pre-render jobs — one book at a time, chapter by chapter, started
-/// from BookDetailView's audio download button.
+/// Where one chapter of a pre-render job is. Every chapter walks
+/// pending → translating → synthesizing → saving → done, or ends in
+/// failed once its retries run out — a failed chapter doesn't stop the
+/// job, the next one starts. Persisted with the job (`job.json`), so a job
+/// killed mid-way picks up again at its first unfinished chapter.
+enum PredownloadChapterState: Codable, Equatable, Sendable {
+    case pending
+    case translating
+    case synthesizing
+    case saving
+    case done
+    case failed(PredownloadChapterFailure)
+
+    /// Being worked on right now (as opposed to waiting or finished).
+    var isActive: Bool { self == .translating || self == .synthesizing || self == .saving }
+
+    var failure: PredownloadChapterFailure? {
+        if case .failed(let failure) = self { return failure }
+        return nil
+    }
+}
+
+struct PredownloadChapterFailure: Codable, Equatable, Sendable {
+    enum Step: String, Codable, Sendable { case loading, translating, synthesizing, saving }
+
+    var step: Step
+    var reason: String
+    var attempts: Int
+    /// The sentence it failed on (index into the chapter's sentence
+    /// sequence) and that sentence's text, when it's down to one sentence.
+    var sentenceIndex: Int?
+    var sentenceText: String?
+}
+
+/// One book's pre-render job — what the download sheet shows, written to
+/// `<bookID>/job.json` on every chapter state change.
+struct PredownloadJob: Codable, Equatable, Sendable {
+    var bookID: Int
+    var bookTitle: String
+    var voice: PrerenderVoice
+    var chapters: [Int]
+    var states: [Int: PredownloadChapterState]
+    /// The job should be running: set on start/retry, cleared when it
+    /// finishes, the user stops it or it can't go on. Still set on disk
+    /// when the app was killed or iOS expired the background task — that's
+    /// what gets it resumed on the next launch/foreground.
+    var wantsToRun: Bool
+    /// Why the whole job stopped early (the voice became unusable — no
+    /// network, logged out), as opposed to one chapter failing.
+    var stopReason: String?
+
+    // In memory only: a task is running it, and the current step's
+    // per-sentence progress.
+    var isRunning = false
+    var stepDone = 0
+    var stepTotal = 0
+
+    private enum CodingKeys: String, CodingKey {
+        case bookID, bookTitle, voice, chapters, states, wantsToRun, stopReason
+    }
+
+    func state(_ index: Int) -> PredownloadChapterState { states[index] ?? .pending }
+
+    var completed: Int { chapters.filter { state($0) == .done }.count }
+    var failedChapters: [Int] { chapters.filter { state($0).failure != nil } }
+    var currentChapter: Int? { chapters.first { state($0).isActive } }
+    var isFinished: Bool { chapters.allSatisfy { state($0) == .done || state($0).failure != nil } }
+
+    /// Chapters done, counting the current one's sentences as a fraction.
+    var progressValue: Double {
+        var current = 0.0
+        if let index = currentChapter {
+            switch state(index) {
+            case .synthesizing: current = stepTotal > 0 ? Double(stepDone) / Double(stepTotal) : 0
+            case .saving: current = 1
+            default: break
+            }
+        }
+        return min(Double(completed) + current, Double(chapters.count))
+    }
+
+    /// A chapter that was mid-way when the app died lost its in-memory
+    /// work, so it goes back to pending.
+    mutating func resetActiveChapters() {
+        for (index, state) in states where state.isActive { states[index] = .pending }
+    }
+}
+
+/// A failure that's down to one sentence of the chapter.
+private struct SentenceError: Error {
+    var index: Int
+    var underlying: Error
+}
+
+/// Runs pre-render jobs — one per book, chapter by chapter, started from
+/// BookDetailView's audio download button.
 @MainActor
 final class AudioPredownloadManager: ObservableObject {
     static let shared = AudioPredownloadManager()
 
-    struct Job: Equatable {
-        var bookID: Int
-        var bookTitle: String
-        var chapters: [Int]
-        var completed: Int
-        var currentChapter: Int?
-        /// What the current chapter is on, with a per-sentence count — a
-        /// chapter takes minutes, so whole-chapter progress alone looks stuck.
-        var step: Step?
-        var stepDone = 0
-        var stepTotal = 0
-        var failure: String?
-        var isRunning: Bool
+    typealias Job = PredownloadJob
 
-        enum Step: Equatable { case translating, synthesizing, saving }
-
-        /// Chapters done, counting the current one's sentences as a fraction.
-        var progressValue: Double {
-            let current: Double
-            switch step {
-            case .synthesizing: current = stepTotal > 0 ? Double(stepDone) / Double(stepTotal) : 0
-            case .saving: current = 1
-            default: current = 0
-            }
-            return min(Double(completed) + current, Double(chapters.count))
-        }
-    }
-
-    private func setStep(_ bookID: Int, _ step: Job.Step?, done: Int = 0, total: Int = 0) {
-        jobs[bookID]?.step = step
-        jobs[bookID]?.stepDone = done
-        jobs[bookID]?.stepTotal = total
-    }
-
-    /// The running (or last stopped/failed) job per book.
+    /// Every book's job on disk — running, interrupted or finished.
     @Published private(set) var jobs: [Int: Job] = [:]
     /// Bumped whenever files on disk change, so storage views reload.
     @Published private(set) var storageRevision = 0
@@ -395,11 +479,19 @@ final class AudioPredownloadManager: ObservableObject {
     /// Same in-flight cap as live playback's preload (Q18: don't burst the
     /// TTS backend).
     private let maxConcurrentSynthesis = 3
+    /// Tries per chapter before it's marked failed. A retry keeps the
+    /// sentences already translated/synthesized.
+    private let maxAttempts = 3
     private var tasks: [Int: Task<Void, Never>] = [:]
     private let store = PrerenderedAudioStore.shared
 
     private init() {
         keepPlayedAudio = UserDefaults.standard.bool(forKey: "prerender.keepPlayedAudio")
+        for bookID in store.jobBookIDs() {
+            guard var job = store.job(bookID) else { continue }
+            job.resetActiveChapters()
+            jobs[bookID] = job
+        }
     }
 
     func isRunning(_ bookID: Int) -> Bool { jobs[bookID]?.isRunning == true }
@@ -465,17 +557,46 @@ final class AudioPredownloadManager: ObservableObject {
             storageRevision += 1
         }
         let chapters = Array(range)
+        var states: [Int: PredownloadChapterState] = [:]
+        for index in chapters {
+            states[index] = isRendered(bookID: book.id, index: index, voiceKey: voice.key) ? .done : .pending
+        }
         jobs[book.id] = Job(
-            bookID: book.id, bookTitle: book.title, chapters: chapters,
-            completed: chapters.filter { isRendered(bookID: book.id, index: $0, voiceKey: voice.key) }.count,
-            currentChapter: nil, failure: nil, isRunning: true
+            bookID: book.id, bookTitle: book.title, voice: voice, chapters: chapters,
+            states: states, wantsToRun: true, stopReason: nil
         )
         EventLogStore.shared.record(.download, "Start audio download", detail: "\(book.title) — \(chapters.count) chapters, \(voice.displayName)")
-        tasks[book.id] = Task { await self.run(book: book, chapters: chapters, voice: voice) }
-        beginBackgroundTask(book: book)
+        launch(bookID: book.id)
     }
 
+    /// "Thử lại": failed chapters go back to pending and the job runs again
+    /// (also continues a job that stopped early or was stopped).
+    func retryFailed(bookID: Int) {
+        guard var job = jobs[bookID], !job.isRunning else { return }
+        for index in job.failedChapters { job.states[index] = .pending }
+        job.wantsToRun = true
+        job.stopReason = nil
+        jobs[bookID] = job
+        EventLogStore.shared.record(.download, "Retry failed audio chapters", detail: job.bookTitle)
+        launch(bookID: bookID)
+    }
+
+    /// Restarts jobs that were still meant to be running when the app was
+    /// killed or iOS ended their background time — called on launch and
+    /// whenever the app comes back to the foreground.
+    func resumeInterruptedJobs() {
+        for (bookID, job) in jobs where job.wantsToRun && !job.isRunning {
+            EventLogStore.shared.record(.download, "Resume audio download", detail: job.bookTitle)
+            launch(bookID: bookID)
+        }
+    }
+
+    /// User stop — unlike an interruption, not resumed later.
     func cancel(bookID: Int) {
+        if jobs[bookID]?.wantsToRun == true {
+            jobs[bookID]?.wantsToRun = false
+            persist(bookID)
+        }
         tasks[bookID]?.cancel()
     }
 
@@ -488,7 +609,7 @@ final class AudioPredownloadManager: ObservableObject {
     }
 
     func deleteAll() {
-        for bookID in store.bookIDs() { deleteAudio(bookID: bookID) }
+        for bookID in Set(store.bookIDs() + Array(jobs.keys)) { deleteAudio(bookID: bookID) }
         StoredJSON.remove(store.root, category: .predownload)
         storageRevision += 1
     }
@@ -500,149 +621,271 @@ final class AudioPredownloadManager: ObservableObject {
         storageRevision += 1
     }
 
-    private func run(book: Book, chapters: [Int], voice: PrerenderVoice) async {
+    // MARK: - State machine
+
+    private func launch(bookID: Int) {
+        guard let job = jobs[bookID], tasks[bookID] == nil else { return }
+        jobs[bookID]?.isRunning = true
+        persist(bookID)
+        tasks[bookID] = Task { await self.run(bookID: bookID) }
+        beginBackgroundTask(bookID: bookID, title: job.bookTitle)
+    }
+
+    private func transition(_ bookID: Int, _ index: Int, to state: PredownloadChapterState) {
+        jobs[bookID]?.states[index] = state
+        setProgress(bookID, done: 0, total: 0)
+        persist(bookID)
+    }
+
+    private func setProgress(_ bookID: Int, done: Int, total: Int) {
+        jobs[bookID]?.stepDone = done
+        jobs[bookID]?.stepTotal = total
+    }
+
+    private func persist(_ bookID: Int) {
+        guard let job = jobs[bookID] else { return }
+        store.setJob(job)
+    }
+
+    private func run(bookID: Int) async {
         // Everything logged under this job — translation, synthesis,
-        // storage — carries which download and which chapter it was.
-        await withLogContext(["job": "predownload", "book": "\(book.id)", "voice": voice.key]) {
-            await runJob(book: book, chapters: chapters, voice: voice)
+        // storage — carries which download it was.
+        await withLogContext(["job": "predownload", "book": "\(bookID)", "voice": jobs[bookID]?.voice.key ?? "-"]) {
+            await runJob(bookID: bookID)
         }
     }
 
-    private func runJob(book: Book, chapters: [Int], voice: PrerenderVoice) async {
+    private func runJob(bookID: Int) async {
         let started = Date()
         defer {
-            jobs[book.id]?.isRunning = false
-            jobs[book.id]?.currentChapter = nil
-            tasks[book.id] = nil
+            tasks[bookID] = nil
+            jobs[bookID]?.isRunning = false
+            // Stopped mid-chapter: that chapter starts over next time.
+            jobs[bookID]?.resetActiveChapters()
+            setProgress(bookID, done: 0, total: 0)
+            if jobs[bookID]?.isFinished == true { jobs[bookID]?.wantsToRun = false }
+            persist(bookID)
             storageRevision += 1
-            endBackgroundTask(bookID: book.id)
+            endBackgroundTask(bookID: bookID)
         }
+        guard let job = jobs[bookID] else { return }
+        let voice = job.voice
         do {
-            try store.setBookInfo(PrerenderedBookInfo(voiceKey: voice.key, voiceName: voice.displayName), bookID: book.id)
-            for index in chapters {
-                try Task.checkCancellation()
-                if isRendered(bookID: book.id, index: index, voiceKey: voice.key) { continue }
-                if let reason = unavailableReason(for: voice) { throw PrerenderError.voiceUnavailable(reason) }
-                jobs[book.id]?.currentChapter = index
-                try await withLogContext(["chapter": "\(index)"]) {
-                    try await renderChapter(book: book, index: index, voice: voice)
-                }
-                jobs[book.id]?.completed += 1
-                setStep(book.id, nil)
-                storageRevision += 1
-                updateBackgroundTaskProgress(bookID: book.id)
-            }
-            EventLogStore.shared.record(.download, "Audio download finished", detail: book.title)
+            try store.setBookInfo(PrerenderedBookInfo(voiceKey: voice.key, voiceName: voice.displayName), bookID: bookID)
         } catch {
-            setStep(book.id, nil)
-            // Stopping mid-request surfaces as URLError.cancelled (or a
-            // translation error), not CancellationError — still a stop.
-            if error is CancellationError || Task.isCancelled {
-                EventLogStore.shared.record(.download, "Audio download stopped", detail: book.title)
+            Log.error(.predownload, "Audio download can't write book info", error: error)
+            stop(bookID, reason: error.localizedDescription)
+            return
+        }
+        for index in job.chapters where jobs[bookID]?.state(index) == .pending {
+            if Task.isCancelled { break }
+            if isRendered(bookID: bookID, index: index, voiceKey: voice.key) {
+                transition(bookID, index, to: .done)
+                continue
+            }
+            // Nothing can succeed without the voice — stop instead of
+            // failing every remaining chapter.
+            if let reason = unavailableReason(for: voice) {
+                stop(bookID, reason: reason)
                 return
             }
-            jobs[book.id]?.failure = error.localizedDescription
-            Log.error(.predownload, "Audio download failed", error: error, [
-                "chapter": jobs[book.id]?.currentChapter.map { "\($0)" } ?? "-",
-                "completed": "\(jobs[book.id]?.completed ?? 0)/\(chapters.count)",
+            await withLogContext(["chapter": "\(index)"]) {
+                await renderWithRetries(bookID: bookID, index: index, voice: voice)
+            }
+            storageRevision += 1
+            updateBackgroundTaskProgress(bookID: bookID)
+        }
+        guard let job = jobs[bookID] else { return }
+        if Task.isCancelled {
+            EventLogStore.shared.record(.download, job.wantsToRun ? "Audio download interrupted" : "Audio download stopped", detail: job.bookTitle)
+        } else if job.failedChapters.isEmpty {
+            EventLogStore.shared.record(.download, "Audio download finished", detail: job.bookTitle)
+        } else {
+            Log.notice(.predownload, "Audio download finished with failed chapters", [
+                "failed": job.failedChapters.map { "\($0)" }.joined(separator: ","),
+                "completed": "\(job.completed)/\(job.chapters.count)",
                 "runSeconds": "\(Int(Date().timeIntervalSince(started)))",
             ])
-            EventLogStore.shared.record(.error, "Audio download failed", detail: "\(book.title): \(error.localizedDescription)")
+            EventLogStore.shared.record(.error, "Audio download finished, \(job.failedChapters.count) chapters failed", detail: job.bookTitle)
         }
     }
 
-    private func renderChapter(book: Book, index: Int, voice: PrerenderVoice) async throws {
-        guard let chapter = DownloadManager.shared.localChapter(bookID: book.id, index: index) else {
+    private func stop(_ bookID: Int, reason: String) {
+        jobs[bookID]?.stopReason = reason
+        jobs[bookID]?.wantsToRun = false
+        Log.notice(.predownload, "Audio download stopped early", ["reason": reason])
+        EventLogStore.shared.record(.error, "Audio download stopped", detail: "\(jobs[bookID]?.bookTitle ?? ""): \(reason)")
+    }
+
+    /// One chapter, through to `done` or `failed`. Translations and clips
+    /// that already succeeded carry over to the next attempt.
+    private func renderWithRetries(bookID: Int, index: Int, voice: PrerenderVoice) async {
+        var work = ChapterWork()
+        for attempt in 1...maxAttempts {
+            do {
+                try await renderChapter(bookID: bookID, index: index, voice: voice, work: &work)
+                transition(bookID, index, to: .done)
+                return
+            } catch {
+                // Stopping mid-request surfaces as URLError.cancelled (or a
+                // translation error), not CancellationError — still a stop.
+                if Log.isCancellation(error) || Task.isCancelled { return } // nolog: a stop, not a failure
+                let failure = failureDetails(error, step: work.step, attempts: attempt, work: work)
+                let title = jobs[bookID]?.bookTitle ?? ""
+                let context = [
+                    "step": failure.step.rawValue, "attempt": "\(attempt)/\(maxAttempts)",
+                    "sentence": failure.sentenceIndex.map { "\($0)" } ?? "-",
+                ]
+                // A chapter missing from the download won't appear by retrying.
+                if attempt == maxAttempts || work.step == .loading {
+                    Log.error(.predownload, "Audio chapter failed", error: (error as? SentenceError)?.underlying ?? error, context)
+                    transition(bookID, index, to: .failed(failure))
+                    EventLogStore.shared.record(.error, "Chapter \(index + 1) failed", detail: "\(title): \(failure.reason)")
+                    return
+                }
+                Log.notice(.predownload, "Audio chapter retry", context.merging(["error": failure.reason]) { $1 })
+                EventLogStore.shared.record(.download, "Retry chapter \(index + 1) (attempt \(attempt + 1))", detail: "\(title): \(failure.reason)")
+                if #available(iOS 18.0, macOS 15.0, *), work.step == .translating,
+                   ReaderPlaybackController.shared.translationEngineKind == .apple {
+                    // A long-lived session can start failing every call
+                    // ("Unable to Translate") hours into a download.
+                    AppleTranslationEngine.shared.resetSession()
+                }
+                do { try await Task.sleep(for: .seconds(2 * attempt)) } catch { return } // nolog: cancelled while waiting
+            }
+        }
+    }
+
+    private func failureDetails(_ error: Error, step: PredownloadChapterFailure.Step, attempts: Int, work: ChapterWork) -> PredownloadChapterFailure {
+        var failure = PredownloadChapterFailure(step: step, reason: error.localizedDescription, attempts: attempts)
+        if let sentence = error as? SentenceError {
+            failure.reason = sentence.underlying.localizedDescription
+            failure.sentenceIndex = sentence.index
+            let texts = step == .synthesizing ? work.spoken : work.sentences
+            if let texts, texts.indices.contains(sentence.index) { failure.sentenceText = texts[sentence.index] }
+        }
+        return failure
+    }
+
+    /// What a chapter's attempts have produced so far.
+    private struct ChapterWork {
+        var step: PredownloadChapterFailure.Step = .loading
+        var sentences: [String]?
+        /// Per sentence: its translation once it's in.
+        var translated: [String?] = []
+        /// What gets synthesized — set once translation (if any) is done.
+        var spoken: [String]?
+        var engineName: String?
+        var target: String?
+        var clips: [Data?] = []
+    }
+
+    private func renderChapter(bookID: Int, index: Int, voice: PrerenderVoice, work: inout ChapterWork) async throws {
+        work.step = .loading
+        guard let chapter = DownloadManager.shared.localChapter(bookID: bookID, index: index) else {
             throw PrerenderError.notDownloaded
         }
         let playback = ReaderPlaybackController.shared
-        let sentences = ReaderPlaybackController.sentenceSequence(for: chapter)
+        let sentences = work.sentences ?? ReaderPlaybackController.sentenceSequence(for: chapter)
+        work.sentences = sentences
         guard !sentences.isEmpty else { return }
 
         // Translate exactly the way opening the chapter would (Q4: frozen
         // into the download) — only when it needs translating and
         // auto-translate is on, with the currently selected engine.
-        var spoken = sentences
-        var engineName: String?
-        var target: String?
-        if playback.autoTranslate, let dominant = playback.dominantLanguage(of: sentences),
-           dominant.rawValue != playback.primaryLanguageCode {
-            let source = Locale.Language(identifier: dominant.rawValue)
-            let targetLanguage = playback.primaryLanguage
-            if playback.translationEngineKind == .apple { await playback.refreshGlossary() }
-            if let engine = playback.translationEngine(bookID: book.id, chapterIndex: index, source: source),
-               engine.canTranslate(from: source, to: targetLanguage) {
-                // A transient engine failure shouldn't end a download that's
-                // hours in — retry the chapter on a fresh session first.
-                var attempt = 0
-                while true {
-                    setStep(book.id, .translating, total: sentences.count)
+        if work.spoken == nil {
+            var spoken = sentences
+            if playback.autoTranslate, let dominant = playback.dominantLanguage(of: sentences),
+               dominant.rawValue != playback.primaryLanguageCode {
+                let source = Locale.Language(identifier: dominant.rawValue)
+                let targetLanguage = playback.primaryLanguage
+                if playback.translationEngineKind == .apple { await playback.refreshGlossary() }
+                if let engine = playback.translationEngine(bookID: bookID, chapterIndex: index, source: source),
+                   engine.canTranslate(from: source, to: targetLanguage) {
+                    work.step = .translating
+                    transition(bookID, index, to: .translating)
+                    if work.translated.count != sentences.count { work.translated = Array(repeating: nil, count: sentences.count) }
+                    let missing = work.translated.indices.filter { work.translated[$0] == nil }
+                    var done = sentences.count - missing.count
+                    setProgress(bookID, done: done, total: sentences.count)
                     do {
-                        var translatedCount = 0
-                        for try await (position, text) in engine.translate(texts: sentences, source: source, target: targetLanguage) {
-                            spoken[position] = text
-                            translatedCount += 1
-                            setStep(book.id, .translating, done: translatedCount, total: sentences.count)
+                        for try await (position, text) in engine.translate(texts: missing.map { sentences[$0] }, source: source, target: targetLanguage) {
+                            work.translated[missing[position]] = text
+                            done += 1
+                            setProgress(bookID, done: done, total: sentences.count)
                         }
-                        break
-                    } catch where !(error is CancellationError) && !Task.isCancelled && attempt < 2 {
-                        attempt += 1
-                        // nolog: LoggedTranslationEngine logged the failure with the sentence
-                        EventLogStore.shared.record(.translation, "Retry translating chapter \(index + 1)", detail: "\(book.title): \(error.localizedDescription)")
-                        if #available(iOS 18.0, macOS 15.0, *), playback.translationEngineKind == .apple {
-                            AppleTranslationEngine.shared.resetSession()
+                    } catch {
+                        // The engine doesn't say which sentence — the first
+                        // one still untranslated is where it stopped.
+                        if let failed = work.translated.firstIndex(where: { $0 == nil }) {
+                            throw SentenceError(index: failed, underlying: error)
                         }
-                        try await Task.sleep(for: .seconds(2))
+                        throw error
                     }
+                    if let failed = work.translated.firstIndex(where: { $0 == nil }) {
+                        throw SentenceError(index: failed, underlying: PrerenderError.translationIncomplete)
+                    }
+                    spoken = work.translated.map { $0 ?? "" }
+                    work.engineName = playback.translationEngineKind.rawValue
+                    work.target = playback.primaryLanguageCode
                 }
-                engineName = playback.translationEngineKind.rawValue
-                target = playback.primaryLanguageCode
             }
+            work.spoken = spoken
         }
+        let texts = work.spoken ?? sentences
 
+        work.step = .synthesizing
+        transition(bookID, index, to: .synthesizing)
         let synthesizer = playback.synthesizer
         let baseURL = SessionStore.baseURL
         let isConnected = NetworkMonitor.shared.isConnected
         let isLoggedIn = SessionStore.shared.isLoggedIn
         let limit = maxConcurrentSynthesis
-        let texts = spoken
-        let bookID = book.id
-        setStep(bookID, .synthesizing, total: texts.count)
-        let clips = try await withThrowingTaskGroup(of: (Int, Data).self) { group in
-            var results = [Data?](repeating: nil, count: texts.count)
+        if work.clips.count != texts.count { work.clips = Array(repeating: nil, count: texts.count) }
+        let missing = work.clips.indices.filter { work.clips[$0] == nil }
+        var synthesized = texts.count - missing.count
+        setProgress(bookID, done: synthesized, total: texts.count)
+        var clips = work.clips
+        defer { work.clips = clips }
+        try await withThrowingTaskGroup(of: (Int, Data).self) { group in
             var next = 0
             func addNext() {
-                guard next < texts.count else { return }
-                let position = next
+                guard next < missing.count else { return }
+                let position = missing[next]
                 next += 1
                 group.addTask {
-                    let data = try await synthesizer.synthesize(
-                        text: texts[position], voice: voice.voice,
-                        vieNeuOfflineV2Voice: voice.vieNeuOfflineV2Voice, vieNeuOfflineV3Voice: voice.vieNeuOfflineV3Voice,
-                        gwenTTSSpeaker: voice.gwenTTSSpeaker, speed: 1.0, baseURL: baseURL,
-                        isConnected: isConnected, isLoggedIn: isLoggedIn
-                    )
-                    return (position, data)
+                    do {
+                        let data = try await synthesizer.synthesize(
+                            text: texts[position], voice: voice.voice,
+                            vieNeuOfflineV2Voice: voice.vieNeuOfflineV2Voice, vieNeuOfflineV3Voice: voice.vieNeuOfflineV3Voice,
+                            gwenTTSSpeaker: voice.gwenTTSSpeaker, speed: 1.0, baseURL: baseURL,
+                            isConnected: isConnected, isLoggedIn: isLoggedIn
+                        )
+                        return (position, data)
+                    } catch {
+                        throw SentenceError(index: position, underlying: error)
+                    }
                 }
             }
-            for _ in 0..<min(limit, texts.count) { addNext() }
-            var synthesized = 0
+            for _ in 0..<min(limit, missing.count) { addNext() }
             while let (position, data) = try await group.next() {
-                results[position] = data
+                clips[position] = data
                 synthesized += 1
-                setStep(bookID, .synthesizing, done: synthesized, total: texts.count)
+                setProgress(bookID, done: synthesized, total: texts.count)
                 addNext()
             }
-            return results.compactMap { $0 }
         }
         try Task.checkCancellation()
 
-        setStep(bookID, .saving)
+        work.step = .saving
+        transition(bookID, index, to: .saving)
         let store = self.store
+        let finished = clips.compactMap { $0 }
+        let engineName = work.engineName, target = work.target
         try await Task.detached(priority: .utility) { // nolog: awaited via .value
             try store.writeChapter(
                 bookID: bookID, index: index, voiceKey: voice.key, sentences: sentences, spoken: texts,
-                translationEngine: engineName, translationTarget: target, clips: clips
+                translationEngine: engineName, translationTarget: target, clips: finished
             )
         }.value
     }
@@ -652,32 +895,32 @@ final class AudioPredownloadManager: ObservableObject {
     // iOS suspends the app ~30s after it backgrounds unless audio is
     // playing; a BGContinuedProcessingTask (user-initiated, shows system
     // progress UI) lets a long "All chapters" job keep going. Older iOS:
-    // the job just stops when suspended and the button resumes it later —
-    // finished chapters stay on disk. macOS doesn't suspend, nothing to do.
+    // the job just stops when suspended; `resumeInterruptedJobs` picks it
+    // up on the next foreground. macOS doesn't suspend, nothing to do.
     #if os(iOS)
     private static let backgroundTaskPrefix = "dev.yanglong.webnovelreader.audio-predownload"
     private var registeredBackgroundIDs: Set<String> = []
     private var backgroundTasks: [Int: AnyObject] = [:]
     #endif
 
-    private func beginBackgroundTask(book: Book) {
+    private func beginBackgroundTask(bookID: Int, title: String) {
         #if os(iOS)
         guard #available(iOS 26.0, *) else { return }
-        let identifier = "\(Self.backgroundTaskPrefix).\(book.id)"
+        let identifier = "\(Self.backgroundTaskPrefix).\(bookID)"
         if !registeredBackgroundIDs.contains(identifier) {
             let registered = BGTaskScheduler.shared.register(forTaskWithIdentifier: identifier, using: nil) { task in
                 guard let task = task as? BGContinuedProcessingTask else { return }
-                Task { @MainActor in self.attachBackgroundTask(task, bookID: book.id) }
+                Task { @MainActor in self.attachBackgroundTask(task, bookID: bookID) }
             }
             guard registered else { return }
             registeredBackgroundIDs.insert(identifier)
         }
-        let request = BGContinuedProcessingTaskRequest(identifier: identifier, title: "Downloading audio", subtitle: book.title)
+        let request = BGContinuedProcessingTaskRequest(identifier: identifier, title: "Downloading audio", subtitle: title)
         request.strategy = .queue
         do {
             try BGTaskScheduler.shared.submit(request)
         } catch {
-            Log.error(.predownload, "Background task request rejected", error: error, ["book": "\(book.id)"])
+            Log.error(.predownload, "Background task request rejected", error: error, ["book": "\(bookID)"])
             EventLogStore.shared.record(.download, "Can't continue in background", detail: error.localizedDescription)
         }
         #endif
@@ -691,8 +934,10 @@ final class AudioPredownloadManager: ObservableObject {
             return
         }
         backgroundTasks[bookID] = task
+        // An interruption, not a user stop: the job stays `wantsToRun` and
+        // resumes on the next foreground.
         task.expirationHandler = { [weak self] in
-            Task { @MainActor in self?.cancel(bookID: bookID) }
+            Task { @MainActor in self?.tasks[bookID]?.cancel() }
         }
         updateBackgroundTaskProgress(bookID: bookID)
     }
@@ -709,7 +954,7 @@ final class AudioPredownloadManager: ObservableObject {
     private func endBackgroundTask(bookID: Int) {
         #if os(iOS)
         guard #available(iOS 26.0, *), let task = backgroundTasks.removeValue(forKey: bookID) as? BGContinuedProcessingTask else { return }
-        task.setTaskCompleted(success: jobs[bookID]?.failure == nil)
+        task.setTaskCompleted(success: jobs[bookID].map { $0.failedChapters.isEmpty && $0.stopReason == nil } ?? true)
         #endif
     }
 }

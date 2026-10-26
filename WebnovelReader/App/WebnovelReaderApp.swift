@@ -11,6 +11,7 @@ struct WebnovelReaderApp: App {
     @StateObject private var network = NetworkMonitor.shared
     @StateObject private var playback = ReaderPlaybackController.shared
     @StateObject private var eventLog = EventLogStore.shared
+    @Environment(\.scenePhase) private var scenePhase
     // Local copy of playback.lastErrorMessage, captured only when
     // errorEventID actually changes (see ReaderPlaybackController's doc
     // comment on that pair) — driving the alert straight off
@@ -86,6 +87,15 @@ struct WebnovelReaderApp: App {
                     WatchSessionRelay.shared.relayCurrentSessionIfNeeded()
                 }
                 #endif
+                // After restoreSession: online voices need the login.
+                AudioPredownloadManager.shared.resumeInterruptedJobs()
+            }
+            // An audio download killed with the app, or whose iOS background
+            // time ran out, carries on from its first unfinished chapter.
+            .onChange(of: scenePhase) { _, phase in
+                if phase == .active, !session.isRestoring {
+                    AudioPredownloadManager.shared.resumeInterruptedJobs()
+                }
             }
             #if os(iOS)
             .onChange(of: session.isLoggedIn) { _, isLoggedIn in

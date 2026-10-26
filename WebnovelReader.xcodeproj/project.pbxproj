@@ -110,6 +110,7 @@
 		82259FB68AFBC2AADC25AE26 /* voice_thuc_doan.json in Resources */ = {isa = PBXBuildFile; fileRef = B79807F48F57ED2F66B725D7 /* voice_thuc_doan.json */; };
 		8273DA6820C8B5DDEEBA7F68 /* WebnovelReaderApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCCFA3ECCF1BC534D815BE89 /* WebnovelReaderApp.swift */; };
 		82A582032CF59E97ABFEB21A /* DownloadManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE5E9FF61219C4CAD0E71621 /* DownloadManagerTests.swift */; };
+		A1D10000000000000000B006 /* AudioPredownloadJobTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1D10000000000000000F004 /* AudioPredownloadJobTests.swift */; };
 		82E705700471517BACD99233 /* AudioPlaybackService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39AFB5C424CB4F3411EF2E1C /* AudioPlaybackService.swift */; };
 		83AD317992F07A5C79C1198D /* CoverImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D24D2C47B51D7655DCB2A4B /* CoverImage.swift */; };
 		84588115DAE8CBD0E394B79D /* NextChapterAudioWarmupDepthUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8119AA1054901D75F23BA3D4 /* NextChapterAudioWarmupDepthUITests.swift */; };
@@ -393,6 +394,7 @@
 		A1D10000000000000000F002 /* AudioPredownloadViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioPredownloadViews.swift; sourceTree = "<group>"; };
 		FB87E7F5611D53CEA837235B /* VieNeuV2CodecDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VieNeuV2CodecDecoder.swift; sourceTree = "<group>"; };
 		FE5E9FF61219C4CAD0E71621 /* DownloadManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadManagerTests.swift; sourceTree = "<group>"; };
+		A1D10000000000000000F004 /* AudioPredownloadJobTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioPredownloadJobTests.swift; sourceTree = "<group>"; };
 		"TEMP_62EF4F92-68E7-492C-99B1-5DAC86584804" /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -606,6 +608,7 @@
 			isa = PBXGroup;
 			children = (
 				DF62CC9FACA427AC450D86AA /* ChapterFragmentParserTests.swift */,
+				A1D10000000000000000F004 /* AudioPredownloadJobTests.swift */,
 				FE5E9FF61219C4CAD0E71621 /* DownloadManagerTests.swift */,
 				D0DE54214FD181D972B3F283 /* TranslationPerformanceTests.swift */,
 				72AC633AE575EA45DF0830C4 /* PiperEnglishTransliteratorTests.swift */,
@@ -1338,6 +1341,7 @@
 				455FB6E16D6AA74E1D51DB9E /* ChapterFragmentParserTests.swift in Sources */,
 				09FD22B220F0F9D8E5B7A91F /* PiperEnglishTransliteratorTests.swift in Sources */,
 				82A582032CF59E97ABFEB21A /* DownloadManagerTests.swift in Sources */,
+				A1D10000000000000000B006 /* AudioPredownloadJobTests.swift in Sources */,
 				BC356F4C1D813BBC51ABF55F /* TranslationPerformanceTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
