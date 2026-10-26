@@ -1,24 +1,23 @@
 import Foundation
 
-// Matches app/server.py's /api/progress record shape exactly
-// ({"chapter": Int, "sentence": Int, "updated_at": ISO8601 UTC}) — the
-// server stamps `updated_at` itself so every timestamp compared during
-// last-write-wins merging (ProgressStore.refreshFromServer) was issued by
-// the same clock, regardless of which device made the request.
+// app/server.py's /api/progress record shape
+// ({"chapter": Int, "sentence": Int, "updated_at": ISO8601 UTC}) minus
+// "sentence": reading history is per chapter only, so the server's
+// sentence field is ignored on decode. The server stamps `updated_at`
+// itself so every timestamp compared during last-write-wins merging
+// (ProgressStore.refreshFromServer) was issued by the same clock,
+// regardless of which device made the request.
 public struct ReadingProgress: Codable, Equatable, Sendable {
     public var chapterIndex: Int
-    public var sentenceIndex: Int
     public var updatedAt: Date
 
-    public init(chapterIndex: Int, sentenceIndex: Int, updatedAt: Date) {
+    public init(chapterIndex: Int, updatedAt: Date) {
         self.chapterIndex = chapterIndex
-        self.sentenceIndex = sentenceIndex
         self.updatedAt = updatedAt
     }
 
     enum CodingKeys: String, CodingKey {
         case chapterIndex = "chapter"
-        case sentenceIndex = "sentence"
         case updatedAt = "updated_at"
     }
 }

@@ -64,7 +64,7 @@ struct WatchPlaybackView: View {
             await playback.open(book: book, chapterIndex: initialChapterIndex)
         }
         .onDisappear {
-            progressStore.recordLocal(bookID: book.id, chapterIndex: playback.chapterIndex, sentenceIndex: 0)
+            progressStore.recordLocal(bookID: book.id, chapterIndex: playback.chapterIndex)
             Task { await progressStore.syncToServer(bookID: book.id) }
         }
     }

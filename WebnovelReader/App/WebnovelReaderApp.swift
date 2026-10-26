@@ -92,9 +92,14 @@ struct WebnovelReaderApp: App {
             }
             // An audio download killed with the app, or whose iOS background
             // time ran out, carries on from its first unfinished chapter.
+            // Coming back to the foreground also pulls reading history, so a
+            // chapter read on another device meanwhile shows up here.
             .onChange(of: scenePhase) { _, phase in
                 if phase == .active, !session.isRestoring {
                     AudioPredownloadManager.shared.resumeInterruptedJobs()
+                    if session.isLoggedIn && !session.isOfflineSession {
+                        Task { await progressStore.refreshFromServer(baseURL: SessionStore.baseURL) }
+                    }
                 }
             }
             #if os(iOS)

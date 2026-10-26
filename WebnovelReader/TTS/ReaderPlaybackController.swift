@@ -339,11 +339,6 @@ final class ReaderPlaybackController: ObservableObject {
     var sentenceCount: Int { sentences.count }
 
     private var shouldAutoPlayNextChapter = false
-    /// Only reset in `open()` — i.e. "a fresh navigation into a book",
-    /// mirroring the old per-ReaderView-instance lifetime this used to
-    /// have. Manual prev/next browsing and auto-advance within the same
-    /// open session must NOT re-trigger a resume jump mid-session.
-    private var hasCheckedResume = false
 
     private var active = false
     private var filterWordsCancellable: AnyCancellable?
@@ -590,11 +585,6 @@ final class ReaderPlaybackController: ObservableObject {
         if self.book?.id == book.id, self.chapterIndex == chapterIndex, chapter != nil {
             return
         }
-        // Deliberately does NOT go through goTo() — goTo() marks a fresh
-        // sentence-0 baseline, which is correct for *manual* navigation but
-        // would clobber a saved mid-chapter position before
-        // applyResumeIfNeeded (called from loadChapter() below) ever gets
-        // to see it. This path needs to preserve whatever's actually saved.
         stop()
         if self.book?.id != book.id {
             // A different book's neighbor-chapter content is irrelevant
@@ -610,8 +600,9 @@ final class ReaderPlaybackController: ObservableObject {
         self.chapterIndex = chapterIndex
         chapter = nil
         clearSentenceState()
-        hasCheckedResume = false
         EventLogStore.shared.record(.navigation, "Open chapter", detail: "\(book.title) — chapter \(chapterIndex + 1)")
+        ProgressStore.shared.recordLocal(bookID: book.id, chapterIndex: chapterIndex)
+        syncProgress()
         await loadChapter()
     }
 
@@ -627,10 +618,7 @@ final class ReaderPlaybackController: ObservableObject {
         let direction = index == chapterIndex + 1 ? "next chapter" : (index == chapterIndex - 1 ? "previous chapter" : "chapter \(index + 1)")
         EventLogStore.shared.record(.navigation, "Go to \(direction)", detail: "\(book.title) — chapter \(index + 1)")
         chapterIndex = index
-        // Marks "now on this chapter" as a baseline even before any audio
-        // plays — playCurrentSentence's progress recording takes over with
-        // finer-grained positions once playback actually starts.
-        ProgressStore.shared.recordLocal(bookID: book.id, chapterIndex: index, sentenceIndex: 0)
+        ProgressStore.shared.recordLocal(bookID: book.id, chapterIndex: index)
         syncProgress()
         await loadChapter()
     }
@@ -656,7 +644,7 @@ final class ReaderPlaybackController: ObservableObject {
         shouldAutoPlayNextChapter = true
         chapter = nil
         chapterIndex = index
-        ProgressStore.shared.recordLocal(bookID: book.id, chapterIndex: index, sentenceIndex: 0)
+        ProgressStore.shared.recordLocal(bookID: book.id, chapterIndex: index)
         syncProgress()
         Task { await loadChapter() }
     }
@@ -786,20 +774,10 @@ final class ReaderPlaybackController: ObservableObject {
     /// chapter *without* already playing left `sentences` empty and the
     /// whole select feature silently disappeared until Play was pressed.
     ///
-    /// Only the very first chapter load of a session (`hasCheckedResume`
-    /// false, reset in `open()`) considers the saved cross-launch resume
-    /// position; every other chapter load (manual swipe/goTo, or
-    /// auto-next) starts at sentence 0 — landing on a chapter should show
-    /// its top, not silently re-jump to an unrelated old position.
+    /// Always starts at sentence 0 — reading history is per chapter, so
+    /// landing on a chapter shows its top.
     private func prepareSentencesForDisplay(_ chapter: Chapter) {
-        var resumeIndex = 0
-        if !hasCheckedResume {
-            hasCheckedResume = true
-            if let book, let saved = ProgressStore.shared.localProgress(bookID: book.id), saved.chapterIndex == chapterIndex {
-                resumeIndex = saved.sentenceIndex
-            }
-        }
-        prepareResume(sentenceIndex: resumeIndex)
+        prepareResume(sentenceIndex: 0)
     }
 
     private func resumeAutoPlayIfNeeded() {
@@ -834,6 +812,8 @@ final class ReaderPlaybackController: ObservableObject {
         shouldAutoPlayNextChapter = true
         chapter = nil
         chapterIndex += 1
+        ProgressStore.shared.recordLocal(bookID: book.id, chapterIndex: chapterIndex)
+        syncProgress()
         Task { await loadChapter() }
     }
 
@@ -937,9 +917,8 @@ final class ReaderPlaybackController: ObservableObject {
     /// `sentences` only ever gets (re)populated by `beginChapter` or
     /// `prepareResume` — and manual chapter navigation (goTo, e.g. from
     /// ChapterListSheet) deliberately does *not* call either of those
-    /// (see goTo's doc comment: it lands on the chapter without playing,
-    /// and `hasCheckedResume` blocks `applyResumeIfNeeded` from firing a
-    /// second time within the same open() session). Without this reset,
+    /// (see goTo's doc comment: it lands on the chapter without playing).
+    /// Without this reset,
     /// `sentences` silently kept the *old* chapter's segmented text after
     /// switching chapters, and ReaderView.chapterBody renders from
     /// `playback.sentences` whenever it's non-empty — so tapping "Chương 6"
@@ -1526,7 +1505,6 @@ final class ReaderPlaybackController: ObservableObject {
         guard let book else { return }
 
         highlightedSentenceIndex = currentSentenceIndex
-        ProgressStore.shared.recordLocal(bookID: book.id, chapterIndex: chapterIndex, sentenceIndex: currentSentenceIndex)
         // Always show loading while waiting on this sentence's audio, even
         // if it was already mid-fetch as a preload (not just when starting
         // a brand-new fetch) — otherwise pressing Play while preload

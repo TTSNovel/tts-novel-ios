@@ -1,18 +1,27 @@
 import Foundation
 
-// Local-first reading-position tracker, same shape as DownloadManager:
+// Local-first reading-history tracker, same shape as DownloadManager:
 // persists to Application Support so it survives relaunches, syncs to the
 // server only at milestones (ReaderView calls syncToServer on pause/stop/
 // chapter-change/app-background) rather than on a timer.
+//
+// History is per chapter: an entry only changes when the reader moves to a
+// different chapter. Re-reading the chapter this device already has saved
+// is a no-op and pushes nothing — otherwise a device left open on an older
+// chapter would overwrite the newer chapter another device pushed since.
 @MainActor
 public final class ProgressStore: ObservableObject {
     public static let shared = ProgressStore()
 
     @Published public private(set) var progress: [Int: ReadingProgress] = [:]
-
+    /// Books whose local entry changed since its last successful push —
+    /// syncToServer only sends these, so a stale local entry never
+    /// overwrites the server.
+    private var unsynced: Set<Int> = []
 
     private init() {
         progress = Self.loadFromDisk()
+        unsynced = StoredJSON.load(Set<Int>.self, from: Self.unsyncedFileURL()) ?? []
     }
 
     public func localProgress(bookID: Int) -> ReadingProgress? {
@@ -34,8 +43,10 @@ public final class ProgressStore: ObservableObject {
         return Array(sorted.prefix(limit))
     }
 
-    public func recordLocal(bookID: Int, chapterIndex: Int, sentenceIndex: Int) {
-        progress[bookID] = ReadingProgress(chapterIndex: chapterIndex, sentenceIndex: sentenceIndex, updatedAt: Date())
+    public func recordLocal(bookID: Int, chapterIndex: Int) {
+        guard progress[bookID]?.chapterIndex != chapterIndex else { return }
+        progress[bookID] = ReadingProgress(chapterIndex: chapterIndex, updatedAt: Date())
+        unsynced.insert(bookID)
         persistToDisk()
     }
 
@@ -47,20 +58,23 @@ public final class ProgressStore: ObservableObject {
         // auth (see tts-webnovel's server.py) even though book browsing/
         // reading itself is now public. Checked up front rather than just
         // letting the request 401 into the catch below, to avoid a pointless
-        // network round trip on every chapter/sentence change while a guest
-        // is reading.
+        // network round trip on every chapter change while a guest is
+        // reading.
         guard SessionStore.shared.isLoggedIn else { return }
-        guard let entry = progress[bookID] else { return }
+        guard unsynced.contains(bookID), let entry = progress[bookID] else { return }
         do {
             let stored = try await APIClient.shared.postProgress(
-                baseURL: SessionStore.baseURL, bookID: bookID,
-                chapterIndex: entry.chapterIndex, sentenceIndex: entry.sentenceIndex
+                baseURL: SessionStore.baseURL, bookID: bookID, chapterIndex: entry.chapterIndex
             )
+            // The reader may have moved on while the request was in flight —
+            // keep that newer chapter (still unsynced) instead of the reply.
+            guard progress[bookID]?.chapterIndex == stored.chapterIndex else { return }
             progress[bookID] = stored
+            unsynced.remove(bookID)
             persistToDisk()
         } catch {
             // Offline or server hiccup — local state already has this
-            // progress, nothing to roll back.
+            // progress and stays unsynced, nothing to roll back.
             Log.notice(.sync, "Reading progress not pushed to the server", ["book": "\(bookID)", "error": ErrorInfo(error).summary])
         }
     }
@@ -73,12 +87,14 @@ public final class ProgressStore: ObservableObject {
         for (bookID, remoteEntry) in remote {
             if let local = progress[bookID], local.updatedAt >= remoteEntry.updatedAt { continue }
             progress[bookID] = remoteEntry
+            unsynced.remove(bookID)
         }
         persistToDisk()
     }
 
     private func persistToDisk() {
         StoredJSON.save(progress, to: Self.fileURL(), encoder: .readingProgress)
+        StoredJSON.save(unsynced, to: Self.unsyncedFileURL())
     }
 
     private static func loadFromDisk() -> [Int: ReadingProgress] {
@@ -88,5 +104,10 @@ public final class ProgressStore: ObservableObject {
     private static func fileURL() -> URL {
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("progress.json")
+    }
+
+    private static func unsyncedFileURL() -> URL {
+        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("progress-unsynced.json")
     }
 }

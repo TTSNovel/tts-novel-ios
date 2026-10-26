@@ -148,12 +148,12 @@ public final class APIClient: @unchecked Sendable {
         _ = try await send(request)
     }
 
-    public func postProgress(baseURL: URL, bookID: Int, chapterIndex: Int, sentenceIndex: Int) async throws -> ReadingProgress {
+    public func postProgress(baseURL: URL, bookID: Int, chapterIndex: Int) async throws -> ReadingProgress {
         var request = URLRequest(url: baseURL.appendingPathComponent("api/progress"))
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONEncoder().encode(
-            ProgressRequestBody(bookID: bookID, chapterIndex: chapterIndex, sentenceIndex: sentenceIndex)
+            ProgressRequestBody(bookID: bookID, chapterIndex: chapterIndex)
         )
 
         let data = try await send(request)
@@ -338,7 +338,9 @@ private struct BugReportEventBody: Encodable {
 private struct ProgressRequestBody: Encodable {
     let bookID: Int
     let chapterIndex: Int
-    let sentenceIndex: Int
+    // The server still requires an int "sentence"; progress is per
+    // chapter now, so it's always 0.
+    let sentenceIndex = 0
 
     enum CodingKeys: String, CodingKey {
         case bookID = "book_id"
