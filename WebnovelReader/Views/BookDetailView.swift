@@ -110,7 +110,7 @@ struct BookDetailView: View {
         .inlineNavigationTitle()
         .readerSettingsToolbar()
         .onAppear {
-            EventLogStore.shared.record(.navigation, "Mở sách", detail: book.title)
+            EventLogStore.shared.record(.navigation, "Open book", detail: book.title)
         }
         .task {
             chapterTitles = await ChapterTitles.load(book: book)

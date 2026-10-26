@@ -118,7 +118,7 @@ struct LibraryView: View {
                 }
             }
             .onAppear {
-                EventLogStore.shared.record(.navigation, "Mở trang chủ")
+                EventLogStore.shared.record(.navigation, "Open library")
             }
             .task {
                 await loadBooks()
@@ -203,6 +203,7 @@ struct LibraryView: View {
             loadError = nil
             isOfflineMode = false
         } catch {
+            // nolog: APIClient logged the failed request
             guard NetworkMonitor.isNetworkError(error) else {
                 isOfflineMode = false
                 loadError = "Kiểm tra kết nối mạng hoặc đăng nhập lại"

@@ -11,7 +11,40 @@ import Core
 final class WebnovelReaderFullSynthesizer: TTSSynthesizing {
     private let online = WebnovelReaderOnlineSynthesizer()
 
+    /// The TTS boundary — every synthesis (reader playback, next-chapter
+    /// warm-up, audio pre-download) goes through here, so a failure is
+    /// logged once with the voice, route and exact text, whoever asked.
     func synthesize(
+        text: String,
+        voice: TTSVoice,
+        vieNeuOfflineV2Voice: VieNeuOfflineV2Voice?,
+        vieNeuOfflineV3Voice: VieNeuOfflineV3Voice?,
+        gwenTTSSpeaker: GwenTTSSpeaker,
+        speed: Double,
+        baseURL: URL,
+        isConnected: Bool,
+        isLoggedIn: Bool
+    ) async throws -> Data {
+        let started = Date()
+        do {
+            return try await route(
+                text: text, voice: voice, vieNeuOfflineV2Voice: vieNeuOfflineV2Voice,
+                vieNeuOfflineV3Voice: vieNeuOfflineV3Voice, gwenTTSSpeaker: gwenTTSSpeaker,
+                speed: speed, baseURL: baseURL, isConnected: isConnected, isLoggedIn: isLoggedIn
+            )
+        } catch {
+            Log.error(.tts, "Synthesis failed", error: error, [
+                "voice": voice.rawValue,
+                "route": voice.isOffline || !isConnected || !isLoggedIn ? "offline" : "online",
+                "connected": "\(isConnected)", "loggedIn": "\(isLoggedIn)", "speed": "\(speed)",
+                "chars": "\(text.count)", "text": String(text.prefix(500)),
+                "ms": "\(Int(Date().timeIntervalSince(started) * 1000))",
+            ])
+            throw error
+        }
+    }
+
+    private func route(
         text: String,
         voice: TTSVoice,
         vieNeuOfflineV2Voice: VieNeuOfflineV2Voice?,

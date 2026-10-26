@@ -514,7 +514,7 @@ private struct StoredTranslationsRow: View {
             chapterCount = try await APIClient.shared.fetchStoredTranslationChapterCount(baseURL: SessionStore.baseURL, bookID: bookID)
             failed = false
         } catch {
-            failed = true
+            failed = true // nolog: APIClient logged the failed request
         }
     }
 
@@ -524,7 +524,7 @@ private struct StoredTranslationsRow: View {
         do {
             try await APIClient.shared.deleteStoredTranslations(baseURL: SessionStore.baseURL, bookID: bookID)
         } catch {
-            failed = true
+            failed = true // nolog: APIClient logged the failed request
             return
         }
         await load()

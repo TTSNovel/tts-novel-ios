@@ -65,7 +65,12 @@ targets:
     # need them. basedOnDependencyAnalysis: false because the script's own
     # per-file existence check is the skip logic; Xcode's new build system
     # otherwise sometimes skips scripts it thinks have no changed inputs.
+    # Lint first: fails the build on an error dropped without logging (see
+    # the script's docstring).
     prebuildScripts:
+      - script: 'python3 "$SRCROOT/Scripts/lint-error-handling.py"'
+        name: "Lint error handling"
+        basedOnDependencyAnalysis: false
       - path: Scripts/fetch-models.sh
         name: "Fetch offline models (GCS)"
         basedOnDependencyAnalysis: false
@@ -181,6 +186,9 @@ targets:
     platform: macOS
     # Piper's model only (VieNeu/OPUS-MT models aren't used on Mac).
     prebuildScripts:
+      - script: 'python3 "$SRCROOT/Scripts/lint-error-handling.py"'
+        name: "Lint error handling"
+        basedOnDependencyAnalysis: false
       - script: '"$SRCROOT/Scripts/fetch-models.sh" PiperOffline/vi_VN-vais1000-medium.onnx'
         name: "Fetch Piper model (GCS)"
         basedOnDependencyAnalysis: false

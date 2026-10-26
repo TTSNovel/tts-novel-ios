@@ -13,15 +13,18 @@ import SwiftSoup
 public enum ChapterFragmentParser {
     public static func parse(html: String, index: Int) -> Chapter {
         let fallbackTitle = "Chương \(index + 1)"
-        guard let doc = try? SwiftSoup.parse(html) else {
+        guard let doc = Log.attempt(.library, "Chapter HTML failed to parse", ["chapter": "\(index)", "bytes": "\(html.utf8.count)"], {
+            try SwiftSoup.parse(html)
+        }) else {
             return Chapter(index: index, title: fallbackTitle, text: "")
         }
+        // nolog: SwiftSoup's select/text only throw on an invalid selector — these are literals
         let h1Text = (try? doc.select("h1").first()?.text()) ?? nil
         let title = (h1Text?.isEmpty == false) ? h1Text! : fallbackTitle
-        let paragraphs = (try? doc.select("p").array()) ?? []
+        let paragraphs = (try? doc.select("p").array()) ?? [] // nolog: literal selector, see above
         var body = paragraphs.map(paragraphText).joined(separator: "\n\n")
         if body.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, let root = doc.body() {
-            body = blockText(root, skipping: try? doc.select("h1").first())
+            body = blockText(root, skipping: try? doc.select("h1").first()) // nolog: literal selector, see above
         }
         return Chapter(index: index, title: title, text: body)
     }
@@ -73,7 +76,7 @@ public enum ChapterFragmentParser {
             if let text = node as? TextNode {
                 result += text.text()
             } else if let el = node as? Element {
-                result += el.tagName().lowercased() == "br" ? "\n" : ((try? el.text()) ?? "")
+                result += el.tagName().lowercased() == "br" ? "\n" : ((try? el.text()) ?? "") // nolog: Element.text() doesn't throw in practice
             }
         }
         return result.trimmingCharacters(in: .whitespaces)

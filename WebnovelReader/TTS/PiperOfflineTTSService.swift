@@ -103,7 +103,7 @@ actor PiperOfflineTTSService {
     /// expects, same contract APIClient.synthesize's online voices return.
     private static func wavData(from audio: SherpaOnnxGeneratedAudioWrapper) throws -> Data {
         let tmpURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".wav")
-        defer { try? FileManager.default.removeItem(at: tmpURL) }
+        defer { try? FileManager.default.removeItem(at: tmpURL) } // nolog: temp file
         guard audio.save(filename: tmpURL.path) == 1 else {
             throw PiperOfflineError.wavWriteFailed
         }

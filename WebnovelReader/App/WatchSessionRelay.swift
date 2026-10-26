@@ -34,10 +34,12 @@ final class WatchSessionRelay: NSObject, WCSessionDelegate {
     func relayCurrentSessionIfNeeded() {
         guard WCSession.isSupported(), WCSession.default.activationState == .activated else { return }
         guard let creds = SessionStore.shared.credentialsForWatchHandoff() else { return }
-        try? WCSession.default.updateApplicationContext([
-            "username": creds.username,
-            "password": creds.password,
-        ])
+        Log.attempt(.watch, "Can't hand the session to the Watch") {
+            try WCSession.default.updateApplicationContext([
+                "username": creds.username,
+                "password": creds.password,
+            ])
+        }
     }
 
     nonisolated func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {

@@ -1,3 +1,4 @@
+import Core
 import Foundation
 
 /// Rewrites English words inside a Vietnamese sentence as Vietnamese
@@ -36,7 +37,7 @@ final class PiperEnglishTransliterator {
     static func loadBundledDictionary() -> [String: String] {
         guard
             let url = Bundle.main.url(forResource: "english_transliterations", withExtension: "csv"),
-            let csv = try? String(contentsOf: url, encoding: .utf8)
+            let csv = Log.attempt(.tts, "English transliteration table unreadable", [:], { try String(contentsOf: url, encoding: .utf8) })
         else { return [:] }
         var dictionary: [String: String] = [:]
         // CRLF file: "\r\n" is a single Character, so split on isNewline.

@@ -43,10 +43,11 @@ public final class SessionStore: ObservableObject {
             isLoggedIn = true
             isOfflineSession = false
         } catch {
+            Log.error(.auth, "Session restore failed", error: error)
             if NetworkMonitor.isNetworkError(error) {
                 isLoggedIn = true
                 isOfflineSession = true
-                EventLogStore.shared.record(.auth, "Khôi phục phiên offline")
+                EventLogStore.shared.record(.auth, "Restored offline session")
             } else {
                 isLoggedIn = false
             }
@@ -60,12 +61,13 @@ public final class SessionStore: ObservableObject {
             Keychain.saveCredentials(username: username, password: password)
             isLoggedIn = true
             isOfflineSession = false
-            EventLogStore.shared.record(.auth, "Đăng nhập")
+            EventLogStore.shared.record(.auth, "Log in")
         } catch {
+            Log.error(.auth, "Login failed", error: error)
             loginError = NetworkMonitor.isNetworkError(error)
                 ? "Không có kết nối mạng — vui lòng thử lại"
                 : "Đăng nhập thất bại — kiểm tra tài khoản/mật khẩu"
-            EventLogStore.shared.record(.error, "Đăng nhập thất bại", detail: loginError)
+            EventLogStore.shared.record(.error, "Login failed", detail: NetworkMonitor.isNetworkError(error) ? "No network" : "Rejected by the server")
         }
     }
 
@@ -89,6 +91,6 @@ public final class SessionStore: ObservableObject {
         if let cookies = HTTPCookieStorage.shared.cookies(for: Self.baseURL) {
             cookies.forEach { HTTPCookieStorage.shared.deleteCookie($0) }
         }
-        EventLogStore.shared.record(.auth, "Đăng xuất")
+        EventLogStore.shared.record(.auth, "Log out")
     }
 }

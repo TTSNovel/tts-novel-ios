@@ -10,7 +10,6 @@ public final class ProgressStore: ObservableObject {
 
     @Published public private(set) var progress: [Int: ReadingProgress] = [:]
 
-    private let fileManager = FileManager.default
 
     private init() {
         progress = Self.loadFromDisk()
@@ -62,6 +61,7 @@ public final class ProgressStore: ObservableObject {
         } catch {
             // Offline or server hiccup — local state already has this
             // progress, nothing to roll back.
+            Log.notice(.sync, "Reading progress not pushed to the server", ["book": "\(bookID)", "error": ErrorInfo(error).summary])
         }
     }
 
@@ -69,7 +69,7 @@ public final class ProgressStore: ObservableObject {
     /// keeping whichever side is newer — this is what brings in progress
     /// made on another device sharing the same login.
     public func refreshFromServer(baseURL: URL) async {
-        guard let remote = try? await APIClient.shared.fetchProgress(baseURL: baseURL) else { return }
+        guard let remote = try? await APIClient.shared.fetchProgress(baseURL: baseURL) else { return } // nolog: APIClient logs the failed request
         for (bookID, remoteEntry) in remote {
             if let local = progress[bookID], local.updatedAt >= remoteEntry.updatedAt { continue }
             progress[bookID] = remoteEntry
@@ -78,18 +78,11 @@ public final class ProgressStore: ObservableObject {
     }
 
     private func persistToDisk() {
-        guard let data = try? JSONEncoder.readingProgress.encode(progress) else { return }
-        let url = Self.fileURL()
-        try? fileManager.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
-        try? data.write(to: url)
+        StoredJSON.save(progress, to: Self.fileURL(), encoder: .readingProgress)
     }
 
     private static func loadFromDisk() -> [Int: ReadingProgress] {
-        guard let data = try? Data(contentsOf: fileURL()),
-              let decoded = try? JSONDecoder.readingProgress.decode([Int: ReadingProgress].self, from: data) else {
-            return [:]
-        }
-        return decoded
+        StoredJSON.load([Int: ReadingProgress].self, from: fileURL(), decoder: .readingProgress) ?? [:]
     }
 
     private static func fileURL() -> URL {

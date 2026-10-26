@@ -52,7 +52,7 @@ actor VieNeuV2CodecDecoder {
         if let cached = voiceEmbeddings[voice] { return cached }
         guard let path = Bundle.main.path(forResource: voice.rawValue, ofType: "json"),
               let data = FileManager.default.contents(atPath: path),
-              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any], // nolog: throws voiceEmbeddingMissing, logged by the synthesizer
               let codes = json["codes"] as? [Double]
         else {
             throw VieNeuV2CodecError.voiceEmbeddingMissing

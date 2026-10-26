@@ -134,8 +134,7 @@ struct PrerenderedAudioStore: Sendable {
     }
 
     func bookInfo(_ bookID: Int) -> PrerenderedBookInfo? {
-        guard let data = try? Data(contentsOf: bookInfoURL(bookID)) else { return nil }
-        return try? JSONDecoder().decode(PrerenderedBookInfo.self, from: data)
+        StoredJSON.load(PrerenderedBookInfo.self, from: bookInfoURL(bookID), category: .predownload)
     }
 
     func setBookInfo(_ info: PrerenderedBookInfo, bookID: Int) throws {
@@ -144,8 +143,7 @@ struct PrerenderedAudioStore: Sendable {
     }
 
     func chapter(bookID: Int, index: Int) -> PrerenderedChapter? {
-        guard let data = try? Data(contentsOf: manifestURL(bookID, index)),
-              let manifest = try? JSONDecoder().decode(PrerenderedChapterManifest.self, from: data) else { return nil }
+        guard let manifest = StoredJSON.load(PrerenderedChapterManifest.self, from: manifestURL(bookID, index), category: .predownload) else { return nil }
         return PrerenderedChapter(manifest: manifest, audioURL: audioURL(bookID, index))
     }
 
@@ -155,18 +153,19 @@ struct PrerenderedAudioStore: Sendable {
 
     /// Books with any pre-rendered audio on disk.
     func bookIDs() -> [Int] {
-        let entries = (try? FileManager.default.contentsOfDirectory(at: root, includingPropertiesForKeys: nil)) ?? []
+        let entries = (try? FileManager.default.contentsOfDirectory(at: root, includingPropertiesForKeys: nil)) ?? [] // nolog: nothing downloaded yet
         return entries.compactMap { Int($0.lastPathComponent) }.filter { !renderedChapters(bookID: $0).isEmpty }
     }
 
     func renderedChapters(bookID: Int) -> [Int] {
-        let entries = (try? FileManager.default.contentsOfDirectory(at: bookDirectory(bookID), includingPropertiesForKeys: nil)) ?? []
+        let entries = (try? FileManager.default.contentsOfDirectory(at: bookDirectory(bookID), includingPropertiesForKeys: nil)) ?? [] // nolog: book not downloaded
         return entries.filter { $0.pathExtension == "json" }.compactMap { Int($0.deletingPathExtension().lastPathComponent) }.sorted()
     }
 
     func byteSize(bookID: Int) -> Int64 {
+        // nolog: book not downloaded / file removed meanwhile — counts as 0 bytes
         let entries = (try? FileManager.default.contentsOfDirectory(at: bookDirectory(bookID), includingPropertiesForKeys: [.fileSizeKey])) ?? []
-        return entries.reduce(0) { $0 + Int64((try? $1.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0) }
+        return entries.reduce(0) { $0 + Int64((try? $1.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0) } // nolog: see above
     }
 
     /// The m4a container's roughly fixed size on top of the audio itself.
@@ -182,7 +181,7 @@ struct PrerenderedAudioStore: Sendable {
                 guard let chapter = chapter(bookID: bookID, index: index) else { continue }
                 // Minus the container's fixed per-file overhead, which
                 // `estimate` adds back per chapter.
-                let fileSize = Int64((try? chapter.audioURL.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0)
+                let fileSize = Int64((try? chapter.audioURL.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0) // nolog: estimate only
                 bytes += max(fileSize - Self.containerOverhead, 0)
                 seconds += chapter.manifest.durationSeconds
                 chars += chapter.manifest.spoken.reduce(0) { $0 + $1.count }
@@ -193,12 +192,12 @@ struct PrerenderedAudioStore: Sendable {
     }
 
     func deleteChapter(bookID: Int, index: Int) {
-        try? FileManager.default.removeItem(at: manifestURL(bookID, index))
-        try? FileManager.default.removeItem(at: audioURL(bookID, index))
+        StoredJSON.remove(manifestURL(bookID, index), category: .predownload)
+        StoredJSON.remove(audioURL(bookID, index), category: .predownload)
     }
 
     func deleteBook(_ bookID: Int) {
-        try? FileManager.default.removeItem(at: bookDirectory(bookID))
+        StoredJSON.remove(bookDirectory(bookID), category: .predownload)
     }
 
     /// Encodes `clips` (one WAV per sentence, in order) into the chapter's
@@ -211,7 +210,7 @@ struct PrerenderedAudioStore: Sendable {
         try FileManager.default.createDirectory(at: bookDirectory(bookID), withIntermediateDirectories: true)
         let finalURL = audioURL(bookID, index)
         let tempURL = bookDirectory(bookID).appendingPathComponent(".\(index)-\(UUID().uuidString).m4a")
-        defer { try? FileManager.default.removeItem(at: tempURL) }
+        defer { try? FileManager.default.removeItem(at: tempURL) } // nolog: temp file, already moved on success
 
         var writer: AVAudioFile?
         var converter: AVAudioConverter?
@@ -242,7 +241,7 @@ struct PrerenderedAudioStore: Sendable {
             try writer.write(from: pcm)
         }
         writer = nil  // closes/finalizes the file
-        try? FileManager.default.removeItem(at: finalURL)
+        StoredJSON.remove(finalURL, category: .predownload)
         try FileManager.default.moveItem(at: tempURL, to: finalURL)
 
         let manifest = PrerenderedChapterManifest(
@@ -261,8 +260,10 @@ struct PrerenderedAudioStore: Sendable {
             AVNumberOfChannelsKey: 1,
             AVEncoderBitRateKey: 32_000,
         ]
-        if let file = try? AVAudioFile(forWriting: url, settings: settings, commonFormat: .pcmFormatFloat32, interleaved: false) {
-            return file
+        do {
+            return try AVAudioFile(forWriting: url, settings: settings, commonFormat: .pcmFormatFloat32, interleaved: false)
+        } catch {
+            Log.notice(.predownload, "AAC writer rejected 32 kbps, retrying with encoder default", ["sampleRate": "\(sampleRate)", "error": ErrorInfo(error).summary])
         }
         // Not every sample rate accepts every bitrate — let the encoder pick.
         settings[AVEncoderBitRateKey] = nil
@@ -273,7 +274,7 @@ struct PrerenderedAudioStore: Sendable {
     private static func decodeClip(_ data: Data) throws -> AVAudioPCMBuffer {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("prerender-\(UUID().uuidString).wav")
         try data.write(to: url)
-        defer { try? FileManager.default.removeItem(at: url) }
+        defer { try? FileManager.default.removeItem(at: url) } // nolog: temp file
         let file = try AVAudioFile(forReading: url)
         guard let buffer = AVAudioPCMBuffer(pcmFormat: file.processingFormat, frameCapacity: AVAudioFrameCount(max(file.length, 1))) else {
             throw PrerenderError.audioFormat
@@ -469,7 +470,7 @@ final class AudioPredownloadManager: ObservableObject {
             completed: chapters.filter { isRendered(bookID: book.id, index: $0, voiceKey: voice.key) }.count,
             currentChapter: nil, failure: nil, isRunning: true
         )
-        EventLogStore.shared.record(.download, "Bắt đầu tải audio", detail: "\(book.title) — \(chapters.count) chương, \(voice.displayName)")
+        EventLogStore.shared.record(.download, "Start audio download", detail: "\(book.title) — \(chapters.count) chapters, \(voice.displayName)")
         tasks[book.id] = Task { await self.run(book: book, chapters: chapters, voice: voice) }
         beginBackgroundTask(book: book)
     }
@@ -488,7 +489,7 @@ final class AudioPredownloadManager: ObservableObject {
 
     func deleteAll() {
         for bookID in store.bookIDs() { deleteAudio(bookID: bookID) }
-        try? FileManager.default.removeItem(at: store.root)
+        StoredJSON.remove(store.root, category: .predownload)
         storageRevision += 1
     }
 
@@ -500,6 +501,15 @@ final class AudioPredownloadManager: ObservableObject {
     }
 
     private func run(book: Book, chapters: [Int], voice: PrerenderVoice) async {
+        // Everything logged under this job — translation, synthesis,
+        // storage — carries which download and which chapter it was.
+        await withLogContext(["job": "predownload", "book": "\(book.id)", "voice": voice.key]) {
+            await runJob(book: book, chapters: chapters, voice: voice)
+        }
+    }
+
+    private func runJob(book: Book, chapters: [Int], voice: PrerenderVoice) async {
+        let started = Date()
         defer {
             jobs[book.id]?.isRunning = false
             jobs[book.id]?.currentChapter = nil
@@ -514,23 +524,30 @@ final class AudioPredownloadManager: ObservableObject {
                 if isRendered(bookID: book.id, index: index, voiceKey: voice.key) { continue }
                 if let reason = unavailableReason(for: voice) { throw PrerenderError.voiceUnavailable(reason) }
                 jobs[book.id]?.currentChapter = index
-                try await renderChapter(book: book, index: index, voice: voice)
+                try await withLogContext(["chapter": "\(index)"]) {
+                    try await renderChapter(book: book, index: index, voice: voice)
+                }
                 jobs[book.id]?.completed += 1
                 setStep(book.id, nil)
                 storageRevision += 1
                 updateBackgroundTaskProgress(bookID: book.id)
             }
-            EventLogStore.shared.record(.download, "Tải audio xong", detail: book.title)
+            EventLogStore.shared.record(.download, "Audio download finished", detail: book.title)
         } catch {
             setStep(book.id, nil)
             // Stopping mid-request surfaces as URLError.cancelled (or a
             // translation error), not CancellationError — still a stop.
             if error is CancellationError || Task.isCancelled {
-                EventLogStore.shared.record(.download, "Dừng tải audio", detail: book.title)
+                EventLogStore.shared.record(.download, "Audio download stopped", detail: book.title)
                 return
             }
             jobs[book.id]?.failure = error.localizedDescription
-            EventLogStore.shared.record(.error, "Tải audio thất bại", detail: "\(book.title): \(error.localizedDescription)")
+            Log.error(.predownload, "Audio download failed", error: error, [
+                "chapter": jobs[book.id]?.currentChapter.map { "\($0)" } ?? "-",
+                "completed": "\(jobs[book.id]?.completed ?? 0)/\(chapters.count)",
+                "runSeconds": "\(Int(Date().timeIntervalSince(started)))",
+            ])
+            EventLogStore.shared.record(.error, "Audio download failed", detail: "\(book.title): \(error.localizedDescription)")
         }
     }
 
@@ -570,7 +587,8 @@ final class AudioPredownloadManager: ObservableObject {
                         break
                     } catch where !(error is CancellationError) && !Task.isCancelled && attempt < 2 {
                         attempt += 1
-                        EventLogStore.shared.record(.translation, "Dịch lại chương \(index + 1)", detail: "\(book.title): \(error.localizedDescription)")
+                        // nolog: LoggedTranslationEngine logged the failure with the sentence
+                        EventLogStore.shared.record(.translation, "Retry translating chapter \(index + 1)", detail: "\(book.title): \(error.localizedDescription)")
                         if #available(iOS 18.0, macOS 15.0, *), playback.translationEngineKind == .apple {
                             AppleTranslationEngine.shared.resetSession()
                         }
@@ -621,7 +639,7 @@ final class AudioPredownloadManager: ObservableObject {
 
         setStep(bookID, .saving)
         let store = self.store
-        try await Task.detached(priority: .utility) {
+        try await Task.detached(priority: .utility) { // nolog: awaited via .value
             try store.writeChapter(
                 bookID: bookID, index: index, voiceKey: voice.key, sentences: sentences, spoken: texts,
                 translationEngine: engineName, translationTarget: target, clips: clips
@@ -659,7 +677,8 @@ final class AudioPredownloadManager: ObservableObject {
         do {
             try BGTaskScheduler.shared.submit(request)
         } catch {
-            EventLogStore.shared.record(.download, "Không chạy nền được", detail: error.localizedDescription)
+            Log.error(.predownload, "Background task request rejected", error: error, ["book": "\(book.id)"])
+            EventLogStore.shared.record(.download, "Can't continue in background", detail: error.localizedDescription)
         }
         #endif
     }
