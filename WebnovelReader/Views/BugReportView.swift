@@ -148,7 +148,8 @@ struct BugReportView: View {
         }
     }
 
-    private static func appVersionString() -> String {
+    // Also shown in Settings' About section.
+    static func appVersionString() -> String {
         let info = Bundle.main.infoDictionary
         let version = info?["CFBundleShortVersionString"] as? String ?? "?"
         let build = info?["CFBundleVersion"] as? String ?? "?"

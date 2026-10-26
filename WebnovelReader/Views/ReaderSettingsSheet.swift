@@ -52,6 +52,7 @@ struct ReaderSettingsSheet: View {
                     playbackSection
                     toolsSection
                     accountSection
+                    aboutSection
                 }
             }
             #if os(macOS)
@@ -359,6 +360,23 @@ struct ReaderSettingsSheet: View {
                 sectionFooter("You're browsing as a guest — log in to use online voices and sync reading progress across devices.")
             }
         }
+    }
+
+    private var aboutSection: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            sectionHeader("About")
+            SettingsRow(icon: "info.circle", label: "Version") {
+                // Same "1.4.0 (build)" string the bug report sends, so what
+                // the user reads here matches what lands on the server.
+                Text(BugReportView.appVersionString())
+                    .font(.system(size: 13.5))
+                    .foregroundStyle(.secondary)
+                    .monospacedDigit()
+                    .textSelection(.enabled)
+                    .accessibilityIdentifier("appVersionLabel")
+            }
+        }
+        .padding(.bottom, 14)
     }
 
     // MARK: - Row building blocks
