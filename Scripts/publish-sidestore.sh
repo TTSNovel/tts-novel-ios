@@ -89,18 +89,27 @@ IPA="$BUILD_DIR/export/WebnovelReader.ipa"
 SIZE=$(stat -f%z "$IPA")
 DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
+# Release notes = commit subjects since the last published tag. Described
+# from HEAD^ so a re-run on an already-tagged commit still finds the tag
+# before it. SideStore shows "nil" on the update card when versionDescription
+# is missing, so there is always a fallback line.
+PREV_TAG=$(git -C "$PROJ_DIR" describe --tags --abbrev=0 --match 'v[0-9]*' HEAD^ 2>/dev/null || true)
+NOTES=$(git -C "$PROJ_DIR" log -n 20 --no-merges --format='- %s' ${PREV_TAG:+"$PREV_TAG..HEAD"})
+[[ -n "$NOTES" ]] || NOTES="Build $(git -C "$PROJ_DIR" rev-parse --short HEAD)"
+
 # The feed's source of truth is the bucket copy (name, icon, URLs) — only
 # the version fields are rewritten.
 gcloud storage cp "$SIDESTORE_BUCKET/repo.json" "$BUILD_DIR/repo.json"
-python3 - "$BUILD_DIR/repo.json" "$VERSION" "$DATE" "$SIZE" <<'PY'
+python3 - "$BUILD_DIR/repo.json" "$VERSION" "$DATE" "$SIZE" "$NOTES" <<'PY'
 import json, sys
-path, version, date, size = sys.argv[1], sys.argv[2], sys.argv[3], int(sys.argv[4])
+path, version, date, size, notes = sys.argv[1], sys.argv[2], sys.argv[3], int(sys.argv[4]), sys.argv[5]
 with open(path) as f:
     repo = json.load(f)
 app = repo["apps"][0]
 app["version"] = version
 app["versionDate"] = date
 app["size"] = size
+app["versionDescription"] = notes
 with open(path, "w") as f:
     json.dump(repo, f, indent=2)
 PY
