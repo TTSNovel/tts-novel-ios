@@ -52,7 +52,6 @@ struct ReaderView: View {
                 .accessibilityIdentifier("chapterListButton")
             }
         }
-        .chapterTranslationSupport()
         .sheet(isPresented: $showingChapterList) {
             ChapterListSheet(book: book, currentChapterIndex: currentChapterIndex) { index in
                 Task { await playback.goTo(index) }

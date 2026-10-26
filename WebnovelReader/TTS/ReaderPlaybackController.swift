@@ -31,9 +31,9 @@ final class ReaderPlaybackController: ObservableObject {
     // plan). watchOS never reaches this file at all (its own, much smaller
     // playback controller uses WebnovelReaderOnlineSynthesizer directly).
     #if os(iOS)
-    private let synthesizer: TTSSynthesizing = WebnovelReaderFullSynthesizer()
+    let synthesizer: TTSSynthesizing = WebnovelReaderFullSynthesizer()
     #else
-    private let synthesizer: TTSSynthesizing = WebnovelReaderOnlineSynthesizer()
+    let synthesizer: TTSSynthesizing = WebnovelReaderOnlineSynthesizer()
     #endif
 
     // Now-playing identity — nil book means nothing has ever been opened
@@ -126,6 +126,9 @@ final class ReaderPlaybackController: ObservableObject {
     /// isLoadingAudio) happened to change at the same moment. Set
     /// explicitly at every play/pause/resume/stop/finish transition below.
     @Published private(set) var isPlaying = false
+    /// Whether the sentence playing now comes from pre-rendered (downloaded)
+    /// audio rather than live synthesis — PlaybackBar shows a badge for it.
+    @Published private(set) var isPlayingPrerendered = false
     @Published var errorMessage: String?
     /// Bumped alongside every user-facing error surfaced above (both this
     /// and `loadError`) — WebnovelReaderApp observes this to pop an
@@ -252,7 +255,7 @@ final class ReaderPlaybackController: ObservableObject {
     private var glossaryFetchedAt: Date?
     private static let glossaryTTL: TimeInterval = 60
 
-    private func refreshGlossary() async {
+    func refreshGlossary() async {
         if let glossaryFetchedAt, Date().timeIntervalSince(glossaryFetchedAt) < Self.glossaryTTL { return }
         do {
             glossaryTerms = try await APIClient.shared.fetchGlossary(baseURL: SessionStore.baseURL)
@@ -408,6 +411,27 @@ final class ReaderPlaybackController: ObservableObject {
     /// concurrency slot) so playback can hand over already-preloaded audio
     /// immediately instead of re-fetching it.
     private var preloadedData: [Int: Data] = [:]
+    /// Pre-rendered audio for the open chapter (see AudioPredownload.swift)
+    /// — nil when none is on disk or it was rendered from different text.
+    private var prerenderedChapter: PrerenderedChapter?
+    /// Sentences whose buffered audio was sliced out of `prerenderedChapter`
+    /// rather than synthesized — rendered at 1.0x, so they play with
+    /// `speed` as the player's rate. Cleared with `preloadedData`.
+    private var prerenderedClipIndices: Set<Int> = []
+
+    /// AudioPredownloadManager deleted a book's audio — stop slicing clips
+    /// out of files that are gone.
+    func prerenderedAudioDeleted(bookID: Int) {
+        if book?.id == bookID { prerenderedChapter = nil }
+    }
+
+    /// The voice + speaker preset pre-rendered audio has to match.
+    var prerenderVoice: PrerenderVoice {
+        PrerenderVoice(
+            voice: voice, vieNeuOfflineV2Voice: vieNeuOfflineV2Voice,
+            vieNeuOfflineV3Voice: vieNeuOfflineV3Voice, gwenTTSSpeaker: gwenTTSSpeaker
+        )
+    }
     /// In-memory prefetch cache for chapter *content* (title/text), separate
     /// from `DownloadManager`'s all-or-nothing full-book offline store —
     /// this is a small rolling window around whatever chapter is current, so
@@ -800,6 +824,8 @@ final class ReaderPlaybackController: ObservableObject {
     /// `shouldAutoPlayNextChapter` and continues the same listening
     /// session (sleep timer keeps counting) instead of starting a fresh one.
     private func handleChapterFinished() {
+        if let book { AudioPredownloadManager.shared.chapterDidFinishPlaying(bookID: book.id, index: chapterIndex) }
+        if !AudioPredownloadManager.shared.keepPlayedAudio { prerenderedChapter = nil }
         guard let book, autoNextChapter, chapterIndex < book.n - 1 else {
             abandonSleepTimerIfIdle()
             return
@@ -895,6 +921,7 @@ final class ReaderPlaybackController: ObservableObject {
         cancelInFlightFetches()
         preloadedIndices = []
         preloadedData = [:]
+        prerenderedClipIndices = []
         preloadedThroughIndex = -1
         preloadedPrefixCount = 0
         preloadedDisplayCount = 0
@@ -902,6 +929,7 @@ final class ReaderPlaybackController: ObservableObject {
         clearAutoStopState()
         player.stop()
         isPlaying = false
+        isPlayingPrerendered = false
         highlightedSentenceIndex = nil
         updateNowPlayingProgress()
     }
@@ -1001,14 +1029,20 @@ final class ReaderPlaybackController: ObservableObject {
     }
 
     private func translationEngine(chapterIndex: Int, source: Locale.Language?) -> TranslationEngine? {
+        translationEngine(bookID: book?.id, chapterIndex: chapterIndex, source: source)
+    }
+
+    /// Also used by AudioPredownloadManager, which translates chapters of
+    /// a book that isn't necessarily the open one.
+    func translationEngine(bookID: Int?, chapterIndex: Int, source: Locale.Language?) -> TranslationEngine? {
         switch translationEngineKind {
         case .google:
-            guard let book else { return nil }
-            return GoogleCloudTranslationEngine(baseURL: SessionStore.baseURL, bookID: book.id, chapterIndex: chapterIndex)
+            guard let bookID else { return nil }
+            return GoogleCloudTranslationEngine(baseURL: SessionStore.baseURL, bookID: bookID, chapterIndex: chapterIndex)
         case .apple:
             guard #available(iOS 18.0, macOS 15.0, *) else { return nil }
             let glossary = Glossary(
-                terms: glossaryTerms, bookID: book?.id,
+                terms: glossaryTerms, bookID: bookID,
                 source: source ?? Locale.Language(identifier: "en"), target: primaryLanguage
             )
             return GlossaryTranslationEngine(base: AppleTranslationEngine.shared, glossary: glossary)
@@ -1039,6 +1073,9 @@ final class ReaderPlaybackController: ObservableObject {
     /// backwards let a chapter needing translation briefly preload
     /// original-language audio before this had a chance to run.
     private func evaluateTranslation(for sentences: [String]) {
+        prerenderedChapter = book
+            .flatMap { PrerenderedAudioStore.shared.chapter(bookID: $0.id, index: chapterIndex) }
+            .flatMap { $0.manifest.sentences == sentences ? $0 : nil }
         translationGeneration += 1
         translatedSentences = nil
         isTranslating = false
@@ -1072,10 +1109,15 @@ final class ReaderPlaybackController: ObservableObject {
             .translation, "Phát hiện chương cần dịch",
             detail: "\(book.map { "\($0.title) — Chương \(chapterIndex + 1)" } ?? "") — phát hiện: \(dominant.rawValue)"
         )
-        // The previous chapter's warm-up may already have translated this
+        // A pre-rendered chapter carries the translation its audio was
+        // made from — reuse it instead of translating again. Otherwise the
+        // previous chapter's warm-up may already have translated this
         // one (see `startNextChapterTranslation`) — start from whatever
         // landed; `performPendingTranslation` only asks for the rest.
-        if let warm = nextChapterTranslation, nextChapterPreloadIndex == chapterIndex, nextChapterSentences == sentences,
+        if let stored = prerenderedChapter?.manifest, stored.isTranslated,
+           stored.translationEngine == translationEngineKind.rawValue, stored.translationTarget == primaryLanguageCode {
+            translatedSentences = stored.spoken
+        } else if let warm = nextChapterTranslation, nextChapterPreloadIndex == chapterIndex, nextChapterSentences == sentences,
            warm.source == translationSourceLanguage, warm.target == primaryLanguage, warm.engineKind == translationEngineKind {
             warm.task?.cancel()
             nextChapterTranslation?.task = nil
@@ -1087,7 +1129,7 @@ final class ReaderPlaybackController: ObservableObject {
     /// `sentences`' dominant language among the ones this app translates
     /// between — shared by `evaluateTranslation` (current chapter) and the
     /// next-chapter warm-up, so both decide "needs translating" the same way.
-    private func dominantLanguage(of sentences: [String]) -> NLLanguage? {
+    func dominantLanguage(of sentences: [String]) -> NLLanguage? {
         let recognizer = NLLanguageRecognizer()
         // Unconstrained, `NLLanguageRecognizer` picks from *any* language it
         // knows — on short/unusual passages (legal boilerplate, proper
@@ -1305,6 +1347,7 @@ final class ReaderPlaybackController: ObservableObject {
         updateNowPlayingProgress()
         preloadedIndices = []
         preloadedData = [:]
+        prerenderedClipIndices = []
         preloadedThroughIndex = sentenceIndex - 1
         preloadedPrefixCount = sentenceIndex
         preloadedDisplayCount = sentenceIndex
@@ -1343,6 +1386,7 @@ final class ReaderPlaybackController: ObservableObject {
         if resetPreload {
             preloadedIndices = []
             preloadedData = [:]
+            prerenderedClipIndices = []
             preloadedThroughIndex = startIndex - 1
             preloadedPrefixCount = startIndex
             preloadedDisplayCount = startIndex
@@ -1510,8 +1554,10 @@ final class ReaderPlaybackController: ObservableObject {
                 return
             }
             isLoadingAudio = false
-            try player.play(data: data)
+            let prerendered = prerenderedClipIndices.contains(currentSentenceIndex)
+            try player.play(data: data, rate: prerendered ? Float(speed) : 1)
             isPlaying = true
+            isPlayingPrerendered = prerendered
             updateNowPlayingProgress()
             errorMessage = nil
             // Every sentence that actually starts playing, whether from a
@@ -1601,6 +1647,8 @@ final class ReaderPlaybackController: ObservableObject {
     private func beginNextChapterAudioWarmup() {
         guard let book, chapterIndex < book.n - 1 else { return }
         let targetIndex = chapterIndex + 1
+        // Its audio is already on disk — nothing to warm up.
+        if AudioPredownloadManager.shared.isRendered(bookID: book.id, index: targetIndex, voiceKey: prerenderVoice.key) { return }
         if nextChapterPreloadIndex == targetIndex, !nextChapterSentences.isEmpty {
             refillNextChapterWarmup()
             return
@@ -1680,6 +1728,7 @@ final class ReaderPlaybackController: ObservableObject {
         }
         guard !usable.isEmpty else { return }
         preloadedData = usable
+        prerenderedClipIndices = []
         preloadedIndices = Set(usable.keys)
         var next = startIndex
         while preloadedIndices.contains(next) { next += 1 }
@@ -1779,6 +1828,18 @@ final class ReaderPlaybackController: ObservableObject {
         // on-device voice exactly like being offline does, same mechanism,
         // just a different reason. ReaderView's footnote explains this.
         let isLoggedIn = SessionStore.shared.isLoggedIn
+        if let prerendered = prerenderedChapter, prerendered.manifest.voiceKey == prerenderVoice.key,
+           let range = prerendered.clipRange(index: index, text: text) {
+            prerenderedClipIndices.insert(index)
+            return Task {
+                let data = try await Task.detached(priority: .userInitiated) {
+                    try prerendered.clipData(start: range.start, count: range.count)
+                }.value
+                self.markPreloaded(index: index, data: data, generation: generation)
+                return data
+            }
+        }
+        prerenderedClipIndices.remove(index)
         return Task {
             let data = try await self.synthesizeAudio(
                 text: text, voice: voice, vieNeuOfflineV2Voice: vieNeuOfflineV2Voice,

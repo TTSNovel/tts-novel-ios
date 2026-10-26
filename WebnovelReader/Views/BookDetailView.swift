@@ -171,6 +171,7 @@ struct BookDetailView: View {
                 }
                 .accessibilityLabel("Xoá bản tải xuống")
                 .accessibilityIdentifier("deleteDownloadButton")
+                AudioPredownloadButton(book: book)
             } else if downloads.downloading.contains(book.id) {
                 DownloadRingIcon(progress: downloads.progress[book.id] ?? 0)
                     .accessibilityLabel("Đang tải xuống")

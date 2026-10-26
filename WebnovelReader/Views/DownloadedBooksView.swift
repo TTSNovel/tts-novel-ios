@@ -15,7 +15,10 @@ struct DownloadedBooksView: View {
     var body: some View {
         List(books) { book in
             NavigationLink(value: book) {
-                BookRow(book: book)
+                VStack(alignment: .leading, spacing: 2) {
+                    BookRow(book: book)
+                    AudioStorageBadge(bookID: book.id)
+                }
             }
             .accessibilityIdentifier("bookRow")
         }

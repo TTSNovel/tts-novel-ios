@@ -308,6 +308,14 @@ struct ReaderSettingsSheet: View {
             .buttonStyle(.plain)
             .accessibilityIdentifier("actionHistoryLink")
             Divider()
+            NavigationLink {
+                AudioStorageView()
+            } label: {
+                SettingsLinkRow(icon: "waveform", label: "Downloaded Audio")
+            }
+            .buttonStyle(.plain)
+            .accessibilityIdentifier("audioStorageLink")
+            Divider()
             Button {
                 showingBugReport = true
             } label: {

@@ -111,10 +111,17 @@ final class AudioPlaybackService: NSObject, ObservableObject {
         case failedToStart
     }
 
-    func play(data: Data) throws {
+    /// `rate` ≠ 1 speeds up audio rendered at 1.0x (pre-rendered chapters,
+    /// see AudioPredownload.swift); synthesized clips already carry the
+    /// speed.
+    func play(data: Data, rate: Float = 1) throws {
         stopFiller()
         let newPlayer = try AVAudioPlayer(data: data)
         newPlayer.delegate = self
+        if rate != 1 {
+            newPlayer.enableRate = true
+            newPlayer.rate = rate
+        }
         player = newPlayer
         // AVAudioPlayer.play() returns false instead of throwing when the OS
         // refuses to start (e.g. audio hardware unavailable) — left
