@@ -250,10 +250,6 @@ targets:
         ENABLE_HARDENED_RUNTIME: YES
         CODE_SIGN_ENTITLEMENTS: WebnovelReaderMac/WebnovelReaderMac.entitlements
         SWIFT_OBJC_BRIDGING_HEADER: WebnovelReaderMac/Piper-Bridging-Header.h
-        # Sparkle is the first dynamic framework embedded here; without this
-        # the archived app can't find it (Xcode runs mask it via
-        # DYLD_FRAMEWORK_PATH).
-        LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/../Frameworks"
     info:
       path: Generated-Info-Mac.plist
       properties:
