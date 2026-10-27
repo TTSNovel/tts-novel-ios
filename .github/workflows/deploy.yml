@@ -7,7 +7,8 @@
 #
 # Auth to GCP is keyless (Workload Identity Federation, tts-pipeline-infra's
 # environments/dev/ci.tf). Repo variables: GCP_WIF_PROVIDER, GCP_DEPLOYER_SA,
-# SIDESTORE_BUCKET, SERVER_BASE_URL.
+# SIDESTORE_BUCKET, SERVER_BASE_URL. Repo secret: SPARKLE_ED_PRIVATE_KEY
+# (signs the Mac app's Sparkle updates, see Scripts/publish-mac.sh).
 name: deploy
 
 on:
@@ -56,3 +57,11 @@ jobs:
         run: |
           git tag "v$VERSION" "$GITHUB_SHA"
           git push origin "v$VERSION"
+      # After the tag: a Mac failure must not hold back the iOS release.
+      - name: Publish Mac app
+        env:
+          VERSION: ${{ steps.publish.outputs.version }}
+          SIDESTORE_BUCKET: ${{ vars.SIDESTORE_BUCKET }}
+          SERVER_BASE_URL: ${{ vars.SERVER_BASE_URL }}
+          SPARKLE_ED_PRIVATE_KEY: ${{ secrets.SPARKLE_ED_PRIVATE_KEY }}
+        run: Scripts/publish-mac.sh "$VERSION"
