@@ -375,6 +375,15 @@ struct ReaderSettingsSheet: View {
                     .textSelection(.enabled)
                     .accessibilityIdentifier("appVersionLabel")
             }
+            #if os(macOS)
+            Button {
+                AppUpdater.shared.checkForUpdates()
+            } label: {
+                SettingsLinkRow(icon: "arrow.down.circle", label: "Check for Updates", showsChevron: false)
+            }
+            .buttonStyle(.plain)
+            .accessibilityIdentifier("checkForUpdatesButton")
+            #endif
         }
         .padding(.bottom, 14)
     }

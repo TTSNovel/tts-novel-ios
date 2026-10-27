@@ -145,5 +145,8 @@ struct WebnovelReaderApp: App {
                 Text(alertMessage ?? "")
             }
         }
+        #if os(macOS)
+        .commands { CheckForUpdatesCommands() }
+        #endif
     }
 }

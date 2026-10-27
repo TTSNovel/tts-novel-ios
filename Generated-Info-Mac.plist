@@ -27,5 +27,13 @@
 	</dict>
 	<key>SERVER_BASE_URL</key>
 	<string>$(SERVER_BASE_URL)</string>
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
+	<key>SUEnableInstallerLauncherService</key>
+	<true/>
+	<key>SUFeedURL</key>
+	<string>https://storage.googleapis.com/tts-pipeline-yl-sidestore-source/mac/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>ACE4rDSfuTG6Wa81VPMAMPqynSk4WWIC9NsYeXAJkDM=</string>
 </dict>
 </plist>

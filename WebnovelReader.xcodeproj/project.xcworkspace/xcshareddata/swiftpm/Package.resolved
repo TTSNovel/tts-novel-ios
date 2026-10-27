@@ -1,5 +1,5 @@
 {
-  "originHash" : "939a3eb4546570b7814262199a05230d68986e5e3513223409bc1ab901e2fb78",
+  "originHash" : "6d4b5503dfe9a306ce16a0cc02339921fef0109a5142d105f0e73f6cdc9b3347",
   "pins" : [
     {
       "identity" : "onnxruntime-libs",
@@ -16,6 +16,15 @@
       "location" : "https://github.com/k2-fsa/sherpa-onnx",
       "state" : {
         "revision" : "634265c9b57642fdd158120148785c89aa281c4b"
+      }
+    },
+    {
+      "identity" : "sparkle",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/sparkle-project/Sparkle",
+      "state" : {
+        "revision" : "ab7d71291238df6e0492143b120c9b696a35f603",
+        "version" : "2.10.1"
       }
     },
     {
