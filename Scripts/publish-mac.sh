@@ -12,7 +12,8 @@
 # Usage: Scripts/publish-mac.sh <version>
 #   version is the MAJOR.MINOR.PATCH publish-sidestore.sh just published,
 #   so iOS and Mac share it. Sparkle compares the build number
-#   (CFBundleVersion = CI run number), which always increases.
+#   (CFBundleVersion = UTC yyMMddHHmm timestamp, shared with the iOS build
+#   via BUILD_NUMBER in CI), which always increases.
 set -euo pipefail
 
 PROJ_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -21,7 +22,7 @@ if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
   echo "version '$VERSION' is not MAJOR.MINOR.PATCH" >&2
   exit 1
 fi
-BUILD_NUMBER="${GITHUB_RUN_NUMBER:-1}"
+BUILD_NUMBER="${BUILD_NUMBER:-$(date -u +%y%m%d%H%M)}"
 : "${SIDESTORE_BUCKET:?SIDESTORE_BUCKET not set (e.g. gs://<project>-sidestore-source)}"
 : "${SPARKLE_ED_PRIVATE_KEY:?SPARKLE_ED_PRIVATE_KEY not set}"
 MAC_BUCKET="$SIDESTORE_BUCKET/mac"

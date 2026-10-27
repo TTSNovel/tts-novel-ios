@@ -21,7 +21,7 @@ settings:
     # the next free one, so a push without a bump still reaches SideStore
     # as an update. See Scripts/publish-sidestore.sh.
     MARKETING_VERSION: "1.4.0"
-    # Build number (CFBundleVersion) — CI overrides with the run number.
+    # Build number (CFBundleVersion) — CI overrides with a yyMMddHHmm timestamp.
     CURRENT_PROJECT_VERSION: "1"
     DEVELOPMENT_TEAM: "R5U3W3463A"
     CODE_SIGN_STYLE: Automatic

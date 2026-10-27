@@ -32,8 +32,9 @@ if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
   echo "version '$VERSION' is not MAJOR.MINOR.PATCH" >&2
   exit 1
 fi
-# CFBundleVersion: the CI run number (always increasing), else 1.
-BUILD_NUMBER="${GITHUB_RUN_NUMBER:-1}"
+# CFBundleVersion: a UTC yyMMddHHmm timestamp (always increasing). CI sets
+# BUILD_NUMBER once per deploy so the iOS and Mac builds share it.
+BUILD_NUMBER="${BUILD_NUMBER:-$(date -u +%y%m%d%H%M)}"
 : "${SIDESTORE_BUCKET:?SIDESTORE_BUCKET not set (e.g. gs://<project>-sidestore-source)}"
 BUILD_DIR="$(mktemp -d)"
 trap 'rm -rf "$BUILD_DIR"' EXIT
