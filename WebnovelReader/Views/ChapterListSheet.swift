@@ -39,7 +39,7 @@ struct ChapterListSheet: View {
         NavigationStack {
             ScrollViewReader { proxy in
                 chapterContainer
-                    .modifier(CommonChapterListModifiers(searchText: $searchText, currentChapterIndex: currentChapterIndex, proxy: proxy) {
+                    .modifier(CommonChapterListModifiers(searchText: $searchText, currentChapterIndex: currentChapterIndex, titlesLoaded: chapterTitles != nil, proxy: proxy) {
                         chapterTitles = await ChapterTitles.load(book: book)
                     })
             }
@@ -69,6 +69,12 @@ struct ChapterListSheet: View {
                 chapterSections
             }
             .frame(maxWidth: .infinity, alignment: .leading)
+            // macOS's LazyVStack keeps rows it already realized as-is when
+            // chapterTitles arrives, so every visible row stayed stuck on
+            // its "Chương N" placeholder (search, which builds fresh rows,
+            // did show real titles). Re-identifying the stack once titles
+            // land forces those rows to rebuild with the real labels.
+            .id(chapterTitles != nil)
         }
         #else
         // Was .plain, but plain-style section headers pin/float with a
@@ -189,6 +195,10 @@ struct ChapterListSheet: View {
 private struct CommonChapterListModifiers: ViewModifier {
     @Binding var searchText: String
     let currentChapterIndex: Int
+    /// Re-runs the scroll below once titles arrive — on macOS that rebuilds
+    /// the whole LazyVStack (see ChapterListSheet.chapterContainer), which
+    /// drops the earlier scroll position.
+    let titlesLoaded: Bool
     let proxy: ScrollViewProxy
     let loadTitles: () async -> Void
 
@@ -198,7 +208,7 @@ private struct CommonChapterListModifiers: ViewModifier {
             .task {
                 await loadTitles()
             }
-            .task {
+            .task(id: titlesLoaded) {
                 // List/LazyVStack needs a beat to lay out its rows before a
                 // ScrollViewReader.scrollTo against them actually lands —
                 // dispatching to the next runloop turn (rather than

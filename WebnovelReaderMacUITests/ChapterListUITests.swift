@@ -58,6 +58,16 @@ final class ChapterListUITests: XCTestCase {
             "ChapterListSheet rendered with no chapter rows on macOS"
         )
 
+        // Same real-title requirement as the iOS test: rows must end up
+        // showing the chapter's own title, not stay on the bare "Chương N"
+        // placeholder.
+        let rowsWithRealTitle = chapterRows.matching(NSPredicate(format: "label CONTAINS[c] %@", ":"))
+        XCTAssertEqual(
+            XCTWaiter().wait(for: [XCTNSPredicateExpectation(predicate: NSPredicate(format: "count > 0"), object: rowsWithRealTitle)], timeout: 15),
+            .completed,
+            "ChapterListSheet never showed a real title on macOS (only bare 'Chương N' placeholders)"
+        )
+
         app.buttons["Đóng"].tap()
         XCTAssertTrue(app.buttons["chapterListButton"].waitForExistence(timeout: 5), "Closing the sheet should return to ReaderView")
     }
