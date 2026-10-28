@@ -79,7 +79,7 @@ struct WebnovelReaderApp: App {
                 #endif
                 await session.restoreSession()
                 if session.isLoggedIn && !session.isOfflineSession {
-                    await progressStore.refreshFromServer(baseURL: SessionStore.baseURL)
+                    await refreshProgress()
                     await filterWords.refreshFromServer(baseURL: SessionStore.baseURL)
                 }
                 #if os(iOS)
@@ -97,11 +97,25 @@ struct WebnovelReaderApp: App {
             .onChange(of: scenePhase) { _, phase in
                 if phase == .active, !session.isRestoring {
                     AudioPredownloadManager.shared.resumeInterruptedJobs()
+                    #if os(iOS)
                     if session.isLoggedIn && !session.isOfflineSession {
-                        Task { await progressStore.refreshFromServer(baseURL: SessionStore.baseURL) }
+                        Task { await refreshProgress() }
                     }
+                    #endif
                 }
             }
+            #if os(macOS)
+            // On macOS the scene stays .active while another app has focus —
+            // scenePhase only changes when the window is hidden/minimized —
+            // so switching back from another app would never pull a chapter
+            // read on the phone meanwhile. App activation is the Mac
+            // equivalent of iOS coming back to the foreground.
+            .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+                if !session.isRestoring, session.isLoggedIn, !session.isOfflineSession {
+                    Task { await refreshProgress() }
+                }
+            }
+            #endif
             #if os(iOS)
             .onChange(of: session.isLoggedIn) { _, isLoggedIn in
                 if isLoggedIn {
@@ -148,5 +162,14 @@ struct WebnovelReaderApp: App {
         #if os(macOS)
         .commands { CheckForUpdatesCommands() }
         #endif
+    }
+
+    /// Pulls reading history from the server, and moves a paused reader to
+    /// any newer chapter read on another device meanwhile.
+    private func refreshProgress() async {
+        let changed = await progressStore.refreshFromServer(baseURL: SessionStore.baseURL)
+        for (bookID, chapterIndex) in changed {
+            playback.adoptRemoteChapter(bookID: bookID, chapterIndex: chapterIndex)
+        }
     }
 }
