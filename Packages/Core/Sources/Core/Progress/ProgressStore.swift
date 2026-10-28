@@ -82,14 +82,23 @@ public final class ProgressStore: ObservableObject {
     /// Pulls every book's server-side progress and merges by `updatedAt`,
     /// keeping whichever side is newer — this is what brings in progress
     /// made on another device sharing the same login.
-    public func refreshFromServer(baseURL: URL) async {
-        guard let remote = try? await APIClient.shared.fetchProgress(baseURL: baseURL) else { return } // nolog: APIClient logs the failed request
+    ///
+    /// Returns the books whose chapter changed because of the merge (book
+    /// ID → the newer chapter), so a paused reader can follow along.
+    @discardableResult
+    public func refreshFromServer(baseURL: URL) async -> [Int: Int] {
+        guard let remote = try? await APIClient.shared.fetchProgress(baseURL: baseURL) else { return [:] } // nolog: APIClient logs the failed request
+        var changedChapters: [Int: Int] = [:]
         for (bookID, remoteEntry) in remote {
             if let local = progress[bookID], local.updatedAt >= remoteEntry.updatedAt { continue }
+            if progress[bookID]?.chapterIndex != remoteEntry.chapterIndex {
+                changedChapters[bookID] = remoteEntry.chapterIndex
+            }
             progress[bookID] = remoteEntry
             unsynced.remove(bookID)
         }
         persistToDisk()
+        return changedChapters
     }
 
     private func persistToDisk() {

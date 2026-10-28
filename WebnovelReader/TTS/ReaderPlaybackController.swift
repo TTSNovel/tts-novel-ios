@@ -649,6 +649,18 @@ final class ReaderPlaybackController: ObservableObject {
         Task { await loadChapter() }
     }
 
+    /// Reading history pulled from the server moved this book to another
+    /// chapter (read on a different device meanwhile). While nothing is
+    /// playing here, follow it — otherwise pressing play on this device
+    /// would resume the chapter it was left on, not the one just read
+    /// elsewhere. An active listening session on this device is left alone.
+    func adoptRemoteChapter(bookID: Int, chapterIndex index: Int) {
+        guard let book, book.id == bookID, index != chapterIndex,
+              !isPlaying, !shouldAutoPlayNextChapter else { return }
+        EventLogStore.shared.record(.navigation, "Follow chapter from another device", detail: "\(book.title) — chapter \(index + 1)")
+        Task { await goTo(index) }
+    }
+
     private func loadChapter() async {
         guard let book else { return }
         loadError = nil
