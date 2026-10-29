@@ -37,5 +37,7 @@
 	<string>https://storage.googleapis.com/tts-pipeline-yl-sidestore-source/mac/appcast.xml</string>
 	<key>SUPublicEDKey</key>
 	<string>ACE4rDSfuTG6Wa81VPMAMPqynSk4WWIC9NsYeXAJkDM=</string>
+	<key>SUScheduledCheckInterval</key>
+	<integer>3600</integer>
 </dict>
 </plist>

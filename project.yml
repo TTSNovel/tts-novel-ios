@@ -267,6 +267,8 @@ targets:
         # Download and install without asking — AppUpdater installs as
         # soon as nothing is playing.
         SUAutomaticallyUpdate: true
+        # Hourly — the shortest interval Sparkle allows.
+        SUScheduledCheckInterval: 3600
         # Sandboxed app: installs go through Sparkle's XPC launcher service.
         SUEnableInstallerLauncherService: true
 
