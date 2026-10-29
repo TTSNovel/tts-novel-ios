@@ -8,22 +8,18 @@ import SwiftUI
 /// never start the updater: their 1.4.0 (1) would always look outdated and
 /// an update prompt would get in the way of Xcode runs and UI tests.
 ///
-/// Fully automatic: checks the appcast every 15 minutes, Sparkle downloads
-/// a new build silently (SUAutomaticallyDownloadsUpdates), and it is
+/// Fully automatic: Sparkle checks the appcast every hour
+/// (SUScheduledCheckInterval, its minimum), downloads a new build silently
+/// (SUAutomaticallyUpdate), and it is
 /// installed and relaunched as soon as nothing is playing — not left
 /// waiting for a quit the reader may not do for days.
 @MainActor
 final class AppUpdater: NSObject, ObservableObject, SPUUpdaterDelegate {
     static let shared = AppUpdater()
 
-    /// Sparkle clamps SUScheduledCheckInterval to at least an hour, so the
-    /// shorter cadence is driven from here with background checks.
-    private static let checkInterval: TimeInterval = 15 * 60
-
     @Published private(set) var canCheckForUpdates = false
 
     private var controller: SPUStandardUpdaterController!
-    private var checkTimer: AnyCancellable?
     private var waitForIdle: AnyCancellable?
 
     private override init() {
@@ -35,23 +31,10 @@ final class AppUpdater: NSObject, ObservableObject, SPUUpdaterDelegate {
         #endif
         controller = SPUStandardUpdaterController(startingUpdater: starts, updaterDelegate: self, userDriverDelegate: nil)
         controller.updater.publisher(for: \.canCheckForUpdates).assign(to: &$canCheckForUpdates)
-        if starts {
-            checkTimer = Timer.publish(every: Self.checkInterval, on: .main, in: .common)
-                .autoconnect()
-                .sink { [weak self] _ in self?.checkInBackground() }
-        }
     }
 
     func checkForUpdates() {
         controller.checkForUpdates(nil)
-    }
-
-    private func checkInBackground() {
-        let updater = controller.updater
-        // A downloaded update waiting for playback to stop keeps its
-        // session open — nothing new to check until it's installed.
-        guard updater.canCheckForUpdates, !updater.sessionInProgress else { return }
-        updater.checkForUpdatesInBackground()
     }
 
     // MARK: SPUUpdaterDelegate
