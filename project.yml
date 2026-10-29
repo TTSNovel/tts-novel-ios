@@ -264,6 +264,9 @@ targets:
         SUFeedURL: "https://storage.googleapis.com/tts-pipeline-yl-sidestore-source/mac/appcast.xml"
         SUPublicEDKey: "ACE4rDSfuTG6Wa81VPMAMPqynSk4WWIC9NsYeXAJkDM="
         SUEnableAutomaticChecks: true
+        # Download and install without asking — AppUpdater installs as
+        # soon as nothing is playing.
+        SUAutomaticallyUpdate: true
         # Sandboxed app: installs go through Sparkle's XPC launcher service.
         SUEnableInstallerLauncherService: true
 
