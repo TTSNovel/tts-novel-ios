@@ -116,7 +116,8 @@ public final class APIClient: @unchecked Sendable {
 
     /// Server-side counterpart: app/server.py's `/api/progress` routes
     /// (tts-webnovel repo) — not one of reader.js's existing endpoints,
-    /// added specifically for cross-device resume.
+    /// added specifically for cross-device resume. Every book's current
+    /// position, with the `rev` writes must be based on.
     public func fetchProgress(baseURL: URL) async throws -> [Int: ReadingProgress] {
         var request = URLRequest(url: baseURL.appendingPathComponent("api/progress"))
         request.httpMethod = "GET"
@@ -148,16 +149,28 @@ public final class APIClient: @unchecked Sendable {
         _ = try await send(request)
     }
 
-    public func postProgress(baseURL: URL, bookID: Int, chapterIndex: Int) async throws -> ReadingProgress {
-        var request = URLRequest(url: baseURL.appendingPathComponent("api/progress"))
+    /// Reading history v2 write — see `PendingReadingEvent`. A 409 is an
+    /// expected answer here (this device's `base_rev` was stale), not a
+    /// failure: it comes back as `.conflict` with the server's current
+    /// position, logged at notice level instead of as a server error.
+    public func postProgressEvent(baseURL: URL, event: PendingReadingEvent) async throws -> ReadingEventOutcome {
+        var request = URLRequest(url: baseURL.appendingPathComponent("api/progress/events"))
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = try JSONEncoder().encode(
-            ProgressRequestBody(bookID: bookID, chapterIndex: chapterIndex)
-        )
+        request.httpBody = try JSONEncoder.readingProgress.encode(event)
 
-        let data = try await send(request)
-        return try Self.decode(ReadingProgress.self, from: data, decoder: .readingProgress)
+        let (data, status) = try await send(request, alsoAccepting: [409])
+        let response = try Self.decode(ReadingEventResponse.self, from: data, decoder: .readingProgress)
+        return status == 409 ? .conflict(response) : .accepted(response)
+    }
+
+    /// One book's event timeline (newest first) plus its current position.
+    public func fetchProgressHistory(baseURL: URL, bookID: Int, limit: Int = 100) async throws -> ReadingHistory {
+        var components = URLComponents(url: baseURL.appendingPathComponent("api/progress/\(bookID)/history"), resolvingAgainstBaseURL: false)
+        components?.queryItems = [URLQueryItem(name: "limit", value: "\(limit)")]
+        guard let url = components?.url else { throw APIError.invalidResponse }
+        let data = try await send(URLRequest(url: url))
+        return try Self.decode(ReadingHistory.self, from: data, decoder: .readingProgress)
     }
 
     /// Server-side counterpart: app/server.py's `/api/filter-words` routes
@@ -245,6 +258,11 @@ public final class APIClient: @unchecked Sendable {
         var request = request
         let requestID = String(UUID().uuidString.prefix(8)).lowercased()
         request.setValue(requestID, forHTTPHeaderField: "X-Request-ID")
+        // Reading history records which device made each change (see
+        // DeviceIdentity). The name is percent-encoded: header values are
+        // Latin-1 and a Mac's name can be anything ("Máy của Long").
+        request.setValue(DeviceIdentity.id, forHTTPHeaderField: "X-Device-Id")
+        request.setValue(DeviceIdentity.encodedName, forHTTPHeaderField: "X-Device-Name")
         var context = [
             "request": requestID,
             "method": request.httpMethod ?? "GET",
@@ -273,10 +291,21 @@ public final class APIClient: @unchecked Sendable {
 
     /// `perform` + a 2xx check.
     private func send(_ request: URLRequest) async throws -> Data {
+        try await send(request, alsoAccepting: []).data
+    }
+
+    /// `send`, also treating `alsoAccepting` statuses as answers rather
+    /// than errors (a progress event's 409 carries a body to act on).
+    private func send(_ request: URLRequest, alsoAccepting accepted: Set<Int>) async throws -> (data: Data, status: Int) {
         let (data, response) = try await perform(request)
         let error: APIError
         switch response.statusCode {
-        case 200..<300: return data
+        case 200..<300: return (data, response.statusCode)
+        case let status where accepted.contains(status):
+            Log.notice(.network, "Server answered with an expected non-2xx status", [
+                "path": request.url?.path ?? "?", "status": "\(status)",
+            ])
+            return (data, status)
         case 401: error = .notAuthenticated
         default: error = .httpStatus(response.statusCode)
         }
@@ -333,20 +362,6 @@ private struct BugReportEventBody: Encodable {
     let category: String
     let message: String
     let detail: String?
-}
-
-private struct ProgressRequestBody: Encodable {
-    let bookID: Int
-    let chapterIndex: Int
-    // The server still requires an int "sentence"; progress is per
-    // chapter now, so it's always 0.
-    let sentenceIndex = 0
-
-    enum CodingKeys: String, CodingKey {
-        case bookID = "book_id"
-        case chapterIndex = "chapter"
-        case sentenceIndex = "sentence"
-    }
 }
 
 private struct FilterWordsRequestBody: Encodable {
