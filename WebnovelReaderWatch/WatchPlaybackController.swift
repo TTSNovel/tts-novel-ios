@@ -19,7 +19,11 @@ final class WatchPlaybackController: ObservableObject {
     @Published private(set) var book: Book?
     @Published private(set) var chapterIndex = 0
     @Published private(set) var chapter: Chapter?
-    @Published private(set) var isPlaying = false
+    @Published private(set) var isPlaying = false {
+        // A remote chapter change to the book being listened to becomes a
+        // notice instead of a jump — see ProgressStore.playingBookID.
+        didSet { ProgressStore.shared.playingBookID = isPlaying ? book?.id : nil }
+    }
     @Published private(set) var isLoading = false
     @Published private(set) var errorMessage: String?
 
@@ -127,14 +131,19 @@ final class WatchPlaybackController: ObservableObject {
     func open(book: Book, chapterIndex: Int) async {
         self.book = book
         self.chapterIndex = chapterIndex
+        // Resuming at the saved chapter records nothing (ProgressStore
+        // ignores it); starting anywhere else is the user's choice.
+        ProgressStore.shared.record(bookID: book.id, chapterIndex: chapterIndex, kind: .select)
         await loadChapter()
     }
 
-    func skipChapter(by delta: Int) async {
+    /// `kind` is `.autoNext` only when a chapter finished on its own.
+    func skipChapter(by delta: Int, kind: ReadingEventKind = .select) async {
         guard let book else { return }
         let target = chapterIndex + delta
         guard target >= 0, target < book.n else { return }
         chapterIndex = target
+        ProgressStore.shared.record(bookID: book.id, chapterIndex: target, kind: kind)
         await loadChapter()
     }
 
@@ -194,7 +203,7 @@ final class WatchPlaybackController: ObservableObject {
             Task { await playCurrentSentence() }
         } else if autoNextChapter {
             Task {
-                await skipChapter(by: 1)
+                await skipChapter(by: 1, kind: .autoNext)
                 guard !sentences.isEmpty else { return }
                 await playCurrentSentence()
             }

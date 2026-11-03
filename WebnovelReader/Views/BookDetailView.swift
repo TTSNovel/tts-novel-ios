@@ -7,6 +7,7 @@ struct BookDetailView: View {
     @EnvironmentObject private var downloads: DownloadManager
     @EnvironmentObject private var progressStore: ProgressStore
     @EnvironmentObject private var network: NetworkMonitor
+    @EnvironmentObject private var session: SessionStore
 
     // readingActions pushes via this instead of NavigationLink — a
     // NavigationLink placed inside a List always renders with the system's
@@ -20,6 +21,7 @@ struct BookDetailView: View {
     @State private var pendingChapterIndex: Int?
     @State private var chapterTitles: [String]?
     @State private var chapterSearchText = ""
+    @State private var showingReadingHistory = false
 
     /// Up to 5 most recent chapters, newest first. Hidden when the book is
     /// short enough that it would just duplicate the full list below.
@@ -106,6 +108,9 @@ struct BookDetailView: View {
         .navigationDestination(item: $pendingChapterIndex) { index in
             ReaderView(book: book, chapterIndex: index)
         }
+        .navigationDestination(isPresented: $showingReadingHistory) {
+            BookReadingHistoryView(book: book)
+        }
         .navigationTitle(book.title)
         .inlineNavigationTitle()
         .readerSettingsToolbar()
@@ -161,6 +166,18 @@ struct BookDetailView: View {
                 }
                 .accessibilityLabel("Đọc tiếp, Chương \(progress.chapterIndex + 1)")
                 .accessibilityIdentifier("continueReadingButton")
+            }
+
+            // The server keeps the history (and only for a logged-in
+            // account), so there's nothing to show a guest.
+            if session.isLoggedIn {
+                Button {
+                    showingReadingHistory = true
+                } label: {
+                    Image(systemName: "clock.arrow.circlepath")
+                }
+                .accessibilityLabel("Lịch sử đọc của sách")
+                .accessibilityIdentifier("bookReadingHistoryButton")
             }
 
             if downloads.isDownloaded(book.id) {
