@@ -18,6 +18,7 @@ struct ReaderView: View {
     @EnvironmentObject private var playback: ReaderPlaybackController
     @Environment(\.scenePhase) private var scenePhase
     @State private var showingChapterList = false
+    @State private var showingReadingHistory = false
 
     init(book: Book, chapterIndex: Int) {
         self.book = book
@@ -34,6 +35,9 @@ struct ReaderView: View {
 
     var body: some View {
         ChapterPagerView(book: book, initialChapterIndex: initialChapterIndex)
+        .overlay(alignment: .top) {
+            ReadingSyncBanner(book: book) { showingReadingHistory = true }
+        }
         .navigationTitle(book.title)
         .inlineNavigationTitle()
         .toolbar {
@@ -57,6 +61,24 @@ struct ReaderView: View {
                 Task { await playback.goTo(index) }
             }
         }
+        .sheet(isPresented: $showingReadingHistory) {
+            NavigationStack {
+                // The restore already made `index` this book's chapter, so
+                // goTo's own record is a no-op.
+                BookReadingHistoryView(book: book) { index in
+                    showingReadingHistory = false
+                    Task { await playback.goTo(index) }
+                }
+                .toolbar {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Đóng") { showingReadingHistory = false }
+                    }
+                }
+            }
+            #if os(macOS)
+            .frame(minWidth: 420, minHeight: 480)
+            #endif
+        }
         .readerSettingsToolbar()
         .task {
             await playback.open(book: book, chapterIndex: initialChapterIndex)
@@ -70,7 +92,7 @@ struct ReaderView: View {
     }
 
     private func syncProgress() {
-        Task { await ProgressStore.shared.syncToServer(bookID: book.id) }
+        Task { await ProgressStore.shared.flush() }
     }
 
     /// Only ever added to the toolbar while `playback.translationSourceLanguage`
@@ -142,4 +164,5 @@ struct ReaderView: View {
     .environmentObject(SessionStore.shared)
     .environmentObject(ReaderPlaybackController.shared)
     .environmentObject(NetworkMonitor.shared)
+    .environmentObject(ProgressStore.shared)
 }

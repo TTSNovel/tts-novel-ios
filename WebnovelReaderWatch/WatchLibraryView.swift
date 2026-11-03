@@ -87,6 +87,12 @@ struct WatchLibraryView: View {
             }
             .task {
                 await session.restoreSession()
+                // Positions (and their revs) from the other devices — without
+                // them every chapter change made here would be based on a
+                // stale rev and rejected.
+                if session.isLoggedIn && !session.isOfflineSession {
+                    await progressStore.refreshFromServer()
+                }
                 await loadBooks()
             }
         }

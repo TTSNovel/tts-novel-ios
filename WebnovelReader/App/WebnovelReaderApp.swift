@@ -167,7 +167,7 @@ struct WebnovelReaderApp: App {
     /// Pulls reading history from the server, and moves a paused reader to
     /// any newer chapter read on another device meanwhile.
     private func refreshProgress() async {
-        let changed = await progressStore.refreshFromServer(baseURL: SessionStore.baseURL)
+        let changed = await progressStore.refreshFromServer()
         for (bookID, chapterIndex) in changed {
             playback.adoptRemoteChapter(bookID: bookID, chapterIndex: chapterIndex)
         }

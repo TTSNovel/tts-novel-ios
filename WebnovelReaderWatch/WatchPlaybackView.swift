@@ -63,9 +63,11 @@ struct WatchPlaybackView: View {
         .task {
             await playback.open(book: book, chapterIndex: initialChapterIndex)
         }
+        // Chapter changes are recorded as they happen (see
+        // WatchPlaybackController); leaving the screen is not a choice, it
+        // only retries anything still queued.
         .onDisappear {
-            progressStore.recordLocal(bookID: book.id, chapterIndex: playback.chapterIndex)
-            Task { await progressStore.syncToServer(bookID: book.id) }
+            Task { await progressStore.flush() }
         }
     }
 }

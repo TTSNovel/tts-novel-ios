@@ -32,12 +32,16 @@ final class ReaderPlaybackController: ObservableObject {
 
     // Now-playing identity — nil book means nothing has ever been opened
     // this app launch.
-    @Published private(set) var book: Book?
+    @Published private(set) var book: Book? {
+        didSet { updatePlayingBookSignal() }
+    }
     @Published private(set) var chapterIndex: Int = 0
     @Published private(set) var chapter: Chapter?
     @Published private(set) var loadError: String?
 
-    @Published private(set) var isLoadingAudio = false
+    @Published private(set) var isLoadingAudio = false {
+        didSet { updatePlayingBookSignal() }
+    }
     @Published private(set) var currentSentenceIndex = 0
     @Published private(set) var sentences: [String] = []
     @Published private(set) var highlightedSentenceIndex: Int?
@@ -119,7 +123,9 @@ final class ReaderPlaybackController: ObservableObject {
     /// by coincidence, whenever some *other* @Published property here (like
     /// isLoadingAudio) happened to change at the same moment. Set
     /// explicitly at every play/pause/resume/stop/finish transition below.
-    @Published private(set) var isPlaying = false
+    @Published private(set) var isPlaying = false {
+        didSet { updatePlayingBookSignal() }
+    }
     /// Whether the sentence playing now comes from pre-rendered (downloaded)
     /// audio rather than live synthesis — PlaybackBar shows a badge for it.
     @Published private(set) var isPlayingPrerendered = false
@@ -338,9 +344,13 @@ final class ReaderPlaybackController: ObservableObject {
 
     var sentenceCount: Int { sentences.count }
 
-    private var shouldAutoPlayNextChapter = false
+    private var shouldAutoPlayNextChapter = false {
+        didSet { updatePlayingBookSignal() }
+    }
 
-    private var active = false
+    private var active = false {
+        didSet { updatePlayingBookSignal() }
+    }
     private var filterWordsCancellable: AnyCancellable?
     /// Set right when an AVAudioSession interruption (call/alarm/Maps
     /// prompt) begins, cleared once consumed on .ended — see
@@ -601,7 +611,10 @@ final class ReaderPlaybackController: ObservableObject {
         chapter = nil
         clearSentenceState()
         EventLogStore.shared.record(.navigation, "Open chapter", detail: "\(book.title) — chapter \(chapterIndex + 1)")
-        ProgressStore.shared.recordLocal(bookID: book.id, chapterIndex: chapterIndex)
+        // Opening at the chapter already saved for this book is a resume and
+        // records nothing (ProgressStore ignores it); any other chapter is
+        // the user picking it.
+        ProgressStore.shared.record(bookID: book.id, chapterIndex: chapterIndex, kind: .select)
         syncProgress()
         await loadChapter()
     }
@@ -618,7 +631,7 @@ final class ReaderPlaybackController: ObservableObject {
         let direction = index == chapterIndex + 1 ? "next chapter" : (index == chapterIndex - 1 ? "previous chapter" : "chapter \(index + 1)")
         EventLogStore.shared.record(.navigation, "Go to \(direction)", detail: "\(book.title) — chapter \(index + 1)")
         chapterIndex = index
-        ProgressStore.shared.recordLocal(bookID: book.id, chapterIndex: index)
+        ProgressStore.shared.record(bookID: book.id, chapterIndex: index, kind: .select)
         syncProgress()
         await loadChapter()
     }
@@ -644,7 +657,7 @@ final class ReaderPlaybackController: ObservableObject {
         shouldAutoPlayNextChapter = true
         chapter = nil
         chapterIndex = index
-        ProgressStore.shared.recordLocal(bookID: book.id, chapterIndex: index)
+        ProgressStore.shared.record(bookID: book.id, chapterIndex: index, kind: .select)
         syncProgress()
         Task { await loadChapter() }
     }
@@ -653,12 +666,35 @@ final class ReaderPlaybackController: ObservableObject {
     /// chapter (read on a different device meanwhile). While nothing is
     /// playing here, follow it — otherwise pressing play on this device
     /// would resume the chapter it was left on, not the one just read
-    /// elsewhere. An active listening session on this device is left alone.
+    /// elsewhere. An active listening session on this device is left alone
+    /// (ProgressStore shows a notice for it instead). Records nothing:
+    /// ProgressStore already shows the remote chapter, so goTo's record is
+    /// a no-op.
     func adoptRemoteChapter(bookID: Int, chapterIndex index: Int) {
         guard let book, book.id == bookID, index != chapterIndex,
               !isPlaying, !shouldAutoPlayNextChapter else { return }
         EventLogStore.shared.record(.navigation, "Follow chapter from another device", detail: "\(book.title) — chapter \(index + 1)")
         Task { await goTo(index) }
+    }
+
+    /// "Chuyển tới chương N" on a conflict/remote-notice banner: show the
+    /// other device's chapter here without writing anything — it already is
+    /// the server's position. Keeps listening into it if audio is playing,
+    /// like a skip, instead of stopping.
+    func moveToServerChapter(bookID: Int) {
+        guard let index = ProgressStore.shared.adoptServer(bookID: bookID),
+              let book, book.id == bookID, index != chapterIndex else { return }
+        EventLogStore.shared.record(.navigation, "Move to another device's chapter", detail: "\(book.title) — chapter \(index + 1)")
+        skipChapter(by: index - chapterIndex)
+    }
+
+    /// Tells ProgressStore which book is being listened to right now
+    /// (playing, buffering a sentence, or between chapters during
+    /// auto-next) — a remote change to that book then becomes a notice
+    /// instead of moving it under the user's ears. Cleared on pause/stop.
+    private func updatePlayingBookSignal() {
+        let listening = isPlaying || shouldAutoPlayNextChapter || (active && isLoadingAudio)
+        ProgressStore.shared.playingBookID = listening ? book?.id : nil
     }
 
     private func loadChapter() async {
@@ -824,7 +860,7 @@ final class ReaderPlaybackController: ObservableObject {
         shouldAutoPlayNextChapter = true
         chapter = nil
         chapterIndex += 1
-        ProgressStore.shared.recordLocal(bookID: book.id, chapterIndex: chapterIndex)
+        ProgressStore.shared.record(bookID: book.id, chapterIndex: chapterIndex, kind: .autoNext)
         syncProgress()
         Task { await loadChapter() }
     }
@@ -1299,9 +1335,10 @@ final class ReaderPlaybackController: ObservableObject {
         player.updateNowPlayingProgress(elapsed: elapsed, duration: duration, rate: isPlaying ? speed : 0)
     }
 
+    /// Sends any reading events still queued (offline earlier) — recording
+    /// itself already tries right away.
     private func syncProgress() {
-        guard let book else { return }
-        Task { await ProgressStore.shared.syncToServer(bookID: book.id) }
+        Task { await ProgressStore.shared.flush() }
     }
 
     private func start() {
