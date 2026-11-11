@@ -1712,6 +1712,8 @@ final class ReaderPlaybackController: ObservableObject {
     /// itself. Each translated sentence is synthesized right away (see
     /// `refillNextChapterWarmup`); a failure just leaves the rest for that
     /// chapter's own translation to fill in once it opens.
+    /// Only starts translating once the open chapter's own translation is
+    /// done, so the two never compete for the same engine.
     private func startNextChapterTranslation() {
         guard autoTranslate, let targetIndex = nextChapterPreloadIndex,
               let dominant = dominantLanguage(of: nextChapterSentences), dominant.rawValue != primaryLanguageCode else { return }
@@ -1727,6 +1729,11 @@ final class ReaderPlaybackController: ObservableObject {
         )
         EventLogStore.shared.record(.translation, "Pre-translate next chapter", detail: "\(logDetail) — \(engine.displayName), \(texts.count) sentences")
         nextChapterTranslation?.task = Task(priority: .utility) {
+            // The on-device engines translate one request at a time, so
+            // running alongside the open chapter's translation halves its
+            // speed — wait until that one is done (or failed) first.
+            for await translating in self.$isTranslating.values where !translating { break }
+            guard !Task.isCancelled else { return }
             do {
                 for try await (index, text) in engine.translate(texts: texts, source: source, target: target) {
                     guard self.nextChapterPreloadIndex == targetIndex, self.nextChapterTranslation != nil else { return }
