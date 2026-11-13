@@ -58,6 +58,12 @@ public enum TextSegmentation {
         // matching this now-cleaned string.
         s = s.replacingOccurrences(of: invisibleCharPattern, with: "", options: .regularExpression)
         s = s.replacingOccurrences(of: "~", with: "")
+        // Decorative separator lines ("_________________", "-----",
+        // "=====", "*****", "━━━━") some chapters use between scenes or
+        // before an author's note — TTS otherwise reads them out
+        // character by character ("gạch dưới gạch dưới..."). A run of 3+
+        // never occurs in ordinary prose; an underscore never does at all.
+        s = s.replacingOccurrences(of: "_+|[-=*#─━═]{3,}", with: "", options: .regularExpression)
         s = s.replacingOccurrences(of: "\\.{2,}", with: ".", options: .regularExpression)
         for rule in filterRules {
             s = applying(rule, to: s)

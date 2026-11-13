@@ -91,4 +91,9 @@ final class TextSegmentationFilterTests: XCTestCase {
         XCTAssertTrue(result.contains("Hắn nhìn"))
         XCTAssertTrue(result.contains("khó hiểu"))
     }
+
+    func testDecorativeSeparatorLinesAreStripped() {
+        let text = "Hết chương.\n\n_________________\n\n-----\n\n*****\n\nLời tác giả."
+        XCTAssertEqual(TextSegmentation.sentences(from: TextSegmentation.cleaned(text)), ["Hết chương.", "Lời tác giả."])
+    }
 }
