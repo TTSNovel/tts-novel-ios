@@ -1522,6 +1522,17 @@ final class ReaderPlaybackController: ObservableObject {
 
     private func advance() {
         guard active else { return }
+        // Wall-clock backstop for the sleep timer: `sleepTimerTask` alone let
+        // a phone read all night (2026-11-20, no "Pause" logged for hours) —
+        // its firing can be lost (autoStopFired's `guard active` drops it
+        // if it lands in auto-next's gap between chapters, with nothing to
+        // re-arm it) or delayed (Task.sleep's clock vs. a locked phone).
+        // Checked before moving the playhead, so resume() replays from the
+        // next sentence exactly like a timer-fired pause.
+        if let deadline = sleepTimerDeadline, Date() >= deadline {
+            autoStopFired()
+            return
+        }
         currentSentenceIndex += 1
         updateNowPlayingProgress()
         Task { await playCurrentSentence(generation: generation) }
